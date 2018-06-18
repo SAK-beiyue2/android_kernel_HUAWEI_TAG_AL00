@@ -1,0 +1,4 @@
+#!/bin/bash
+make mrproper -k -i
+make clean -k -i
+

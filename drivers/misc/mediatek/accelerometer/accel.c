@@ -1,6 +1,9 @@
 
 #include "accel.h"
 #include "accel_factory.h"
+#include <mach/hardwareinfo.h>
+
+extern hardware_info_struct hardware_info;
 
 struct acc_context *acc_context_obj = NULL;
 
@@ -441,6 +444,7 @@ static int acc_real_driver_init(void)
 			if (0 == err) {
 				ACC_LOG(" acc real driver %s probe ok\n",
 					gsensor_init_list[i]->name);
+				hardware_info.gsensor_name = gsensor_init_list[i]->name;
 				break;
 			}
 		}

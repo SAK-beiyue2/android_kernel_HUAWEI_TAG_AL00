@@ -1,6 +1,10 @@
 
 #include "alsps.h"
 #include "aal_control.h"
+#include <mach/hardwareinfo.h>
+ 
+extern hardware_info_struct hardware_info;
+
 struct alsps_context *alsps_context_obj = NULL;
 
 
@@ -791,6 +795,7 @@ static int alsps_real_driver_init(void)
 		if(0 == err)
 		{
 		   ALSPS_LOG(" alsps real driver %s probe ok\n", alsps_init_list[i]->name);
+		   hardware_info.alsps_name = alsps_init_list[i]->name;
 		   break;
 		}
 	  }

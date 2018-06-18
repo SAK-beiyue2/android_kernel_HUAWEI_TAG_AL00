@@ -159,6 +159,17 @@ config MTK_C2K_DATA_PPP_SUPPORT
 	bool "MTK_C2K_DATA_PPP_SUPPORT"
 	default n
 
+config MTK_C2K_OM_SOLUTION1
+	bool "C2K OM solution1 support"
+	default n
+
+config MTK_CT6M_SUPPORT
+	bool "CT 6M support"
+	depends on MTK_C2K_SUPPORT
+	default n
+	help
+	  To support 6M modem
+
 config MTK_IRAT_SUPPORT
 	bool "MTK_IRAT_SUPPORT"
 	depends on MTK_NET_CCMNI
@@ -953,7 +964,15 @@ config MTK_APDS9930_NEW
 	bool "APDS9930_NEW for MediaTek package"
 	default n
 
+config MTK_AP3426
+	bool "ap3426 for MediaTek package"
+	default n
+
 # Accelerometer sensor
+config MTK_BMA253
+	bool "BMA253 for MediaTek package"
+	default n
+	
 config MTK_KXTJ2_1009
 	bool "KXTJ2 1009 for MediaTek package"
 	default n
@@ -1020,7 +1039,15 @@ config MTK_MXC400X_NEW
 config MTK_DA213
         bool "DA213 for MediaTek package"
         default n
-        
+
+config MTK_GMA303
+        bool "GMA303 for MediaTek package"
+        default n
+
+config MTK_MC6470_ACC
+	bool "MC6470 ACC(ACC+MAG) sensor for MediaTek package"
+	default n
+
 # Gyro sensor
 config MTK_MPU3050C
 	bool "MPU3050C for MediaTek package"
@@ -1136,7 +1163,23 @@ config MTK_IST8303
         
 config MTK_ST480
 	bool "ST480 for MediaTek package"
-	default n	        
+	default n
+
+config MTK_MMC3524X
+	bool "MTK_MMC3524X for MediaTek package"
+	default n
+
+config MTK_MC6470
+	bool "MC6470 MAG(ACC+MAG) sensor for MediaTek package"
+	default n
+
+config MTK_QMCX983
+	bool "QMCX983 MAG sensor for MediaTek package"
+	default n
+
+config MTK_AF7133E
+	bool "AF7133E for MediaTek package"
+	default n
 # Barometer sensor
 config MTK_BMP180_NEW
 	bool "BMP180 for MediaTek package"
@@ -1304,6 +1347,10 @@ config KICK_SPM_WDT # SW WORKAROUND
 	  SW workaround to kick SPM WDT instaed of RGU WDT
 
 # Keypad
+config BOOT_AT_INSERT_BAT
+        bool "The phone will boot when insert battery"
+        default n
+
 config ONEKEY_REBOOT_NORMAL_MODE
         bool "Long press reboot by Powerkey only on normal mode"
         default n
@@ -1740,6 +1787,18 @@ config MTK_LENS_DW9718AF_SUPPORT
 
 config MTK_LENS_DW9714AF_SUPPORT
 	bool "DW9714AF Lens Driver"
+	default n
+
+config MTK_LENS_DW9714QTAF_SUPPORT
+	bool "DW9714QTAF Lens Driver"
+	default n
+
+config MTK_LENS_DW9714OV13850AF_SUPPORT
+	bool "DW9714OV13850AF Lens Driver"
+	default n
+
+config MTK_LENS_DW9714IMX219AF_SUPPORT
+	bool "DW9714IMX219AF Lens Driver"
 	default n
 
 config MTK_LENS_DW9714A_SUPPORT

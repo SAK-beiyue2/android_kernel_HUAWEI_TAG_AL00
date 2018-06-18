@@ -321,4 +321,4 @@ ifneq ($(CONFIG_CUSTOM_KERNEL_SENSORHUB),"")
 obj-y	+= sensorHub/
 endif
 endif
-
+obj-y	+= hardwareinfo/

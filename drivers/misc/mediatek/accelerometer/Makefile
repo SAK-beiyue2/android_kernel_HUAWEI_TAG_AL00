@@ -71,6 +71,10 @@ ifeq ($(CONFIG_MTK_BMA056),y)
 obj-y   +=  bma056/
 endif
 
+ifeq ($(CONFIG_MTK_BMA253),y)
+obj-y   +=  bma253/
+endif
+
 ifeq ($(CONFIG_MTK_LSM6DS3),y)
 obj-y   +=  lsm6ds3/
 endif
@@ -82,3 +86,12 @@ endif
 ifeq ($(CONFIG_MTK_DA213),y)
 obj-y   +=  da213/
 endif
+
+ifeq ($(CONFIG_MTK_GMA303),y)
+obj-y   +=  gma303/
+endif
+
+ifeq ($(CONFIG_MTK_MC6470_ACC),y)
+obj-y   +=  mc6470_acc/
+endif
+

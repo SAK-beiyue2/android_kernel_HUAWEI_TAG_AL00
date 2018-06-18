@@ -35,6 +35,9 @@
 #if defined(CONFIG_MTK_S3320) || defined(CONFIG_MTK_S3320_50) || defined(CONFIG_MTK_S3320_47) || defined(CONFIG_MTK_MIT200) || defined(CONFIG_TOUCHSCREEN_SYNAPTICS_S3528) || defined(CONFIG_MTK_S7020)
 #include <linux/input/mt.h>
 #endif /* CONFIG_MTK_S3320 */
+#include <mach/hardwareinfo.h>
+
+extern hardware_info_struct hardware_info;
 /* for magnify velocity******************************************** */
 #define TOUCH_IOC_MAGIC 'A'
 
@@ -410,6 +413,7 @@ static int tpd_probe(struct platform_device *pdev)
 				TPD_DMESG("[mtk-tpd]tpd_probe, tpd_driver_name=%s\n",
 					  tpd_driver_list[i].tpd_device_name);
 				g_tpd_drv = &tpd_driver_list[i];
+				hardware_info.hq_tpd_name = g_tpd_drv->tpd_device_name;
 				break;
 			}
 		}

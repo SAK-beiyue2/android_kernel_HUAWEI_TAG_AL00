@@ -2,6 +2,10 @@
 #include "mag.h"
 #include "accel.h"
 
+#include <mach/hardwareinfo.h>
+
+extern hardware_info_struct hardware_info;
+
 struct mag_context *mag_context_obj = NULL;
 
 static struct mag_init_info* msensor_init_list[MAX_CHOOSE_G_NUM]= {0}; //modified

@@ -45,4 +45,11 @@ config MAX_DRAM_SIZE_SUPPORT
 	  Notice that the maximum DRAM size is including the memory size
 	  reserved for the modem and the PMEM.
 
+config SODI_OFF
+	bool "Disable SODI"
+	depends on (ARCH_MT6735 || ARCH_MT6735M || ARCH_MT6753)
+	default n
+	help
+	  Select if you want to disable Screen ON DeepIdle (SODI).
+
 endmenu

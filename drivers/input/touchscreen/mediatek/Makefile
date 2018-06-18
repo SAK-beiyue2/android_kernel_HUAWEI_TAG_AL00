@@ -77,6 +77,14 @@ ifeq ($(CONFIG_TOUCHSCREEN_MTK_FT5436),y)
 obj-y  +=  FT5436/
 endif
 
+ifeq ($(CONFIG_MTK_FT5X46),y)
+obj-y	+=  ft5x46_driver/
+endif
+
+ifeq ($(CONFIG_TOUCHSCREEN_MTK_FT5436_ZAL1518),y)
+obj-y	+=  ft5436_zal1518/
+endif
+
 ifeq ($(CONFIG_TOUCHSCREEN_MTK_FTS2A052),y)
 obj-y	+=  FTS2A052/
 endif

@@ -1,0 +1,4 @@
+#!/bin/bash
+make AL00_defconfig
+make -j64 2>&1 | tee build.log
+

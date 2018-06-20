@@ -1158,9 +1158,37 @@ LCM_DRIVER* lcm_driver_list[] =
 #if defined(ST7789H2_DBI)
 	&st7789h2_dbi_lcm_drv,
 #endif
+#if defined(ILI9881_HD720_DSI_VDO)
+        &ili9881_hd720_dsi_vdo_lcm_drv,
+#endif
 
-#if defined(B080UAN01_2_WUXGA_DSI_VDO)
-    &b080uan01_2_wuxga_dsi_vdo_lcm_drv,
+#if defined(ILI9881_HD720_DSI_VDO_K503)
+        &ili9881_hd720_dsi_vdo_k503_lcm_drv,
+#endif
+
+#if defined(ILI9881_HD720_DSI_VDO_K551)
+        &ili9881_hd720_dsi_vdo_k551_lcm_drv,
+#endif
+
+#if defined(R61318A1_HD720_DSI_VDO_K503)
+        &r61318a1_hd720_dsi_vdo_k503_lcm_drv,
+#endif
+
+#if defined(NT35596_FHD_DSI_VDO)
+        &nt35596_fhd_dsi_vdo_drv,
+#endif
+#if defined(NT35596_FHD_DSI_VDO_K505)
+        &nt35596_fhd_dsi_vdo_k505_drv,
+#endif
+
+#if defined(OTM1901_FHD_DSI_VDO)
+        &otm1901_fhd_dsi_vdo_lcm_drv,
+#endif
+#if defined(OTM1901_LIDE_FHD_DSI_VDO)
+        &otm1901_lide_fhd_dsi_vdo_lcm_drv,
+#endif
+#if defined(FL10802_DSI_VDO_FWVGA)
+        &fl10802_dsi_vdo_fwvga_drv,
 #endif
 
 #if defined(OTA7290B_DSI_IVO)

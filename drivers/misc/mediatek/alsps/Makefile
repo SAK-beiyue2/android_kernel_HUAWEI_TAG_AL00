@@ -56,3 +56,7 @@ endif
 ifeq ($(CONFIG_MTK_AP3426),y)
 obj-y	+=  ap3426/
 endif
+
+ifeq ($(CONFIG_MTK_AP3XX6),y)
+obj-y	+=  ap3xx6_mtk/
+endif

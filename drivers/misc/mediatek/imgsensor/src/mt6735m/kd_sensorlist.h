@@ -112,6 +112,13 @@ UINT32 T4KA7_MIPI_RAW_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
 UINT32 ISX012_MIPI_YUV_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
 UINT32 T8EV5_YUV_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
 
+/*oujiacheng@wind-mobi.com 2015.6.8 add begin*/
+UINT32 S5K4H5YC_MIPI_RAW_SensorInit_GEER(PSENSOR_FUNCTION_STRUCT *pfFunc);
+UINT32 S5K4H5YC_MIPI_RAW_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
+UINT32 GC2355_MIPI_RAW_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
+UINT32 OV2680_MIPI_RAW_SensorInit(PSENSOR_FUNCTION_STRUCT *pfFunc);
+/*oujiacheng@wind-mobi.com 2015.6.8 add end*/
+
 //! Add Sensor Init function here
 //! Note:
 //! 1. Add by the resolution from ""large to small"", due to large sensor
@@ -432,6 +439,21 @@ ACDK_KD_SENSOR_INIT_FUNCTION_STRUCT kdSensorList[MAX_NUM_OF_SUPPORT_SENSOR+1] =
 #if defined(IMX135_MIPI_RAW_5MP)
     {IMX135_SENSOR_ID, SENSOR_DRVNAME_IMX135_MIPI_RAW_5MP, IMX135_MIPI_RAW_SensorInit},
 #endif
+
+/* oujiacheng@wind-mobi.com 2015.6.8 begin */
+#if defined(S5K4H5YC_MIPI_RAW_GEER)
+    {S5K4H5YC_SENSOR_ID_GEER, SENSOR_DRVNAME_S5K4H5YC_MIPI_RAW_GEER, S5K4H5YC_MIPI_RAW_SensorInit_GEER},
+#endif
+#if defined(S5K4H5YC_MIPI_RAW)
+    {S5K4H5YC_SENSOR_ID, SENSOR_DRVNAME_S5K4H5YC_MIPI_RAW, S5K4H5YC_MIPI_RAW_SensorInit},
+#endif
+#if defined(GC2355_MIPI_RAW)
+    {GC2355_SENSOR_ID, SENSOR_DRVNAME_GC2355_MIPI_RAW,GC2355_MIPI_RAW_SensorInit},
+#endif
+#if defined(OV2680_MIPI_RAW)
+    {OV2680MIPI_SENSOR_ID, SENSOR_DRVNAME_OV2680_MIPI_RAW,OV2680_MIPI_RAW_SensorInit},
+#endif
+/* oujiacheng@wind-mobi.com 2015.6.8 end */
 
 /*  ADD sensor driver before this line */
     {0,{0},NULL}, //end of list

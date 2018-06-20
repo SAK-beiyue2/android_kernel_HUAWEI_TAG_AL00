@@ -1000,6 +1000,10 @@ config MTK_MPU6050G_NEW
 	bool "MPU6050G for MediaTek package"
 	default n
 
+config MTK_LIS3DH_NEW
+	bool "LIS3DH for MediaTek package"
+	default n
+
 config MTK_MPU6050G
 	bool "MPU6050G for MediaTek package"
 	default n
@@ -1121,6 +1125,10 @@ config MTK_BMM050
 
 config MTK_MMC3416X
 	bool "MTK_MMC3416X for MediaTek package"
+	default n
+
+config MTK_ist8303
+	bool "MTK_ist8303 for MediaTek package"
 	default n
 
 config MTK_BMA250
@@ -1773,6 +1781,24 @@ config MTK_LENS_BU6429AF_SUPPORT
 	bool "BU6429AF Lens Driver"
 	default n
 
+# oujiacheng@wind-mobi.com 2015.6.10 begin	
+config MTK_LENS_BU642911501AF_SUPPORT
+	bool "BU642911501AF Lens Driver"
+	default n
+	
+config MTK_LENS_BU642911502AF_SUPPORT
+	bool "BU642911502AF Lens Driver"
+	default n
+# oujiacheng@wind-mobi.com 2015.6.10 end	
+#dixiaobing@wind-mobi.com 20150710 start	
+config MTK_LENS_BU6429116109AF_SUPPORT
+	bool "BU6429116109AF Lens Driver"
+	default n
+	
+config MTK_LENS_BU6429116134AF_SUPPORT
+	bool "BU6429116134AF Lens Driver"
+	default n
+#dixiaobing@wind-mobi.com 20150710 end
 config MTK_LENS_BU64745GWZAF_SUPPORT
 	bool "BU64745GWZAF Lens Driver"
 	default n
@@ -1843,6 +1869,10 @@ config MTK_LENS_GAF002AF_SUPPORT
 
 config MTK_LENS_GAF008AF_SUPPORT
 	bool "GAF008AF Lens Driver"
+	default n
+
+config MTK_CAM_CAL_S5K3L2OTP_SUPPORT
+	bool "S5K3L2 OTP Driver"
 	default n
 
 #

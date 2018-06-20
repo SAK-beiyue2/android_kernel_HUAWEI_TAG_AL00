@@ -18,7 +18,11 @@ endif
 ifeq ($(CONFIG_TOUCHSCREEN_MTK_MAX1187X),y)
 obj-y	+=  max1187x/
 endif
-
+#dixiaobing@wind-mobi.com 20150710 start
+ifeq ($(CONFIG_TOUCHSCREEN_MTK_FT5446),y)
+obj-y	+=  ft5446/
+endif
+#dixiaobing@wind-mobi.com 20150710 end
 ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT9XX),y)
 obj-y	+=  GT9XX/
 endif

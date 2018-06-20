@@ -1041,4 +1041,11 @@ config TOUCHSCREEN_SYNAPTICS
 	help
 	  This enables support for Synaptics over I2C based touchscreens.
 	  
+#dixiaobing@wind-mobi.com 20150710 start
+config TOUCHSCREEN_MTK_FT5446
+        bool "FT FT5446 for Mediatek package"
+        default n
+        help
+          add by zhuhuadong, GFM TP
+#dixiaobing@wind-mobi.com 20150710 end
 endif

@@ -153,6 +153,10 @@ ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT9XX_2),y)
 obj-y	+=  GT9XX_2/
 endif
 
+ifeq ($(CONFIG_ICN6202),y)
+obj-y  +=  GT9XX_icn6202/
+endif
+
 ifeq ($(CONFIG_MTK_MIT200),y)
 obj-y	+=  melfas_mit200/
 endif
@@ -163,4 +167,19 @@ endif
 
 ifeq ($(CONFIG_TOUCHSCREEN_MTK_MSG28XX),y)
 obj-y	+=  Msg28xx/
+endif
+
+ifeq ($(CONFIG_TOUCHSCREEN_MTK_MSG2838),y)
+obj-y    +=  msg2838/
+endif
+
+ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT9XX_V22),y)
+ifeq ($(CONFIG_CUSTOM_KERNEL_LCM), "icn6202_lcm_drv")
+obj-y     +=  gt9xx_icn6202/
+else ifeq ($(CONFIG_CUSTOM_KERNEL_LCM), "ota7290b_dsi_ivo")    
+#obj-y    +=  gt9xx_v22/
+obj-y     +=  gt911_v22/
+else
+obj-y     +=  gt911_v23/
+endif
 endif

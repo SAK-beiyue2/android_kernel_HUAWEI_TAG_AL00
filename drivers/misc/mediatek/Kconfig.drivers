@@ -919,6 +919,10 @@ config MTK_AUDIO_EXTCODEC_SUPPORT
 	  If you say Y, enable MTK_AUDIO_EXTCODEC_SUPPORT driver.
 
 # ALSPS sensor
+config MTK_EPL259X
+	bool "EPL259X for MediaTek package"
+	default n
+
 config MTK_CM36283
 	bool "CM36283 for MediaTek package"
 	default n
@@ -1187,6 +1191,10 @@ config MTK_QMCX983
 
 config MTK_AF7133E
 	bool "AF7133E for MediaTek package"
+	default n
+
+config MTK_GMC303
+	bool "GMC303 for MediaTek package"
 	default n
 # Barometer sensor
 config MTK_BMP180_NEW

@@ -5,6 +5,10 @@ obj-y   +=  alsps.o
 obj-y   +=  alsps_factory.o
 obj-y   +=  aal_control.o
 
+ifeq ($(CONFIG_MTK_EPL259X),y)
+obj-y	+=  epl259x/
+endif
+
 ifeq ($(CONFIG_MTK_GP2AP002S00F),y)
 obj-y	+=  gp2ap002s00f/
 endif
@@ -50,5 +54,5 @@ obj-y	+=  rpr410/
 endif
 
 ifeq ($(CONFIG_MTK_AP3426),y)
-obj-y	+=  AP3426/
+obj-y	+=  ap3426/
 endif

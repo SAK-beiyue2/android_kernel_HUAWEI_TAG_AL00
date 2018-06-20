@@ -142,3 +142,7 @@ endif
 ifeq ($(CONFIG_ARCH_MT6753),y)
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/m4u/$(MTK_PLATFORM)/mt6753/
 endif
+ifeq ($(CONFIG_CUSTOM_KERNEL_LCM), "icn6202_lcm_drv")
+ccflags-y += -DCONFIG_ICN6202
+endif
+

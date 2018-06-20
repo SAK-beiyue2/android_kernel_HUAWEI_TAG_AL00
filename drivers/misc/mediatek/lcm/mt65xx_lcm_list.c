@@ -18,7 +18,9 @@
 #define LCD_DEBUG(fmt)  printk(fmt)
 #endif
 
+extern LCM_DRIVER icn6202_lcm_drv;
 extern LCM_DRIVER nt35521_hd720_dsi_vdo_dj_lcm_drv;
+extern LCM_DRIVER nt35521_hd720_lide_lcm_drv;
 extern LCM_DRIVER otm1282a_hd720_dsi_vdo_60hz_lcm_drv;
 extern LCM_DRIVER otm1282a_hd720_dsi_vdo_lcm_drv;
 extern LCM_DRIVER otm1287a_hd720_dsi_vdo_boyi_lcm_drv;
@@ -248,10 +250,23 @@ extern LCM_DRIVER ili7802_hd720_dsi_vdo_yassy_lcm_drv;
 extern LCM_DRIVER ili9881_CA_hd720_dsi_vdo_yassy_lcm_drv;
 extern LCM_DRIVER b080uan01_2_wuxga_dsi_vdo_lcm_drv;
 extern LCM_DRIVER ptg101f08_lvds_lcm_drv;
+extern LCM_DRIVER ota7290b_dsi_ivo_lcm_drv;
+extern LCM_DRIVER wtl0988_dsi_ivo_lcm_drv;
 extern LCM_DRIVER ili9881c_dsi_vdo_djn_lcm_drv;
 
 LCM_DRIVER* lcm_driver_list[] =
 {
+#if defined(WTL0988_DSI_IVO)
+    &wtl0988_dsi_ivo_lcm_drv,
+#endif
+#if defined(ICN6202_LCM_DRV)
+    &icn6202_lcm_drv,
+#endif
+
+#if defined(NT35521_HD720_DSI_VDO_LIDE)
+    &nt35521_hd720_lide_lcm_drv,
+#endif
+
 #if defined(ILI9881_CA_HD720_DSI_VDO_YASSY)
 	&ili9881_CA_hd720_dsi_vdo_yassy_lcm_drv,
 #endif
@@ -1146,6 +1161,10 @@ LCM_DRIVER* lcm_driver_list[] =
 
 #if defined(B080UAN01_2_WUXGA_DSI_VDO)
     &b080uan01_2_wuxga_dsi_vdo_lcm_drv,
+#endif
+
+#if defined(OTA7290B_DSI_IVO)
+    &ota7290b_dsi_ivo_lcm_drv,
 #endif
 };
 

@@ -1,4 +1,12 @@
 #!/bin/bash
 make AL00_defconfig
 make -j64 2>&1 | tee build.log
+cp -Rf arch/arm64/boot/Image.gz-dtb install_kernel
+mv install_kernel/Image.gz-dtb install_kernel/zImage
+cp -Rf arch/arm64/boot/Image.gz-dtb install_kernel
+mv install_kernel/Image.gz-dtb install_kernel/oldimg
+cd install_kernel
+zip -q -r install.zip *
+cd ../
+mv install_kernel/install.zip ./
 

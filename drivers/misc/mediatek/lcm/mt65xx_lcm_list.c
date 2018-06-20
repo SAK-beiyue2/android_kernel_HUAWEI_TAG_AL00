@@ -254,6 +254,27 @@ extern LCM_DRIVER ota7290b_dsi_ivo_lcm_drv;
 extern LCM_DRIVER wtl0988_dsi_ivo_lcm_drv;
 extern LCM_DRIVER ili9881c_dsi_vdo_djn_lcm_drv;
 
+extern LCM_DRIVER ili9881_hd720_dsi_vdo_lcm_drv;
+extern LCM_DRIVER ili9881_hd720_dsi_vdo_k503_lcm_drv;
+extern LCM_DRIVER ili9881_hd720_dsi_vdo_k551_lcm_drv;
+extern LCM_DRIVER r61318a1_hd720_dsi_vdo_k503_lcm_drv;
+extern LCM_DRIVER nt35596_fhd_dsi_vdo_drv;
+extern LCM_DRIVER nt35596_fhd_dsi_vdo_k505_drv;
+extern LCM_DRIVER otm1901_fhd_dsi_vdo_lcm_drv;
+extern LCM_DRIVER otm1901_lide_fhd_dsi_vdo_lcm_drv;
+extern LCM_DRIVER fl10802_dsi_vdo_fwvga_drv;
+extern LCM_DRIVER fl10802_liangbang_dsi_vdo_fwvga_drv;
+extern LCM_DRIVER jd9367_hd720_dsi_vdo_lcm_drv;
+extern LCM_DRIVER fl11280_hd720_dsi_vdo_lcm_drv;
+extern LCM_DRIVER hx8399_fhd_dsi_vdo_lcm_drv;
+#if defined(OTM9605A_HONGZHAN_QHD_VDO)
+    extern LCM_DRIVER otm9605a_hongzhan_qhd_vdo_lcm_drv;
+#endif
+#if defined(NT35517_DELITAI_QHD_VDO)
+    extern LCM_DRIVER nt35517_delitai_qhd_vdo_lcm_drv;
+#endif
+extern LCM_DRIVER hx8394f_hd720_dsi_vdo_lcm_drv;
+
 LCM_DRIVER* lcm_driver_list[] =
 {
 #if defined(WTL0988_DSI_IVO)
@@ -1162,6 +1183,14 @@ LCM_DRIVER* lcm_driver_list[] =
         &ili9881_hd720_dsi_vdo_lcm_drv,
 #endif
 
+#if defined(B080UAN01_2_WUXGA_DSI_VDO)
+    &b080uan01_2_wuxga_dsi_vdo_lcm_drv,
+#endif
+
+#if defined(OTA7290B_DSI_IVO)
+    &ota7290b_dsi_ivo_lcm_drv,
+#endif
+
 #if defined(ILI9881_HD720_DSI_VDO_K503)
         &ili9881_hd720_dsi_vdo_k503_lcm_drv,
 #endif
@@ -1190,9 +1219,27 @@ LCM_DRIVER* lcm_driver_list[] =
 #if defined(FL10802_DSI_VDO_FWVGA)
         &fl10802_dsi_vdo_fwvga_drv,
 #endif
+#if defined(FL10802_LIANGBANG_DSI_VDO_FWVGA)
+        &fl10802_liangbang_dsi_vdo_fwvga_drv,
+#endif
+#if defined(JD9367_HD720_DSI_VDO)
+	&jd9367_hd720_dsi_vdo_lcm_drv,
+#endif
+#if defined(FL11280_HD720_DSI_VDO)
+        &fl11280_hd720_dsi_vdo_lcm_drv,
+#endif
+#if defined(HX8399_FHD_DSI_VDO)
+        &hx8399_fhd_dsi_vdo_lcm_drv,
+#endif
+#if defined(OTM9605A_HONGZHAN_QHD_VDO)
+    &otm9605a_hongzhan_qhd_vdo_lcm_drv,
+#endif
 
-#if defined(OTA7290B_DSI_IVO)
-    &ota7290b_dsi_ivo_lcm_drv,
+#if defined(NT35517_DELITAI_QHD_VDO)
+    &nt35517_delitai_qhd_vdo_lcm_drv,
+#endif
+#if defined(HX8394F_HD720_DSI_VDO)
+    &hx8394f_hd720_dsi_vdo_lcm_drv,
 #endif
 };
 

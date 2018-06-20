@@ -793,6 +793,11 @@ config MTK_FAN5405_SUPPORT
 	help
 	  use external charger IC
 
+config MTK_ETA6005_SUPPORT
+	bool "MTK_ETA6005_SUPPORT"
+	help
+	  use external charger IC ETA6005
+
 config MTK_FAN5402_SUPPORT
 	bool "MTK_FAN5402_SUPPORT"
 	help
@@ -967,6 +972,9 @@ config MTK_RPR410
 config MTK_APDS9930_NEW
 	bool "APDS9930_NEW for MediaTek package"
 	default n
+config MTK_AP3XX6
+	bool "AP3XX6 for MediaTek package"
+	default n
 
 config MTK_AP3426
 	bool "ap3426 for MediaTek package"
@@ -1006,6 +1014,10 @@ config MTK_MPU6050G_NEW
 
 config MTK_LIS3DH_NEW
 	bool "LIS3DH for MediaTek package"
+	default n
+	
+config MTK_MC6470_ACC
+	bool "MC6470 ACC(ACC+MAG) sensor for MediaTek package"
 	default n
 
 config MTK_MPU6050G
@@ -1107,6 +1119,14 @@ config MTK_AKM09911
 	
 config MTK_AKM09911_NEW
 	bool "AKM09911 for MediaTek package"
+	default n
+	
+config MTK_MC64XX
+	bool "MC64XX for MediaTek package"
+	default n
+	
+config MTK_MC6470
+	bool "MC64XX for MediaTek package"
 	default n
 
 config MTK_HSCDTD006
@@ -1853,6 +1873,10 @@ config MTK_LENS_LC898212AF_SUPPORT
 
 config MTK_LENS_FM50AF_SUPPORT
 	bool "FM50AF Lens Driver"
+	default n
+	
+config MTK_LENS_DW9761AF_SUPPORT
+	bool "DW9761AF Lens Driver"
 	default n
 
 config MTK_LENS_MT9P017AF_SUPPORT

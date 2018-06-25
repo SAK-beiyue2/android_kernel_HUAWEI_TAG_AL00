@@ -161,12 +161,6 @@ static char STR_HELP[] =
     "        reg:[lcd|dpi|dsi|tvc|tve]\n"
     "             dump hw register values\n"
     "\n"
-    "        regw:addr=val\n"
-    "             write hw register\n"
-    "\n"
-    "        regr:addr\n"
-    "             read hw register\n"
-    "\n"     
     "       cpfbonly:[on|off]\n"
     "             capture UI layer only on/off\n"
     "\n"     
@@ -970,29 +964,6 @@ else if (0 == strncmp(opt, "ata",3))
         	gTriggerDispMode=simple_strtoul(p, &p, 10);
         	DISPMSG("DDP: gTriggerDispMode=%d\n", gTriggerDispMode);    
     	}
-	    else if (0 == strncmp(opt, "regw:", 5))
-    {
-        char *p = (char *)opt + 5;
-        unsigned long addr = simple_strtoul(p, &p, 16);
-        unsigned long val  = simple_strtoul(p + 1, &p, 16);
-
-        if (addr) {
-            OUTREG32(addr, val);
-        } else {
-            return;
-        }
-    }
-    else if (0 == strncmp(opt, "regr:", 5))
-    {
-        char *p = (char *)opt + 5;
-        unsigned long addr = (unsigned int) simple_strtoul(p, &p, 16);
-
-        if (addr) {
-            printk("Read register 0x%lx: 0x%08x\n", addr, INREG32(addr));
-        } else {
-           return;
-        }
-    }
     else if (0 == strncmp(opt, "cmmva_dprec", 11))
     {
 		dprec_handle_option(0x7);
@@ -1236,29 +1207,6 @@ else if (0 == strncmp(opt, "ata",3))
     else if (0 == strncmp(opt, "layer", 5))
     {
         dump_layer_info();
-    }
-    else if (0 == strncmp(opt, "regw:", 5))
-    {
-        char *p = (char *)opt + 5;
-        unsigned long addr = simple_strtoul(p, &p, 16);
-        unsigned long val  = simple_strtoul(p + 1, &p, 16);
-
-        if (addr) {
-            OUTREG32(addr, val);
-        } else {
-            goto Error;
-        }
-    }
-    else if (0 == strncmp(opt, "regr:", 5))
-    {
-        char *p = (char *)opt + 5;
-        unsigned int addr = (unsigned int) simple_strtoul(p, &p, 16);
-
-        if (addr) {
-            pr_info("DISP/DBG " "Read register 0x%08x: 0x%08x\n", addr, INREG32(addr));
-        } else {
-            goto Error;
-        }
     }
     else if(0 == strncmp(opt, "dither:", 7))
     {

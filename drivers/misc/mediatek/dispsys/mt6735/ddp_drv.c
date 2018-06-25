@@ -62,6 +62,7 @@
 #include <linux/sysfs.h>
 
 
+
 extern PDPI_REGS DPI_REG;
 #define DISP_DEVNAME "DISPSYS"
 

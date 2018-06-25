@@ -332,6 +332,7 @@ ssize_t WIFI_write(struct file *filp, const char __user *buf, size_t count, loff
     struct net_device *netdev = NULL;
     PARAM_CUSTOM_P2P_SET_STRUC_T p2pmode;
     INT32 wait_cnt = 0;
+    int copy_size = 0;
 
     down(&wr_mtx);
     if (count <= 0) {
@@ -339,8 +340,9 @@ ssize_t WIFI_write(struct file *filp, const char __user *buf, size_t count, loff
         goto done;
     }
 
-    if (0 == copy_from_user(local, buf, (count > sizeof(local)) ? sizeof(local) : count)) {
-        local[11] = 0;
+    copy_size = min(sizeof(local) - 1, count);
+    if (0 == copy_from_user(local, buf, copy_size)) {
+
         WIFI_INFO_FUNC("WIFI_write %s\n", local);
 
         if (local[0] == '0') {
@@ -373,7 +375,6 @@ ssize_t WIFI_write(struct file *filp, const char __user *buf, size_t count, loff
 
             if (MTK_WCN_BOOL_FALSE == mtk_wcn_wmt_func_off(WMTDRV_TYPE_WIFI)) {
                 WIFI_ERR_FUNC("WMT turn off WIFI fail!\n");
-                powered = 2;
             }
             else {
                 WIFI_INFO_FUNC("WMT turn off WIFI OK!\n");

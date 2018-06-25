@@ -411,7 +411,9 @@ static int tsbat_sysrst_set_cur_state(struct thermal_cooling_device *cdev,
 
 //		BUG();
 		//arch_reset(0,NULL);
-		*(unsigned int*) 0x0 = 0xdead; // To trigger data abort to reset the system for thermal protection.
+		/*Cancel the function of high tempreture protection in kernel and do this by app!!!*/
+		/*Chang by wangyang 2015-12-10*/
+		//*(unsigned int*) 0x0 = 0xdead; // To trigger data abort to reset the system for thermal protection.
 	}
 	return 0;
 }

@@ -9,33 +9,7 @@
 
 
 
-/*
-** $Log: mib.h $
- *
- * 11 08 2010 wh.su
- * [WCXRP00000171] [MT6620 Wi-Fi][Driver] Add message check code same behavior as mt5921
- * add the message check code from mt5921.
- *
- * 07 24 2010 wh.su
- * 
- * .support the Wi-Fi RSN
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 07 2010 cp.wu
- * [WPD00003833][MT6620 and MT5931] Driver migration
- * add aa_fsm.h, ais_fsm.h, bss.h, mib.h and scan.h.
- *
- * 02 04 2010 kevin.huang
- * [BORA00000603][WIFISYS] [New Feature] AAA Module Support
- * Add AAA Module Support, Revise Net Type to Net Type Index for array lookup
- *
- * Nov 23 2009 mtk01461
- * [BORA00000018] Integrate WIFI part into BORA for the 1st time
- *
-*/
+
 
 #ifndef _MIB_H
 #define _MIB_H

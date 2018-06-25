@@ -289,6 +289,7 @@ unsigned long a_u4Param)
 //CAM_RESET
 static int AF_Open(struct inode * a_pstInode, struct file * a_pstFile)
 {
+    int i4RetValue = 0;
     LOG_INF("Start \n");
 
 
@@ -301,6 +302,45 @@ static int AF_Open(struct inode * a_pstInode, struct file * a_pstFile)
     spin_lock(&g_AF_SpinLock);
     g_s4AF_Opened = 1;
     spin_unlock(&g_AF_SpinLock);
+
+#if 0
+char puSendCmd[2]={(char)(0xA8),(char)(0x4D)};//2aEO¡¦uAe
+    if (i4RetValue < 0) 
+    {
+        LOG_INF("[FM50AF] I2C send failed!! \n");
+        return -1;
+    }
+#else
+char puSendCmd1[2]={(char)(0xEC),(char)(0xA3)};//A point=100d 
+char puSendCmd2[2]={(char)(0xA1),(char)(0x0D)};//B point=139d 
+char puSendCmd3[2]={(char)(0xF2),(char)(0xE8)};//A-B point step mode:200us/7Lsd 
+char puSendCmd4[2]={(char)(0xDC),(char)(0x51)};//100Hz,Fastest mode //5b
+
+ i4RetValue = i2c_master_send(g_pstAF_I2Cclient, puSendCmd1, 2);	
+    if (i4RetValue < 0) 
+    {
+        LOG_INF("I2C send failed!! \n");
+        return -1;
+    }
+ i4RetValue = i2c_master_send(g_pstAF_I2Cclient, puSendCmd2, 2);
+    if (i4RetValue < 0) 
+    {
+        LOG_INF("I2C send failed!! \n");
+        return -1;
+    }
+ i4RetValue = i2c_master_send(g_pstAF_I2Cclient, puSendCmd3, 2);
+    if (i4RetValue < 0) 
+    {
+        LOG_INF("I2C send failed!! \n");
+        return -1;
+    }
+ i4RetValue = i2c_master_send(g_pstAF_I2Cclient, puSendCmd4, 2);
+    if (i4RetValue < 0) 
+    {
+        LOG_INF("I2C send failed!! \n");
+        return -1;
+    }
+#endif
 
     LOG_INF("End \n");
 

@@ -18,9 +18,7 @@ endif
 ifeq ($(CONFIG_TOUCHSCREEN_MTK_MAX1187X),y)
 obj-y	+=  max1187x/
 endif
-ifeq ($(CONFIG_TOUCHSCREEN_MTK_FT5446),y)
-obj-y	+=  ft5446/
-endif
+
 ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT9XX),y)
 obj-y	+=  GT9XX/
 endif
@@ -83,10 +81,6 @@ ifeq ($(CONFIG_MTK_FT5X46),y)
 obj-y	+=  ft5x46_driver/
 endif
 
-ifeq ($(CONFIG_TOUCHSCREEN_MTK_FT5436_ZAL1518),y)
-obj-y	+=  ft5436_zal1518/
-endif
-
 ifeq ($(CONFIG_TOUCHSCREEN_MTK_FTS2A052),y)
 obj-y	+=  FTS2A052/
 endif
@@ -123,10 +117,6 @@ ifeq ($(CONFIG_TOUCHSCREEN_SYNAPTICS_S3528),y)
 obj-y   +=  synaptics_3528/
 endif
 
-ifeq ($(CONFIG_TOUCHSCREEN_SYNAPTICS_S2714),y)
-obj-y   +=  synaptics_s2714/
-endif
-
 ifeq ($(CONFIG_TOUCHSCREEN_SYNAPTICS),y)
 obj-y   +=  synaptics/
 endif
@@ -155,10 +145,6 @@ ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT9XX_2),y)
 obj-y	+=  GT9XX_2/
 endif
 
-ifeq ($(CONFIG_ICN6202),y)
-obj-y  +=  GT9XX_icn6202/
-endif
-
 ifeq ($(CONFIG_MTK_MIT200),y)
 obj-y	+=  melfas_mit200/
 endif
@@ -167,29 +153,6 @@ ifeq ($(CONFIG_MTK_GT911),y)
 obj-y	+=  GT911/
 endif
 
-ifeq ($(CONFIG_MTK_FT6x36),y)
-obj-y	+=  ft6x36/
-endif
-
-ifeq ($(CONFIG_MTK_MSG2238),y)
-obj-y	+=  msg2238/
-endif
-
-ifeq ($(CONFIG_MTK_FT6x36),y)
-obj-y	+=  ft6x36/
-endif
-
-ifeq ($(CONFIG_MTK_MSG2238),y)
-obj-y	+=  msg2238/
-endif
-
-ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT9XX_V22),y)
-ifeq ($(CONFIG_CUSTOM_KERNEL_LCM), "icn6202_lcm_drv")
-obj-y     +=  gt9xx_icn6202/
-else ifeq ($(CONFIG_CUSTOM_KERNEL_LCM), "ota7290b_dsi_ivo")    
-#obj-y    +=  gt9xx_v22/
-obj-y     +=  gt911_v22/
-else
-obj-y     +=  gt911_v23/
-endif
+ifeq ($(CONFIG_TOUCHSCREEN_MTK_MSG28XX),y)
+obj-y	+=  Msg28xx/
 endif

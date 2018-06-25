@@ -74,9 +74,9 @@ typedef int (*activate_cooler_opp_func)(int level);
 static activate_cooler_opp_func opp_func[COOLER_STEPS] = {0};
 
 typedef struct adaptive_cooler {
-    int cur_level; 
-    int max_level; 
-    activate_cooler_opp_func *opp_func_array; 
+    int cur_level;
+    int max_level;
+    activate_cooler_opp_func *opp_func_array;
 } adaptive_coolers;
 
 static adaptive_coolers amdtxctrl;
@@ -84,13 +84,13 @@ static adaptive_coolers amdtxctrl;
 static int amdtxpwr_backoff(int level)
 {
     int ret;
-    if (level == 0) 
+    if (level == 0)
     {
         // no throttle
         //ret = eemcs_notify_md_by_sys_msg(MD_SYS5, EXT_MD_DTX_REQ, 8);
         ret = eemcs_notify_md_by_sys_msg(MD_SYS5, EXT_MD_TX_PWR_REDU_REQ, 23); // TODO: 30db as unlimit...
         mtk_cooler_amdtxctrl_dprintk_always("[%s] unlimit DTX and TX\n", __func__);
-        
+
     }
 #if 0
     else if (level >= 1 && level <= 7)
@@ -116,7 +116,7 @@ static int amdtxpwr_backoff(int level)
     }
 
     return ret;
-        
+
 }
 
 
@@ -196,7 +196,7 @@ static int wmt_send_signal(int level)
 		ret = send_sig_info(SIGIO, &info, pg_task);
 	}
 
-	if (ret != 0) 
+	if (ret != 0)
 	    mtk_cooler_amdtxctrl_dprintk("[%s] ret=%d\n", __func__, ret);
 
 	return ret;
@@ -237,18 +237,18 @@ static int judge_throttling(int index, int is_on, int interval)
 			case HIGH_STAT:
 				if (throttling_pre_stat < HIGH_STAT) {
 				    // 1st down throttle
-				    int new_step = 
+				    int new_step =
 				        down_throttle(&amdtxctrl, up_step);
 
 					mtk_cooler_amdtxctrl_dprintk_always("LOW/MID-->HIGH: step %d\n", new_step);
-					
+
 					throttling_pre_stat = HIGH_STAT;
 					over_up_time = 0;
 				} else if (throttling_pre_stat == HIGH_STAT) {
 				    // keep down throttle
 					over_up_time++;
 					if ( (over_up_time * interval) >= up_duration) {
-					    int new_step = 
+					    int new_step =
     				        down_throttle(&amdtxctrl, up_step);
 
 						mtk_cooler_amdtxctrl_dprintk_always("HIGH-->HIGH: step %d\n", new_step);
@@ -279,7 +279,7 @@ static int judge_throttling(int index, int is_on, int interval)
 			case LOW_STAT:
 				if (throttling_pre_stat > LOW_STAT) {
 				    // 1st up throttle
-				    int new_step = 
+				    int new_step =
 				        up_throttle(&amdtxctrl, low_step);
 
 					mtk_cooler_amdtxctrl_dprintk_always("MID/HIGH-->LOW: step %d\n", new_step);
@@ -293,16 +293,16 @@ static int judge_throttling(int index, int is_on, int interval)
 						if (low_rst_time >= low_rst_max && !is_reset) {
 						    // rst
                             rst_throttle(&amdtxctrl);
-						    
+
 							mtk_cooler_amdtxctrl_dprintk_always("over rst time=%d\n", low_rst_time);
 
 							low_rst_time = low_rst_max;
 							is_reset = true;
 						} else if(!is_reset) {
 						    // keep up throttle
-                            int new_step = 
+                            int new_step =
 				                up_throttle(&amdtxctrl, low_step);
-						    
+
 							low_rst_time++;
 
 							mtk_cooler_amdtxctrl_dprintk_always("LOW-->LOW: step %d\n", new_step);
@@ -362,7 +362,7 @@ static int amdtxctrl_cooler_upper_set_cur_state(struct thermal_cooling_device *c
 	} else {
 		ret = judge_throttling(1, 0, polling_interval);
 	}
-	if (ret != 0) 
+	if (ret != 0)
 	    mtk_cooler_amdtxctrl_dprintk_always("[%s] ret=%d\n", __func__, ret);
     return ret;
 }
@@ -405,7 +405,7 @@ static int amdtxctrl_cooler_lower_set_cur_state(struct thermal_cooling_device *c
 	} else {
 		ret = judge_throttling(0, 0, polling_interval);
 	}
-	if (ret != 0) 
+	if (ret != 0)
 	    mtk_cooler_amdtxctrl_dprintk_always("[%s] ret=%d\n", __func__, ret);
 	return ret;
 }
@@ -541,6 +541,7 @@ ssize_t amdtxctrl_pid_write( struct file *filp, const char __user *buf, unsigned
 	int ret = 0;
 	char tmp[MAX_LEN] = {0};
 
+	len = (len < (MAX_LEN-1)) ? len : (MAX_LEN-1);
 	/* write data to the buffer */
 	if ( copy_from_user(tmp, buf, len) ) {
 		return -EFAULT;

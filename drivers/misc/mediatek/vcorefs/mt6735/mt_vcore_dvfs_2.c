@@ -21,14 +21,16 @@
 /**************************************
  * Macro and Inline
  **************************************/
-#define vcorefs_emerg(fmt, args...)	pr_emerg(fmt, ##args)
-#define vcorefs_alert(fmt, args...)	pr_alert(fmt, ##args)
-#define vcorefs_crit(fmt, args...)	pr_crit(fmt, ##args)
 #define vcorefs_err(fmt, args...)	pr_err(fmt, ##args)
 #define vcorefs_warn(fmt, args...)	pr_warn(fmt, ##args)
-#define vcorefs_notice(fmt, args...)	pr_notice(fmt, ##args)
-#define vcorefs_info(fmt, args...)	pr_info(fmt, ##args)
-#define vcorefs_debug(fmt, args...)	pr_info(fmt, ##args)	/* pr_debug show nothing */
+
+#if 1
+#define vcorefs_crit(fmt, args...)	pr_crit(fmt, ##args)
+#define vcorefs_debug(fmt, args...)	pr_info(fmt, ##args)
+#else
+#define vcorefs_crit(fmt, args...)	pr_debug(fmt, ##args)
+#define vcorefs_debug(fmt, args...)	pr_debug(fmt, ##args)
+#endif
 
 /* log_mask[15:0]: show nothing, log_mask[16:31]: show only on MobileLog */
 #define vcorefs_crit_mask(fmt, args...)				\
@@ -36,9 +38,9 @@ do {								\
 	if (pwrctrl->log_mask & (1U << kicker))			\
 		;						\
 	else if ((pwrctrl->log_mask >> 16) & (1U << kicker))	\
-		pr_info(fmt, ##args);				\
+		vcorefs_debug(fmt, ##args);			\
 	else							\
-		pr_crit(fmt, ##args);				\
+		vcorefs_crit(fmt, ##args);			\
 } while (0)
 
 #define DEFINE_ATTR_RO(_name)			\
@@ -209,31 +211,41 @@ static void update_vcore_pwrap_cmd(struct opp_profile *opp_ctrl_table)
 	trans[TRANS3] = opp_ctrl_table[OPPI_PERF].vcore_uv + (diff / 3) * 1;
 	trans[TRANS4] = opp_ctrl_table[OPPI_PERF].vcore_uv + (diff / 3) * 2;
 
-	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_UHPM,   vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv));
+	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_UHPM,
+				vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv));
 	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_TRANS4, vcore_uv_to_pmic(trans[TRANS4]));
 	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_TRANS3, vcore_uv_to_pmic(trans[TRANS3]));
-	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_HPM,    vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF].vcore_uv));
+	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_HPM,
+				vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF].vcore_uv));
 	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_TRANS2, vcore_uv_to_pmic(trans[TRANS2]));
 	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_TRANS1, vcore_uv_to_pmic(trans[TRANS1]));
-	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_LPM,    vcore_uv_to_pmic(opp_ctrl_table[OPPI_LOW_PWR].vcore_uv));
+	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_NORMAL, IDX_NM_VCORE_LPM,
+				vcore_uv_to_pmic(opp_ctrl_table[OPPI_LOW_PWR].vcore_uv));
 
-	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_SUSPEND, IDX_SP_VCORE_HPM,    vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF].vcore_uv));
+	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_SUSPEND, IDX_SP_VCORE_HPM,
+				vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF].vcore_uv));
 	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_SUSPEND, IDX_SP_VCORE_TRANS2, vcore_uv_to_pmic(trans[TRANS2]));
 	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_SUSPEND, IDX_SP_VCORE_TRANS1, vcore_uv_to_pmic(trans[TRANS1]));
-	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_SUSPEND, IDX_SP_VCORE_LPM,    vcore_uv_to_pmic(opp_ctrl_table[OPPI_LOW_PWR].vcore_uv));
+	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_SUSPEND, IDX_SP_VCORE_LPM,
+				vcore_uv_to_pmic(opp_ctrl_table[OPPI_LOW_PWR].vcore_uv));
 
-	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_DEEPIDLE, IDX_DI_VCORE_HPM,    vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF].vcore_uv));
+	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_DEEPIDLE, IDX_DI_VCORE_HPM,
+				vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF].vcore_uv));
 	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_DEEPIDLE, IDX_DI_VCORE_TRANS2, vcore_uv_to_pmic(trans[TRANS2]));
 	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_DEEPIDLE, IDX_DI_VCORE_TRANS1, vcore_uv_to_pmic(trans[TRANS1]));
-	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_DEEPIDLE, IDX_DI_VCORE_LPM,    vcore_uv_to_pmic(opp_ctrl_table[OPPI_LOW_PWR].vcore_uv));
+	mt_cpufreq_set_pmic_cmd(PMIC_WRAP_PHASE_DEEPIDLE, IDX_DI_VCORE_LPM,
+				vcore_uv_to_pmic(opp_ctrl_table[OPPI_LOW_PWR].vcore_uv));
 
-	vcorefs_crit("UHPM  : %u (0x%x)\n", opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv, vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv));
+	vcorefs_crit("UHPM  : %u (0x%x)\n", opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv,
+						vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv));
 	vcorefs_crit("TRANS4: %u (0x%x)\n", trans[TRANS4], vcore_uv_to_pmic(trans[TRANS4]));
 	vcorefs_crit("TRANS3: %u (0x%x)\n", trans[TRANS3], vcore_uv_to_pmic(trans[TRANS3]));
-	vcorefs_crit("HPM   : %u (0x%x)\n", opp_ctrl_table[OPPI_PERF].vcore_uv, vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF].vcore_uv));
+	vcorefs_crit("HPM   : %u (0x%x)\n", opp_ctrl_table[OPPI_PERF].vcore_uv,
+						vcore_uv_to_pmic(opp_ctrl_table[OPPI_PERF].vcore_uv));
 	vcorefs_crit("TRANS2: %u (0x%x)\n", trans[TRANS2], vcore_uv_to_pmic(trans[TRANS2]));
 	vcorefs_crit("TRANS1: %u (0x%x)\n", trans[TRANS1], vcore_uv_to_pmic(trans[TRANS1]));
-	vcorefs_crit("LPM   : %u (0x%x)\n", opp_ctrl_table[OPPI_LOW_PWR].vcore_uv, vcore_uv_to_pmic(opp_ctrl_table[OPPI_LOW_PWR].vcore_uv));
+	vcorefs_crit("LPM   : %u (0x%x)\n", opp_ctrl_table[OPPI_LOW_PWR].vcore_uv,
+						vcore_uv_to_pmic(opp_ctrl_table[OPPI_LOW_PWR].vcore_uv));
 }
 
 /**************************************
@@ -308,7 +320,8 @@ static int set_freq_with_opp(enum dvfs_kicker kicker, unsigned int opp)
 #ifndef VCOREFS_FVENC_NOCTRL
 	    && opp_ctrl_table[opp].venc_khz == pwrctrl->curr_venc_khz
 #endif
-		) return 0;
+	    )
+		return 0;
 
 	if (opp == OPPI_PERF_ULTRA || opp == OPPI_PERF) {
 		clkmux_sel(MT_MUX_AXI, 2, "vcorefs");	/* 218MHz - SYSPLL_D5 */
@@ -435,7 +448,7 @@ static int is_need_recover_dvfs(enum dvfs_kicker kicker, int curr_opp)
 	unsigned int recover_opp;
 	int r = FAIL;
 
-	if (pwrctrl->recover_en && feature_en && kicker < NUM_KICKER) {
+	if (pwrctrl->recover_en && kicker < NUM_KICKER && feature_en) {
 
 		mutex_lock(&fuct_check_mutex);
 		recover_opp = find_min_opp(kicker);
@@ -538,14 +551,14 @@ static int kick_dvfs_by_opp_index(enum dvfs_kicker kicker, unsigned int opp)
 	vcorefs_crit_mask("kicker: %u, opp: %u, curr_opp: %u(%u)\n",
 			  kicker, opp, vcorefs_curr_opp, vcorefs_prev_opp);
 
-	if (opp == vcorefs_curr_opp && vcorefs_curr_opp == vcorefs_prev_opp)
+	if (vcorefs_curr_opp == opp && vcorefs_curr_opp == vcorefs_prev_opp)
 		return 0;
 
 	if (!feature_en)
 		return -ERR_FEATURE_DISABLE;
 
 	/* try again since previous change is partial success */
-	if (opp == vcorefs_curr_opp && vcorefs_curr_opp != vcorefs_prev_opp)
+	if (vcorefs_curr_opp == opp && vcorefs_curr_opp != vcorefs_prev_opp)
 		vcorefs_curr_opp = vcorefs_prev_opp;
 
 	/* 0 (performance) <= index <= X (low power) */
@@ -717,7 +730,7 @@ bool vcorefs_sdio_need_multi_autok(void)
 static void set_init_opp_index(struct vcorefs_profile *pwrctrl)
 {
 	if (feature_en) {
-		if (pwrctrl->init_opp_perf /*|| reserved_condition*/)
+		if (pwrctrl->init_opp_perf || !dram_can_support_fh())
 			pwrctrl->late_init_opp = OPPI_PERF;
 		else
 			pwrctrl->late_init_opp = OPPI_LOW_PWR;
@@ -731,11 +744,6 @@ static int late_init_to_lowpwr_opp(void)
 	struct vcorefs_profile *pwrctrl = &vcorefs_ctrl;
 
 	mutex_lock(&vcorefs_mutex);
-	if (!dram_can_support_fh()) {
-		feature_en = 0;
-		vcorefs_err("*** DISABLE DVFS DUE TO NOT SUPPORT DRAM FH ***\n");
-	}
-
 	set_init_opp_index(pwrctrl);
 	kick_dvfs_by_opp_index(KIR_LATE_INIT, pwrctrl->late_init_opp);
 
@@ -758,7 +766,8 @@ static ssize_t opp_table_show(struct kobject *kobj, struct kobj_attribute *attr,
 	int i;
 
 	for (i = 0; i < NUM_OPP; i++) {
-		p += sprintf(p, "[OPP_%d] vcore_uv:    %u (0x%x)\n", i, opp_ctrl_table[i].vcore_uv, vcore_uv_to_pmic(opp_ctrl_table[i].vcore_uv));
+		p += sprintf(p, "[OPP_%d] vcore_uv:    %u (0x%x)\n", i, opp_ctrl_table[i].vcore_uv,
+								     vcore_uv_to_pmic(opp_ctrl_table[i].vcore_uv));
 		p += sprintf(p, "[OPP_%d] ddr_khz:     %u\n", i, opp_ctrl_table[i].ddr_khz);
 #ifndef VCOREFS_FVENC_NOCTRL
 		p += sprintf(p, "[OPP_%d] venc_khz:    %u\n", i, opp_ctrl_table[i].venc_khz);
@@ -779,7 +788,7 @@ static ssize_t opp_table_store(struct kobject *kobj, struct kobj_attribute *attr
 			       const char *buf, size_t count)
 {
 	struct opp_profile *opp_ctrl_table = opp_table;
-	unsigned int val;
+	unsigned int val, uv;
 	char cmd[32];
 
 	if (sscanf(buf, "%31s %u", cmd, &val) != 2)
@@ -788,25 +797,26 @@ static ssize_t opp_table_store(struct kobject *kobj, struct kobj_attribute *attr
 	vcorefs_crit("opp_table: cmd = %s, val = %u (0x%x)\n", cmd, val, val);
 
 	if (!strcmp(cmd, "UHPM") && val < VCORE_INVALID) {
-		unsigned int uv = vcore_pmic_to_uv(val);
+		uv = vcore_pmic_to_uv(val);
 		mutex_lock(&vcorefs_mutex);
-		if (!feature_en && uv >= opp_ctrl_table[OPPI_PERF].vcore_uv) {
+		if (uv >= opp_ctrl_table[OPPI_PERF].vcore_uv && !feature_en) {
 			opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv = uv;
 			update_vcore_pwrap_cmd(opp_ctrl_table);
 		}
 		mutex_unlock(&vcorefs_mutex);
 	} else if (!strcmp(cmd, "HPM") && val < VCORE_INVALID) {
-		unsigned int uv = vcore_pmic_to_uv(val);
+		uv = vcore_pmic_to_uv(val);
 		mutex_lock(&vcorefs_mutex);
-		if (!feature_en && uv >= opp_ctrl_table[OPPI_LOW_PWR].vcore_uv && uv <= opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv) {
+		if (uv >= opp_ctrl_table[OPPI_LOW_PWR].vcore_uv &&
+		    uv <= opp_ctrl_table[OPPI_PERF_ULTRA].vcore_uv && !feature_en) {
 			opp_ctrl_table[OPPI_PERF].vcore_uv = uv;
 			update_vcore_pwrap_cmd(opp_ctrl_table);
 		}
 		mutex_unlock(&vcorefs_mutex);
 	} else if (!strcmp(cmd, "LPM") && val < VCORE_INVALID) {
-		unsigned int uv = vcore_pmic_to_uv(val);
+		uv = vcore_pmic_to_uv(val);
 		mutex_lock(&vcorefs_mutex);
-		if (!feature_en && uv <= opp_ctrl_table[OPPI_PERF].vcore_uv) {
+		if (uv <= opp_ctrl_table[OPPI_PERF].vcore_uv && !feature_en) {
 			opp_ctrl_table[OPPI_LOW_PWR].vcore_uv = uv;
 			update_vcore_pwrap_cmd(opp_ctrl_table);
 		}
@@ -895,8 +905,9 @@ static ssize_t vcore_debug_store(struct kobject *kobj, struct kobj_attribute *at
 {
 	struct vcorefs_profile *pwrctrl = &vcorefs_ctrl;
 	struct kicker_profile *kicker_ctrl_table = kicker_table;
-	int val;
+	int val, r;
 	char cmd[32];
+	unsigned int opp;
 
 	if (sscanf(buf, "%31s %d", cmd, &val) != 2)
 		return -EPERM;
@@ -905,11 +916,11 @@ static ssize_t vcore_debug_store(struct kobject *kobj, struct kobj_attribute *at
 
 	if (!strcmp(cmd, "feature_en")) {
 		mutex_lock(&vcorefs_mutex);
-		if (!feature_en && val && dram_can_support_fh()) {
+		if (val && dram_can_support_fh() && !feature_en) {
 			feature_en = 1;
 			set_init_opp_index(pwrctrl);
-		} else if (feature_en && !val && kicker_ctrl_table[KIR_GPU].opp != OPPI_PERF_ULTRA) {
-			int r = kick_dvfs_by_opp_index(KIR_SYSFS, OPPI_PERF);
+		} else if (!val && kicker_ctrl_table[KIR_GPU].opp != OPPI_PERF_ULTRA && feature_en) {
+			r = kick_dvfs_by_opp_index(KIR_SYSFS, OPPI_PERF);
 			BUG_ON(r);
 			feature_en = 0;
 			set_init_opp_index(pwrctrl);
@@ -939,7 +950,7 @@ static ssize_t vcore_debug_store(struct kobject *kobj, struct kobj_attribute *at
 		vcorefs_request_dvfs_opp(KIR_USB, val);
 	} else if (!strcmp(cmd, "KIR_SYSFS") && (val >= OPP_OFF && val < NUM_OPP)) {
 		if (is_vcorefs_can_work()) {
-			int r = vcorefs_request_dvfs_opp(KIR_SYSFS, val);
+			r = vcorefs_request_dvfs_opp(KIR_SYSFS, val);
 			BUG_ON(r);
 		}
 	} else if (!strcmp(cmd, "KIR_SYSFSX") && (val >= OPP_OFF && val < NUM_OPP)) {
@@ -948,7 +959,7 @@ static ssize_t vcore_debug_store(struct kobject *kobj, struct kobj_attribute *at
 			pwrctrl->kr_req_mask = (1U << NUM_KICKER) - 1;
 			kick_dvfs_by_opp_index(KIR_SYSFS, val);
 		} else {
-			unsigned int opp = find_min_opp(KIR_SYSFS);
+			opp = find_min_opp(KIR_SYSFS);
 			kick_dvfs_by_opp_index(KIR_SYSFS, opp);
 			pwrctrl->kr_req_mask = 0;
 		}
@@ -1030,4 +1041,4 @@ static int __init vcorefs_module_init(void)
 module_init(vcorefs_module_init);
 late_initcall_sync(late_init_to_lowpwr_opp);
 
-MODULE_DESCRIPTION("Vcore DVFS Driver v0.1");
+MODULE_DESCRIPTION("Vcore DVFS Driver v0.3");

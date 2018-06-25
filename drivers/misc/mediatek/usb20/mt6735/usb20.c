@@ -52,6 +52,10 @@ struct clk *musb_clk;
 #include <linux/musb/musb_qmu.h>
 #endif
 
+#ifdef CONFIG_LOG_JANK
+#include <linux/log_jank.h>
+#endif
+
 void pmic_enable_charger_detection_int(int x);
 int first_connect = 0;
 int pmic_intr_enable = 0;
@@ -468,6 +472,10 @@ void mt_usb_connect(void)
 	first_connect = 1;
 	
 	printk("[MUSB] USB connect\n");
+	
+#ifdef CONFIG_LOG_JANK
+	LOG_JANK_D(JLID_USBCHARGING_START,"%s","JL_USBCHARGING_START");
+#endif
 }
 
 void mt_usb_disconnect(void)
@@ -512,6 +520,10 @@ void mt_usb_disconnect(void)
 	spin_unlock(&musb_connect_lock);
 
 	printk("[MUSB] USB disconnect\n");
+
+#ifdef CONFIG_LOG_JANK
+	LOG_JANK_D(JLID_USBCHARGING_END,"%s","JL_USBCHARGING_END");
+#endif
 }
 
 void mt_usb_check_reconnect(void)
@@ -543,7 +555,6 @@ bool usb_cable_connected(void)
 	int charger_type;
 
 #ifdef CONFIG_USB_MTK_OTG
-	//ALPS00775710
 #if 0
 	int iddig_state = 1;
 
@@ -553,7 +564,6 @@ bool usb_cable_connected(void)
 	if(!iddig_state)
 		return false;
 #endif
-	//ALPS00775710
 #endif
 	
 	charger_type = mt_get_charger_type();

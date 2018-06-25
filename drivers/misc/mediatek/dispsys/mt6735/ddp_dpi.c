@@ -1,6 +1,5 @@
 #ifdef BUILD_UBOOT
 #define ENABLE_DSI_INTERRUPT 0 
-
 #include <asm/arch/disp_drv_platform.h>
 #else
 #include <linux/delay.h>
@@ -139,23 +138,17 @@ static void lcm_mdelay(UINT32 ms)
 
 static void lcm_set_reset_pin(UINT32 value)
 {
-#ifndef K2_SMT
-	DPI_OUTREG32(0, MMSYS_CONFIG_BASE+0x150, value);
-#endif
+	DPI_OUTREG32(0, DISPSYS_CONFIG_BASE+0x150, value);
 }
 
 static void lcm_send_cmd(UINT32 cmd)
 {
-#ifndef K2_SMT
 	DPI_OUTREG32(0, LCD_BASE+0x0F80, cmd);
-#endif
 }
 
 static void lcm_send_data(UINT32 data)
 {
-#ifndef K2_SMT
 	DPI_OUTREG32(0, LCD_BASE+0x0F90, data);
-#endif
 }
 
 static void _BackupDPIRegisters(void)
@@ -180,6 +173,62 @@ static void _RestoreDPIRegisters(void)
         DPI_OUTREG32(0, REG_ADDR(DPI_REG, BACKUP_DPI_REG_OFFSETS[i]),
                  AS_UINT32(REG_ADDR(reg, BACKUP_DPI_REG_OFFSETS[i])));
     }
+}
+
+void LVDS_PLL_Init(void *cmdq_handle, UINT32 PLL_CLK, DPI_POLARITY polarity)
+{
+	unsigned int pixel_clock=0, ck_div = 0, postdiv = 0;
+	unsigned int pcw = 0, n_info = 0;
+	pixel_clock = PLL_CLK*2;
+    DPI_REG_OUTPUT_SETTING ctrl = DPI_REG->OUTPUT_SETTING;
+			
+	if(pixel_clock > 250)			{	DISPCHECK("lvds pll clock exceed limitation(%d)\n", pixel_clock);ASSERT(0);}
+	else if(pixel_clock >= 125)		{	ck_div = 1;	postdiv = 8; }
+	else if(pixel_clock >= 63)		{	ck_div = 2;	postdiv = 8; }
+	else if(pixel_clock >= 32)		{	ck_div = 4;	postdiv = 8; }
+	else if(pixel_clock > 16) 		{	ck_div = 8;	postdiv = 8; }
+	else if(pixel_clock >= 8)		{	ck_div = 1;	postdiv = 16; }
+	else							{	DISPCHECK("lvds pll clock exceed limitation(%d)\n", pixel_clock);ASSERT(0);}
+
+	n_info = pixel_clock * ck_div * postdiv / 26;
+	pcw = ((n_info * (1 << 14)) | (1 << 31));
+	
+	switch(postdiv)
+	{
+		case 1:
+			postdiv = 0;
+			break;
+		
+		case 2:
+			postdiv = 1;
+			break;
+		
+		case 4:
+			postdiv = 2;
+			break;
+
+		default:
+		case 8:
+			postdiv = 3;
+			break;
+			
+		case 16:
+			postdiv = 4;
+			break;			
+	}
+
+	DISPCHECK("DPI0 LVDSPLL_init: pixel_clock = %d,postdiv = 0x%x, pcw = 0x%x, ck_div = 0x%x\n", pixel_clock, postdiv, pcw, ck_div);
+	
+	//OUTREG32(TVDPLL_CON0, (1 << 8) | (postdiv << 4) | (1 << 0)); // TVDSPLL_CON0
+	//OUTREG32(TVDPLL_CON1, pcw); // LVDSPLL_CON1
+	
+	OUTREG32(TVDPLL_CON0,0x00000141);
+	OUTREG32(TVDPLL_CON1,0x80100000); 
+	//MASKREG32(TVDPLL_CFG6, (0x700), 0x200);	//CLK_CFG_6  bit0~2
+    clkmux_sel(MT_MUX_DPI0, 2, "DPI"); 
+	
+    ctrl.CLK_POL = (DPI_POLARITY_FALLING == polarity) ? 1 : 0;
+	DPI_OUTREGBIT(cmdq_handle, DPI_REG_OUTPUT_SETTING, DPI_REG->OUTPUT_SETTING, CLK_POL, ctrl.CLK_POL);
 }
 
 /*the fuctions declare*/
@@ -234,6 +283,7 @@ DPI_STATUS ddp_dpi_ConfigPclk(cmdqRecHandle cmdq, unsigned int clk_req, DPI_POLA
 	DPI_OUTREG32(NULL, TVDPLL_CON1, prediv);	 // set TVDPLL output clock frequency 
 	pr_warn("DISP/DPI,TVDPLL_CON0: 0x%x, TVDPLL_CON1: 0x%x\n", INREG32(TVDPLL_CON0),  INREG32(TVDPLL_CON1));
 
+/*
 #ifdef CONFIG_FOR_ARCH_M1
 	pr_warn("DISP/DPI,CONFIG_FOR_ARCH_M1 is defined!\n");
 	//Timing Set
@@ -280,6 +330,7 @@ DPI_STATUS ddp_dpi_ConfigPclk(cmdqRecHandle cmdq, unsigned int clk_req, DPI_POLA
 	DPI_MASKREG32(NULL, DISPSYS_IO_DRIVING2, 0x0006, 0x0 << 1);
 	DPI_MASKREG32(NULL, DISPSYS_IO_DRIVING3, 0x0006, 0x2 << 1);
 #endif
+*/
 	pr_warn("DISP/DPI,DISPSYS_IO_DRIVING1: 0x%x, DISPSYS_IO_DRIVING2: 0x%x, DISPSYS_IO_DRIVING3: 0x%x\n", INREG32(DISPSYS_IO_DRIVING1),  INREG32(DISPSYS_IO_DRIVING2), INREG32(DISPSYS_IO_DRIVING3));
 
     /*DPI output clock polarity*/
@@ -539,8 +590,11 @@ int ddp_dpi_config(DISP_MODULE_ENUM module, disp_ddp_path_config *config, void *
     {
         LCM_DPI_PARAMS *dpi_config = &(config->dispif_config.dpi);
         pr_warn("DISP/DPI,ddp_dpi_config DPI status:%x, cmdq:%p, dpi_config->width:%u\n", INREG32(&DPI_REG->STATUS), cmdq_handle, dpi_config->width);
- 
-        ddp_dpi_ConfigPclk(cmdq_handle, dpi_config->dpi_clock, dpi_config->clk_pol);    
+ 		if(dpi_config->lvds_tx_en) {
+			LVDS_PLL_Init(cmdq_handle, dpi_config->PLL_CLOCK, dpi_config->clk_pol);
+ 			} else {
+        	ddp_dpi_ConfigPclk(cmdq_handle, dpi_config->dpi_clock, dpi_config->clk_pol);
+ 			}
         ddp_dpi_ConfigSize(cmdq_handle, dpi_config->width, dpi_config->height);
         ddp_dpi_ConfigBG(cmdq_handle, true, dpi_config->bg_width, dpi_config->bg_height);
 		cache_bg_parameter = dpi_config->bg_width << 16 | dpi_config->bg_height;
@@ -554,7 +608,7 @@ int ddp_dpi_config(DISP_MODULE_ENUM module, disp_ddp_path_config *config, void *
 
         ddp_dpi_ConfigDualEdge(cmdq_handle, dpi_config->i2x_en, dpi_config->i2x_edge);
 
-	 #ifdef HDMI_MT8193_SUPPORT
+	 #ifdef HDMI_MT8193_SUPPORT &&(dpi_config->lvds_tx_en == 0)
 	 ddp_dpi_ConfigCCIR656(cmdq_handle, TRUE);
 	 #endif
 
@@ -565,6 +619,7 @@ int ddp_dpi_config(DISP_MODULE_ENUM module, disp_ddp_path_config *config, void *
 	if(s_isDpiConfig == TRUE)
 	{
 		LCM_DPI_PARAMS *dpi_config = &(config->dispif_config.dpi);
+ 		if(dpi_config->lvds_tx_en == 0) {
 		int now_bg_parameters = dpi_config->bg_width << 16 | dpi_config->bg_height;
 		pr_warn("DISP/DPI,now_bg_parameters: 0x%x, cache_bg_parameter: 0x%x\n", now_bg_parameters, cache_bg_parameter);
 		
@@ -581,6 +636,7 @@ int ddp_dpi_config(DISP_MODULE_ENUM module, disp_ddp_path_config *config, void *
 			//DPI_OUTREG32(cmdq_handle, DISPSYS_DPI_BASE, 0x00000001);
 
 			cache_bg_parameter = now_bg_parameters;
+		}
 		}
 	}
 

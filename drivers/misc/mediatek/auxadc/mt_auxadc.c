@@ -971,26 +971,35 @@ static int dbug_thread(void *unused)
 static ssize_t store_AUXADC_channel(struct device *dev, struct device_attribute *attr,
 				    const char *buf, size_t size)
 {
-	unsigned int start_flag;
-	int error;
+	int start_flag = 0;
+	int error = 0;
+	int ret = 0;
 
-		if (sscanf(buf, "%u", &start_flag) != 1) {
-			printk("[adc_driver]: Invalid values\n");
-			return -EINVAL;
-		}
+	if (buf == NULL) {
+		pr_debug("[%s] Invalid input!!\n", __func__);
+		return 0;
+	}
 
-		printk("[adc_driver] start flag =%d \n",start_flag);
+	ret = kstrtoint(buf, sizeof(int), &start_flag);
+	if (ret < 0) {
+		pr_debug("[%s] Invalid invalues!!\n", __func__);
+		return 0;
+	}
+
+	pr_debug("[adc_driver] start flag =%d\n", start_flag);
+	if (start_flag) {
 		g_start_debug_thread = start_flag;
-	if (1 == start_flag) {
-		   thread = kthread_run(dbug_thread, 0, "AUXADC");
+		thread = kthread_run(dbug_thread, 0, "AUXADC");
 
 		if (IS_ERR(thread)) {
-			  error = PTR_ERR(thread);
-			  printk( "[adc_driver] failed to create kernel thread: %d\n", error);
-		   }
+			error = PTR_ERR(thread);
+			pr_debug("[adc_driver] failed to create kernel thread: %d\n", error);
 		}
+	} else {
+		pr_debug("[%s] Invalid input!!\n", __func__);
+	}
 
-    return size;
+	return size;
 }
 
 static DEVICE_ATTR(AUXADC_read_channel, 0664, show_AUXADC_chanel, store_AUXADC_channel);

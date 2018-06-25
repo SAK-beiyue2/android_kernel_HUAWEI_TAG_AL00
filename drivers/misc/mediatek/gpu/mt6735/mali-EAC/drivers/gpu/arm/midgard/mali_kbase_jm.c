@@ -31,7 +31,12 @@
 
 #include "mali_kbase_jm.h"
 
+#include "mach/mt_emi_bm.h"
+
 extern void smi_dumpDebugMsg(void);
+//extern void BM_Init(void);
+//extern void dump_emi_registers(void);
+
 
 #define beenthere(kctx, f, a...)  dev_dbg(kctx->kbdev->dev, "%s:" f, __func__, ##a)
 
@@ -1193,6 +1198,8 @@ void kbasep_reset_timeout_worker(struct work_struct *data)
 	struct kbase_uk_hwcnt_setup hwcnt_setup = { {0} };
 	enum kbase_instr_state bckp_state;
 
+	unsigned int delay_count;
+
 	KBASE_DEBUG_ASSERT(data);
 
 	kbdev = container_of(data, struct kbase_device, reset_work);
@@ -1248,6 +1255,9 @@ void kbasep_reset_timeout_worker(struct work_struct *data)
 
 	/* Output the state of some interesting registers to help in the
 	 * debugging of GPU resets */
+	//BM_Init();
+	//for( delay_count=0; delay_count<100000000; ++delay_count);
+    dump_emi_registers();
 	smi_dumpDebugMsg();
 	kbase_debug_dump_registers(kbdev);
 

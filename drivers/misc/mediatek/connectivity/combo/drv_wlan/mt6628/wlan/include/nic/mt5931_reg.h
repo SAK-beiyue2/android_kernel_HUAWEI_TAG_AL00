@@ -10,22 +10,7 @@
 
 
 
-/*
-** $Log: mt5931_reg.h $
- *
- * 02 25 2011 cp.wu
- * [WCXRP00000496] [MT5931][Driver] Apply host-triggered chip reset before initializing firmware download procedures
- * apply host-triggered chip reset mechanism before initializing firmware download procedures.
- *
- * 02 18 2011 terry.wu
- * [WCXRP00000412] [MT6620 Wi-Fi][FW/Driver] Dump firmware assert info at android kernel log
- * Add WHISR_D2H_SW_ASSERT_INFO_INT to MT5931_reg.
- *
- * 10 07 2010 cp.wu
- * [WCXRP00000083] [MT5931][Driver][FW] Add necessary logic for MT5931 first connection
- * add firmware download for MT5931.
- *
-*/
+
 
 #ifndef _MT5931_REG_H
 #define _MT5931_REG_H

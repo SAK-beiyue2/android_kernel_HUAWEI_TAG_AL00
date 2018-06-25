@@ -10,22 +10,7 @@
 
 
 
-/*
-** $Log: mt6628_reg.h $
-**
-** 09 12 2012 wcpadmin
-** [ALPS00276400] Remove MTK copyright and legal header on GPL/LGPL related packages
-** .
- *
- * 08 15 2011 cp.wu
- * [WCXRP00000851] [MT6628 Wi-Fi][Driver] Add HIFSYS related definition to driver source tree
- * add MT6628-specific definitions.
- *
- * 07 13 2011 cp.wu
- * [WCXRP00000851] [MT6628 Wi-Fi][Driver] Add HIFSYS related definition to driver source tree
- * add initial version for MT6628 driver support.
- *
-*/
+
 
 #ifndef _MT6628_REG_H
 #define _MT6628_REG_H

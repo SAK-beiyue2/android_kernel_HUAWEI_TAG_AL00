@@ -404,7 +404,7 @@ void AudDrv_Clk_Off(void)
     PRINTK_AUD_CLK("+!! AudDrv_Clk_Off, Aud_AFE_Clk_cntr:%d \n",Aud_AFE_Clk_cntr);
     spin_lock_irqsave(&auddrv_Clk_lock, flags);
 
-    Aud_AFE_Clk_cntr--;
+    //Aud_AFE_Clk_cntr--; MTK ALPS02560879
     if (Aud_AFE_Clk_cntr == 0)
     {
         pr_err("------------AudDrv_Clk_Off, Aud_AFE_Clk_cntr:%d \n", Aud_AFE_Clk_cntr);
@@ -871,7 +871,7 @@ void AudDrv_APLL24M_Clk_On(void)
         {
             PRINTK_AUD_CLK("%s fail", __func__);
         }
-        if (enable_clock(MT_CG_AUDIO_APLL2_TUNER, "AUDIO"))
+        if (enable_clock(MT_CG_AUDIO_APLL_TUNER, "AUDIO"))
         {
             PRINTK_AUD_CLK("%s fail", __func__);
         }
@@ -932,7 +932,7 @@ void AudDrv_APLL24M_Clk_Off(void)
         {
             PRINTK_AUD_CLK("%s fail", __func__);
         }
-        if (disable_clock(MT_CG_AUDIO_APLL2_TUNER, "AUDIO"))
+        if (disable_clock(MT_CG_AUDIO_APLL_TUNER, "AUDIO"))
         {
             PRINTK_AUD_CLK("%s fail", __func__);
         }
@@ -1332,12 +1332,12 @@ void AudDrv_Suspend_Clk_Off(void)
             {
                 PRINTK_AUD_CLK("%s fail", __func__);
             }
-            if (disable_clock(MT_CG_AUDIO_APLL2_TUNER, "AUDIO"))
+            if (disable_clock(MT_CG_AUDIO_APLL_TUNER, "AUDIO"))
             {
                 PRINTK_AUD_CLK("%s fail", __func__);
             }
-            clkmux_sel(MT_MUX_AUD2, 0, "AUDIO"); //select 26M
-            disable_mux(MT_MUX_AUD2, "AUDIO");
+            clkmux_sel(MT_MUX_AUD1, 0, "AUDIO"); //select 26M
+            disable_mux(MT_MUX_AUD1, "AUDIO");
 #else
             if (paudclk->aud_apll24m_clk_status)
             {
@@ -1499,14 +1499,14 @@ void AudDrv_Suspend_Clk_On(void)
         }
         if (Aud_APLL24M_Clk_cntr > 0)
         {
-            enable_mux(MT_MUX_AUD2, "AUDIO");
-            clkmux_sel(MT_MUX_AUD2, 1, "AUDIO"); //APLL2
+            enable_mux(MT_MUX_AUD1, "AUDIO");
+            clkmux_sel(MT_MUX_AUD1, 1, "AUDIO"); //APLL2
 #if defined(CONFIG_MTK_LEGACY)                   
             if (enable_clock(MT_CG_AUDIO_24M, "AUDIO"))
             {
                 PRINTK_AUD_CLK("%s fail", __func__);
             }
-            if (enable_clock(MT_CG_AUDIO_APLL2_TUNER, "AUDIO"))
+            if (enable_clock(MT_CG_AUDIO_APLL_TUNER, "AUDIO"))
             {
                 PRINTK_AUD_CLK("%s fail", __func__);
             }

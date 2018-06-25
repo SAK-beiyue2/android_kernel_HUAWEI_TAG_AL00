@@ -130,16 +130,16 @@ mtk_cl_bcct_set_bcct_limit(void)
 	}
 }
 
-static int 
+static int
 mtk_cl_bcct_get_max_state(struct thermal_cooling_device *cdev,
                           unsigned long *state)
-{        
+{
   *state = 1;
   mtk_cooler_bcct_dprintk("mtk_cl_bcct_get_max_state() %s %lu\n", cdev->type, *state);
   return 0;
 }
 
-static int 
+static int
 mtk_cl_bcct_get_cur_state(struct thermal_cooling_device *cdev,
                           unsigned long *state)
 {
@@ -149,7 +149,7 @@ mtk_cl_bcct_get_cur_state(struct thermal_cooling_device *cdev,
   return 0;
 }
 
-static int 
+static int
 mtk_cl_bcct_set_cur_state(struct thermal_cooling_device *cdev,
                           unsigned long state)
 {
@@ -157,7 +157,7 @@ mtk_cl_bcct_set_cur_state(struct thermal_cooling_device *cdev,
   MTK_CL_BCCT_SET_CURR_STATE(state, *((unsigned long*) cdev->devdata));
   mtk_cl_bcct_set_bcct_limit();
   mtk_cooler_bcct_dprintk("mtk_cl_bcct_set_cur_state() %s limit=%d\n", cdev->type, get_bat_charging_current_level()/100);
-  
+
   return 0;
 }
 
@@ -177,7 +177,7 @@ static int mtk_cooler_bcct_register_ltf(void)
   {
     char temp[20] = {0};
     sprintf(temp, "mtk-cl-bcct%02d", i);
-    cl_bcct_dev[i] = mtk_thermal_cooling_device_register(temp, 
+    cl_bcct_dev[i] = mtk_thermal_cooling_device_register(temp,
                                                          (void*) &cl_bcct_state[i], // put bcct state to cooler devdata
                                                          &mtk_cl_bcct_ops);
   }
@@ -210,7 +210,7 @@ static int _mtk_cl_bcct_proc_read(char *buf, char **start, off_t off, int count,
     mtk_cooler_bcct_dprintk("[_mtk_cl_bcct_proc_read] invoked.\n");
 
     /**
-     * The format to print out: 
+     * The format to print out:
      *  kernel_log <0 or 1>
      *  <mtk-cl-bcct<ID>> <bcc limit>
      *  ..
@@ -230,10 +230,10 @@ static int _mtk_cl_bcct_proc_read(char *buf, char **start, off_t off, int count,
         {
             int limit;
             unsigned int curr_state;
-            
+
             MTK_CL_BCCT_GET_LIMIT(limit, cl_bcct_state[i]);
             MTK_CL_BCCT_GET_CURR_STATE(curr_state, cl_bcct_state[i]);
-        
+
             p += sprintf(p, "mtk-cl-bcct%02d %d mA, state %d\n", i, limit, curr_state);
         }
     }
@@ -291,7 +291,7 @@ static ssize_t _mtk_cl_bcct_proc_write(struct file *file, const char *buffer, un
         if (limit0 >= -1) MTK_CL_BCCT_SET_LIMIT(limit0, cl_bcct_state[0]);
         if (limit1 >= -1) MTK_CL_BCCT_SET_LIMIT(limit1, cl_bcct_state[1]);
         if (limit2 >= -1) MTK_CL_BCCT_SET_LIMIT(limit2, cl_bcct_state[2]);
-        
+
         return count;
     }
     else
@@ -311,6 +311,8 @@ static ssize_t _cl_bcct_write(struct file *filp, const char __user *buf, size_t 
     //int ret = 0;
 	char tmp[128] = {0};
 	int klog_on, limit0, limit1, limit2;
+
+	len = (len < (128 - 1)) ? len : (128 - 1);
 
 	/* write data to the buffer */
 	if ( copy_from_user(tmp, buf, len) ) {
@@ -346,7 +348,7 @@ static ssize_t _cl_bcct_write(struct file *filp, const char __user *buf, size_t 
         if (limit0 >= -1) MTK_CL_BCCT_SET_LIMIT(limit0, cl_bcct_state[0]);
         if (limit1 >= -1) MTK_CL_BCCT_SET_LIMIT(limit1, cl_bcct_state[1]);
         if (limit2 >= -1) MTK_CL_BCCT_SET_LIMIT(limit2, cl_bcct_state[2]);
-        
+
         return len;
     }
     else
@@ -363,7 +365,7 @@ static ssize_t _cl_bcct_write(struct file *filp, const char __user *buf, size_t 
 static int _cl_bcct_read(struct seq_file *m, void *v)
 {
     /**
-     * The format to print out: 
+     * The format to print out:
      *  kernel_log <0 or 1>
      *  <mtk-cl-bcct<ID>> <bcc limit>
      *  ..
@@ -381,10 +383,10 @@ static int _cl_bcct_read(struct seq_file *m, void *v)
         {
             int limit;
             unsigned int curr_state;
-            
+
             MTK_CL_BCCT_GET_LIMIT(limit, cl_bcct_state[i]);
             MTK_CL_BCCT_GET_CURR_STATE(curr_state, cl_bcct_state[i]);
-        
+
             seq_printf(m, "mtk-cl-bcct%02d %d mA, state %d\n", i, limit, curr_state);
         }
     }
@@ -444,7 +446,7 @@ static int __init mtk_cooler_bcct_init(void)
             proc_create("clbcct", S_IRUGO | S_IWUSR | S_IWGRP, dir_entry,
                 &_cl_bcct_fops);
 		if (!entry) {
-			mtk_cooler_bcct_dprintk_always("%s clbcct creation failed\n", 
+			mtk_cooler_bcct_dprintk_always("%s clbcct creation failed\n",
 						                   __func__);
 		} else {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
@@ -467,7 +469,7 @@ static void __exit mtk_cooler_bcct_exit(void)
 
   /* remove the proc file */
   remove_proc_entry("driver/mtk-cl-bcct", NULL);
-    
+
   mtk_cooler_bcct_unregister_ltf();
 }
 

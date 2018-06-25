@@ -2258,10 +2258,15 @@ static int P_adaptive(int total_power, unsigned int gpu_loading)
     {
         set_adaptive_cpu_power_limit(cpu_power);
 	}
-    if (gpu_power != last_gpu_power)
-    {
-        set_adaptive_gpu_power_limit(gpu_power);
-    }
+
+
+	if (gpu_power != last_gpu_power) {
+		/* Work-around for unsync GPU power table problem 1. */
+		if (gpu_power > mtk_gpu_power[0].gpufreq_power)
+			set_adaptive_gpu_power_limit(0);
+		else
+			set_adaptive_gpu_power_limit(gpu_power);
+	}
 
     tscpu_dprintk("%s cpu %d, gpu %d\n", __func__, cpu_power, gpu_power);
 
@@ -5070,7 +5075,7 @@ static int __init tscpu_init(void)
 #endif
 
         /* +ASC+ */
-		entry = proc_create("clatm", S_IRUGO | S_IWUSR, mtktscpu_dir, &mtktscpu_atm_fops);
+		entry = proc_create("clatm", S_IRUGO | S_IWUSR| S_IWGRP, mtktscpu_dir, &mtktscpu_atm_fops);
         if (entry) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
             proc_set_user(entry, 0, 1000);

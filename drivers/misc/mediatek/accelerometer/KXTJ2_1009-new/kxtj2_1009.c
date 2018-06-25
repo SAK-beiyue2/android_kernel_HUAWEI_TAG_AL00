@@ -885,7 +885,7 @@ static int KXTJ2_1009_ReadChipInfo(struct i2c_client *client, char *buf, int buf
 }
 
 /*Kionix Auto-Cali Start*/
-#define KIONIX_AUTO_CAL     //Setup AUTO-Cali parameter
+//#define KIONIX_AUTO_CAL     //Setup AUTO-Cali parameter
 #ifdef KIONIX_AUTO_CAL
 //#define DEBUG_MSG_CAL
 #define Sensitivity_def      1024	//	
@@ -2405,6 +2405,8 @@ static int kxtj2_1009_i2c_probe(struct i2c_client *client, const struct i2c_devi
 	}
 	
 	memset(obj, 0, sizeof(struct kxtj2_1009_i2c_data));
+
+	client->timing = 100;
 
 	obj->hw = get_cust_acc_hw();
 	

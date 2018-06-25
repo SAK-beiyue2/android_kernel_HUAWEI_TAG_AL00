@@ -457,7 +457,7 @@ long kpd_dev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	switch (cmd) {
 #if KPD_AUTOTEST
-	case PRESS_OK_KEY:	/* KPD_AUTOTEST disable auto test setting to resolve CR ALPS00464496 */
+	case PRESS_OK_KEY:
 		if (test_bit(KEY_OK, kpd_input_dev->keybit)) {
 			printk("[AUTOTEST] PRESS OK KEY!!\n");
 			input_report_key(kpd_input_dev, KEY_OK, 1);
@@ -912,7 +912,7 @@ static int kpd_pdrv_suspend(struct platform_device *pdev, pm_message_t state)
 	if (call_status == 2) {
 		kpd_print("kpd_early_suspend wake up source enable!! (%d)\n", kpd_suspend);
 	} else {
-		kpd_wakeup_src_setting(0);
+		kpd_wakeup_src_setting(1);
 		kpd_print("kpd_early_suspend wake up source disable!! (%d)\n", kpd_suspend);
 	}
 #endif

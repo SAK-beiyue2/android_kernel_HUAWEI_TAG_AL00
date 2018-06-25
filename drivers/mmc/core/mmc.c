@@ -23,6 +23,9 @@
 #include "mmc_ops.h"
 #include "sd_ops.h"
 
+#include <linux/fs.h>
+#include <linux/proc_fs.h>
+
 static const unsigned int tran_exp[] = {
 	10000,		100000,		1000000,	10000000,
 	0,		0,		0,		0
@@ -41,6 +44,9 @@ static const unsigned int tacc_mant[] = {
 	0,	10,	12,	13,	15,	20,	25,	30,
 	35,	40,	45,	50,	55,	60,	70,	80,
 };
+
+static unsigned char g_emmc_ecsd_rev = 0;
+#define EMMC_SPEC_VER50   7
 
 #define UNSTUFF_BITS(resp,start,size)					\
 	({								\
@@ -175,6 +181,26 @@ static int mmc_decode_csd(struct mmc_card *card)
 	return 0;
 }
 
+static int emmc_ecsd_rev_show(struct seq_file *m, void *v)
+{
+    seq_printf(m, "%d\n", g_emmc_ecsd_rev);
+
+    return 0;
+}
+
+static int emmc_ecsd_open(struct inode *inode, struct file *file)
+{
+    return single_open(file, emmc_ecsd_rev_show, NULL);
+}
+
+static const struct file_operations proc_info_operations =
+{
+    .open       = emmc_ecsd_open,
+    .read       = seq_read,
+    .llseek     = seq_lseek,
+    .release    = single_release,
+};
+
 /*
  * Read extended CSD.
  */
@@ -300,7 +326,7 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 	}
 
 	card->ext_csd.rev = ext_csd[EXT_CSD_REV];
-	if (card->ext_csd.rev > 7) {
+	if (card->ext_csd.rev > 8) {
 		pr_err("%s: unrecognised EXT_CSD revision %d\n",
 			mmc_hostname(card->host), card->ext_csd.rev);
 		err = -EINVAL;
@@ -561,6 +587,11 @@ static int mmc_read_ext_csd(struct mmc_card *card, u8 *ext_csd)
 			ext_csd[EXT_CSD_MAX_PACKED_READS];
 	} else {
 		card->ext_csd.data_sector_size = 512;
+	}
+
+	if (card->ext_csd.rev == EMMC_SPEC_VER50) {
+	    g_emmc_ecsd_rev = card->ext_csd.rev;
+	    proc_create("emmc_ecsd_rev", 0, NULL, &proc_info_operations);
 	}
 
 out:

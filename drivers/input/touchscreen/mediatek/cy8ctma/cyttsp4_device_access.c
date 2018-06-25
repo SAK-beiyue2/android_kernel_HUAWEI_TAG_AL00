@@ -1,7 +1,4 @@
-/* BEGIN PN:DTS2013051703879 ,Added by l00184147, 2013/5/17*/
 //add Touch driver for G610-T11
-/* BEGIN PN:DTS2013012601133 ,Modified by l00184147, 2013/1/26*/ 
-/* BEGIN PN:SPBB-1218 ,Added by l00184147, 2012/12/20*/
 /*
  * cyttsp4_device_access.c
  * Cypress TrueTouch(TM) Standard Product V4 Device Access module.
@@ -50,9 +47,7 @@
 #include <linux/workqueue.h>
 #include "cyttsp4_device_access.h"
 #include "cyttsp4_regs.h"
-/* BEGIN PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 //#include <linux/hardware_self_adapt.h>
-/* END PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 
 #define CY_MAX_CONFIG_BYTES    256
 #define CY_CMD_INDEX             0
@@ -1458,7 +1453,6 @@ static int _cyttsp4_ret_scan_data_cmd(struct device *dev, int readOffset,
 	return rc;
 }
 
-/* BEGIN PN:SPBB-1276  ,Modified by l00184147, 2013/3/7*/ 
 /*
 * SysFs grpdata show function implementation of group 6.
 * Prints contents of the touch parameters a row at a time.
@@ -1631,7 +1625,6 @@ cyttsp4_get_panel_data_show_err_release:
 cyttsp4_get_panel_data_show_err_sysfs:
          return printIdx;
 }
-/* END PN:SPBB-1276  ,Modified by l00184147, 2013/3/7*/
 
 /*
  * SysFs grpdata show function implementation of group 6.
@@ -1682,7 +1675,6 @@ cyttsp4_get_panel_data_store_exit:
 static DEVICE_ATTR(get_panel_data, S_IRUSR | S_IWUSR,
 	cyttsp4_get_panel_data_show, cyttsp4_get_panel_data_store);
 
-/* BEGIN PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 static struct device * access_dev = NULL;
 
 static int getHighPart(int num)
@@ -1701,7 +1693,6 @@ static int getHighPart(int num)
 	}
 
 }
-/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 #define MAX_CAPACITANCE_LEN 	4096 
 static	int  g_capacitance_count = 0;
 static char *g_touch_capacitance = NULL;
@@ -1718,30 +1709,23 @@ static void record_tp_capacitance(enum check_data_type type, int value)
 
 	return;
 }
-/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 static int out_of_range(enum check_data_type type, int value)
 {
 	//hw_product_type board_id;
 	//board_id=get_hardware_product_version();
-	/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 	record_tp_capacitance(type, value);
-	/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 	if(1/*(board_id & HW_VER_MAIN_MASK) == HW_G750_VER*/)
 		{	
 			switch(type)
 			{
 				case CY_CHK_MUT_RAW:
-					/* BEGIN PN:DTS2013071007839 ,Modified by l00184147, 2013/7/11*/
 					if(value < -1900 || value > -300)
-					/* END PN:DTS2013071007839 ,Modified by l00184147, 2013/7/11*/ 
 					{
 						return 1;
 					}
 					break;
 				case CY_CHK_SELF_RAW:
-					/* BEGIN PN:DTS2013071007839 ,Modified by l00184147, 2013/7/11*/ 
 					if(value < -500 || value > 1300)
-					/* END PN:DTS2013071007839 ,Modified by l00184147, 2013/7/11*/ 
 					{
 						return 1;
 					}
@@ -2032,7 +2016,6 @@ static inline void cyttsp4_out_to_buf(int ret, char ** buf)
 	}
 }
 
-/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 static int cyttsp4_check_short_data(struct device *dev)
 {
 	struct cyttsp4_device_access_data *dad = dev_get_drvdata(dev);
@@ -2069,8 +2052,6 @@ cyttsp4_check_short_data_error:
 	mutex_unlock(&dad->sysfs_lock);
 	return rc;
 }
-/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
-/* BEGIN PN:DTS2013062405322 ,Modified by l00184147, 2013/6/24*/
 int  cyttsp4_get_panel_data_check(char **buf)
 {
 	int rc = 0;
@@ -2212,8 +2193,6 @@ cyttsp4_check_short_data_err_release:
  exit:
 	return rc;
 }
-/* END PN:DTS2013062405322 ,Modified by l00184147, 2013/6/24*/
-/* BEGIN PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 static void cyttsp4_fw_calibrate(struct cyttsp4_device *ttsp)
 {
 	struct device *dev = &ttsp->dev;
@@ -2305,7 +2284,6 @@ exit:
 	dev_info(dev, "%s\n", __func__);
 	pm_runtime_put(dev);
 }
-/* END PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 /*touchpanel mmi test begin*/
 static char *touch_mmi_test_result = NULL;
 static ssize_t cyttsp4_touch_mmi_test_show(struct device *dev,
@@ -2316,11 +2294,8 @@ static ssize_t cyttsp4_touch_mmi_test_show(struct device *dev,
 		pr_err("touch_mmi_test dev is null\n");
 		return -EINVAL;
 	}
-	/* BEGIN PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 	struct cyttsp4_device_access_data *dad = dev_get_drvdata(dev);
-	/* END PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 	
-	/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 	/* if g_touch_capacitance is null, alloc memory for it*/
 	if(NULL == g_touch_capacitance)
 	{	
@@ -2334,13 +2309,11 @@ static ssize_t cyttsp4_touch_mmi_test_show(struct device *dev,
 	/*reset the g_capacitance_count and g_touch_capacitance */
 	g_capacitance_count= 0;
 	memset(g_touch_capacitance, 0, MAX_CAPACITANCE_LEN);
-	/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 	
 	rc = cyttsp4_get_panel_data_check(&touch_mmi_test_result);
 	if(rc < 0){
 		pr_err("cyttsp4_get_panel_data_check error\n");
 	}
-	/* BEGIN PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 
 	if(0==strcmp(touch_mmi_test_result,"Fail")){
 		pr_err("cyttsp4_get_panel_data_check Fail,calibrate and attempt to test again\n");
 
@@ -2355,21 +2328,17 @@ static ssize_t cyttsp4_touch_mmi_test_show(struct device *dev,
 		pr_err("cyttsp4_get_panel_data_check error\n");
 		}		
 	}
-	/* END PN:DTS2013071007839 ,Added by l00184147, 2013/7/11*/ 	
 	printk("touch_mmi_test_result : %d\n", rc);
 	printk("touch_mmi_test_result : %s\n", touch_mmi_test_result);
 	
-	/* BEGIN PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 	/*if someting is error, we still want to report info, because it is useful for debugging*/
 	rc = sprintf(buf, "%s\n%s", touch_mmi_test_result,g_touch_capacitance);
 	kfree(g_touch_capacitance);
 	g_touch_capacitance = NULL;
 	return rc;
-	/* END PN:DTS2013062405322 ,Added by l00184147, 2013/6/24*/
 }
 static DEVICE_ATTR(touch_mmi_test, 0664,
 				   cyttsp4_touch_mmi_test_show, NULL);
-/* END PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 
 #ifdef CONFIG_PM_SLEEP
 static int cyttsp4_device_access_suspend(struct device *dev)
@@ -2393,13 +2362,11 @@ static int cyttsp4_device_access_resume(struct device *dev)
 }
 #endif
 
-/* BEGIN PN:SPBB-1257 ,Deteled by l00184147, 2013/2/21*/
 //Don't use the pm operation with PM sleep
 //static const struct dev_pm_ops cyttsp4_device_access_pm_ops = {
 //     SET_SYSTEM_SLEEP_PM_OPS(cyttsp4_device_access_suspend,
 //                     cyttsp4_device_access_resume)
 //};
-/* END PN:SPBB-1257 ,Deteled by l00184147, 2013/2/21*/
 
 static int cyttsp4_setup_sysfs(struct cyttsp4_device *ttsp)
 {
@@ -2488,7 +2455,6 @@ static int cyttsp4_device_access_probe(struct cyttsp4_device *ttsp)
 		goto cyttsp4_device_access_probe_data_failed;
 	}
 
-	/* BEGIN PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 	access_dev = dev;
 	rc = device_create_file(dev, &dev_attr_touch_mmi_test);
 	if (rc) {
@@ -2496,7 +2462,6 @@ static int cyttsp4_device_access_probe(struct cyttsp4_device *ttsp)
 				__func__);
 		goto cyttsp4_create_touch_mmi_test_failed;
 	}
-	/* END PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
 
 	mutex_init(&dad->sysfs_lock);
 	init_waitqueue_head(&dad->wait_q);
@@ -2536,9 +2501,7 @@ static int cyttsp4_device_access_probe(struct cyttsp4_device *ttsp)
 	pm_runtime_disable(dev);
 	dev_set_drvdata(dev, NULL);
 	kfree(dad);
- /* BEGIN PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
  cyttsp4_create_touch_mmi_test_failed:
- /* END PN:DTS2013061703557 ,Added by l00184147, 2013/6/17*/
  cyttsp4_device_access_probe_data_failed:
 	dev_err(dev, "%s failed.\n", __func__);
 	return rc;
@@ -2590,10 +2553,8 @@ static struct cyttsp4_driver cyttsp4_device_access_driver = {
 		.name = CYTTSP4_DEVICE_ACCESS_NAME,
 		.bus = &cyttsp4_bus_type,
 		.owner = THIS_MODULE,
-		/* BEGIN PN:SPBB-1257 ,Deteled by l00184147, 2013/2/21*/
 		//no longer to use pm operation
 		//.pm = &cyttsp4_device_access_pm_ops,
-		/* END PN:SPBB-1257 ,Deteled by l00184147, 2013/2/21*/
 	},
 };
 
@@ -2666,9 +2627,7 @@ static int __init cyttsp4_device_access_init(void)
 	return 0;
 
 fail_unregister_devices:
-	/* BEGIN PN:DTS2013033006231 ,Modified by l00184147, 2013/3/27*/
 	for (i--; i >= 0; i--) {
-	/* END PN:DTS2013033006231 ,Modified by l00184147, 2013/3/27*/
 		cyttsp4_unregister_device(cyttsp4_device_access_infos[i].name,
 			cyttsp4_device_access_infos[i].core_id);
 		pr_info("%s: Unregistering device access device for core_id: %s\n",
@@ -2696,6 +2655,3 @@ module_exit(cyttsp4_device_access_exit);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Cypress TrueTouch(R) Standard Product Device Access Driver");
 MODULE_AUTHOR("Cypress Semiconductor");
-/* END PN:SPBB-1218 ,Added by l00184147, 2012/12/20*/
-/* END PN:DTS2013012601133 ,Modified by l00184147, 2013/1/26*/ 
-/* END PN:DTS2013051703879 ,Added by l00184147, 2013/5/17*/

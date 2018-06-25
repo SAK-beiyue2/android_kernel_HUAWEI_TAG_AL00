@@ -66,7 +66,7 @@ static CHARGER_TYPE g_charger_type = CHARGER_UNKNOWN;
 int wireless_charger_gpio_number   = (168 | 0x80000000); 
 #endif
 
-#if 0
+#if 1
 #include <cust_gpio_usage.h>
 int gpio_number   = GPIO_SWCHARGER_EN_PIN; 
 int gpio_off_mode = GPIO_SWCHARGER_EN_PIN_M_GPIO;
@@ -530,6 +530,8 @@ static void hw_bc11_done(void)
 		fan5405_reg_config_interface(0x04,0x1A); //146mA
 		charging_init_flag = KAL_TRUE;
 	}        
+	printk("[charging_hw_init]   dump register begin: \n"); 
+       fan5405_dump_register();
  	return status;
  }
 

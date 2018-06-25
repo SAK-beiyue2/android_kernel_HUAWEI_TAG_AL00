@@ -246,12 +246,12 @@ void wdma_calc_ultra(unsigned int idx, unsigned int width, unsigned int height, 
    */
   if(idx==0 && primary_display_is_decouple_mode()==0)
   {
-      DISP_REG_SET(handle,idx*DISP_WDMA_INDEX_OFFSET+DISP_REG_WDMA_BUF_CON2, 0x35011b44);
+      DISP_REG_SET(handle,idx*DISP_WDMA_INDEX_OFFSET+DISP_REG_WDMA_BUF_CON2, 0x1B010E22);
       DISP_REG_SET(handle,idx*DISP_WDMA_INDEX_OFFSET+DISP_REG_WDMA_BUF_CON1, 0xD0100080);
   }
   else
   {
-      DISP_REG_SET(handle,idx*DISP_WDMA_INDEX_OFFSET+DISP_REG_WDMA_BUF_CON2, 0x35011b44);
+      DISP_REG_SET(handle,idx*DISP_WDMA_INDEX_OFFSET+DISP_REG_WDMA_BUF_CON2, 0x1B010E22);
       DISP_REG_SET(handle,idx*DISP_WDMA_INDEX_OFFSET+DISP_REG_WDMA_BUF_CON1, 0x50100080);
   }
 

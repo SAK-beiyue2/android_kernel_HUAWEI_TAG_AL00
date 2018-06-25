@@ -52,10 +52,6 @@ ifeq ($(CONFIG_MTK_MC3410_NEW),y)
 obj-y   +=  mc3410-new/
 endif
 
-ifeq ($(CONFIG_MTK_LIS3DH_NEW),y)
-obj-y   +=  lis3dh-new/
-endif
-
 ifeq ($(CONFIG_MTK_MC3XXX_AUTO),y)
 obj-y   +=  mc3xxx_auto/
 endif
@@ -71,6 +67,7 @@ endif
 ifeq ($(CONFIG_MTK_BMA255_SDO1),y)
 obj-y   +=  bma255-sdo1/
 endif
+
 ifeq ($(CONFIG_MTK_BMA056),y)
 obj-y   +=  bma056/
 endif

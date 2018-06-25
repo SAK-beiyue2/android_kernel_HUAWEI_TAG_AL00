@@ -483,10 +483,8 @@ static void usb_phy_savecurrent_internal(void){
     // RG_SUSPENDM, 1'b0 
     USBPHY_CLR8(0x68, 0x08);
 
-	//ALPS00427972, implement the analog register formula
 	// printk("%s: USBPHY_READ8(0x05) = 0x%x \n", __func__, USBPHY_READ8(0x05));
 	// printk("%s: USBPHY_READ8(0x07) = 0x%x \n", __func__, USBPHY_READ8(0x07));
-	//ALPS00427972, implement the analog register formula
 
     udelay(1);
 

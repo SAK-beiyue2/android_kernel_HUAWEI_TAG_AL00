@@ -19,39 +19,7 @@
 
 
 
-/*
-** $Log: cmd_buf.c $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 18 2010 cm.chang
- * [WPD00003841][LITE Driver] Migrate RLM/CNM to host driver
- * Provide cnmMgtPktAlloc() and alloc/free function of msg/buf
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
- *
- * 02 03 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * 1. clear prPendingCmdInfo properly
- *  * 2. while allocating memory for cmdinfo, no need to add extra 4 bytes.
-**  \main\maintrunk.MT6620WiFiDriver_Prj\4 2009-10-13 21:59:08 GMT mtk01084
-**  remove un-neceasary spaces
-**  \main\maintrunk.MT6620WiFiDriver_Prj\3 2009-05-20 12:24:26 GMT mtk01461
-**  Increase CMD Buffer - HIF_RX_HW_APPENDED_LEN when doing CMD_INFO_T allocation
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-04-21 09:41:08 GMT mtk01461
-**  Add init of Driver Domain MCR flag and fix lint MTK WARN
-**  \main\maintrunk.MT6620WiFiDriver_Prj\1 2009-04-17 19:51:45 GMT mtk01461
-**  allocation function of CMD_INFO_T
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S
@@ -142,7 +110,6 @@ P_CMD_INFO_T cmdBufAllocateCmdInfo(IN P_ADAPTER_T prAdapter, IN UINT_32 u4Length
 
 	DEBUGFUNC("cmdBufAllocateCmdInfo");
 
-
 	ASSERT(prAdapter);
 
 	KAL_ACQUIRE_SPIN_LOCK(prAdapter, SPIN_LOCK_CMD_RESOURCE);
@@ -151,30 +118,34 @@ P_CMD_INFO_T cmdBufAllocateCmdInfo(IN P_ADAPTER_T prAdapter, IN UINT_32 u4Length
 
 	if (prCmdInfo) {
 		/* Setup initial value in CMD_INFO_T */
-		/* Start address of allocated memory */
-		prCmdInfo->pucInfoBuffer = cnmMemAlloc(prAdapter, RAM_TYPE_BUF, u4Length);
+		prCmdInfo->u2InfoBufLen = 0;
+		prCmdInfo->fgIsOid = FALSE;
+		prCmdInfo->fgDriverDomainMCR = FALSE;        
 
-		if (prCmdInfo->pucInfoBuffer == NULL) {
-			KAL_ACQUIRE_SPIN_LOCK(prAdapter, SPIN_LOCK_CMD_RESOURCE);
-			QUEUE_INSERT_TAIL(&prAdapter->rFreeCmdList, &prCmdInfo->rQueEntry);
-			KAL_RELEASE_SPIN_LOCK(prAdapter, SPIN_LOCK_CMD_RESOURCE);
+        if(u4Length) {
+    		/* Start address of allocated memory */
+    		prCmdInfo->pucInfoBuffer = 
+    		    cnmMemAlloc(prAdapter, RAM_TYPE_BUF, u4Length);
 
-			prCmdInfo = NULL;
-		} else {
-			prCmdInfo->u2InfoBufLen = 0;
-			prCmdInfo->fgIsOid = FALSE;
-			prCmdInfo->fgDriverDomainMCR = FALSE;
-		}
+    		if (prCmdInfo->pucInfoBuffer == NULL) {
+    			KAL_ACQUIRE_SPIN_LOCK(prAdapter, SPIN_LOCK_CMD_RESOURCE);
+    			QUEUE_INSERT_TAIL(&prAdapter->rFreeCmdList, &prCmdInfo->rQueEntry);
+    			KAL_RELEASE_SPIN_LOCK(prAdapter, SPIN_LOCK_CMD_RESOURCE);
+
+    			prCmdInfo = NULL;
+    		}
+        }
+        else {
+            prCmdInfo->pucInfoBuffer = NULL;
+        }
 	}
 
 	if (prCmdInfo) {
-		DBGLOG(MEM, INFO,
-		       ("CMD[0x%p] allocated! LEN[%04u], Rest[%u]\n", prCmdInfo, u4Length,
-			prAdapter->rFreeCmdList.u4NumElem));
+		DBGLOG(MEM, INFO, ("CMD[0x%p] allocated! LEN[%04u], Rest[%u]\n", 
+            prCmdInfo, u4Length, prAdapter->rFreeCmdList.u4NumElem));
 	} else {
-		DBGLOG(MEM, INFO,
-		       ("CMD allocation failed! LEN[%04u], Rest[%u]\n", u4Length,
-			prAdapter->rFreeCmdList.u4NumElem));
+		DBGLOG(MEM, INFO, ("CMD allocation failed! LEN[%04u], Rest[%u]\n", 
+            u4Length, prAdapter->rFreeCmdList.u4NumElem));
 	}
 
 	return prCmdInfo;

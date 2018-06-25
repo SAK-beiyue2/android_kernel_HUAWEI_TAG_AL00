@@ -76,9 +76,9 @@ typedef int (*activate_cooler_opp_func)(int level);
 static activate_cooler_opp_func opp_func[COOLER_STEPS] = {0};
 
 typedef struct adaptive_cooler {
-    int cur_level; 
-    int max_level; 
-    activate_cooler_opp_func *opp_func_array; 
+    int cur_level;
+    int max_level;
+    activate_cooler_opp_func *opp_func_array;
 } adaptive_coolers;
 
 static adaptive_coolers amddulthro;
@@ -110,7 +110,7 @@ static int wmt_send_signal(int level)
 		ret = send_sig_info(SIGIO, &info, pg_task);
 	}
 
-	if (ret != 0) 
+	if (ret != 0)
 	    mtk_cooler_amddulthro_dprintk("[%s] ret=%d\n", __func__, ret);
 
 	return ret;
@@ -121,12 +121,12 @@ static int wmt_send_signal(int level)
 int amddulthro_backoff(int level)
 {
     int ret;
-    if (level == 0) 
+    if (level == 0)
     {
         // no throttle
         wmt_send_signal(10);
         mtk_cooler_amddulthro_dprintk_always("[%s] unlimit mddulthro\n", __func__);
-        
+
     }
     else if (level >= 1 && level <= 9)
     {
@@ -142,7 +142,7 @@ int amddulthro_backoff(int level)
     }
 
     return ret;
-        
+
 }
 EXPORT_SYMBOL(amddulthro_backoff);
 
@@ -227,18 +227,18 @@ static int judge_throttling(int index, int is_on, int interval)
 			case HIGH_STAT:
 				if (throttling_pre_stat < HIGH_STAT) {
 				    // 1st down throttle
-				    int new_step = 
+				    int new_step =
 				        down_throttle(&amddulthro, up_step);
 
 					mtk_cooler_amddulthro_dprintk_always("LOW/MID-->HIGH: step %d\n", new_step);
-					
+
 					throttling_pre_stat = HIGH_STAT;
 					over_up_time = 0;
 				} else if (throttling_pre_stat == HIGH_STAT) {
 				    // keep down throttle
 					over_up_time++;
 					if ( (over_up_time * interval) >= up_duration) {
-					    int new_step = 
+					    int new_step =
     				        down_throttle(&amddulthro, up_step);
 
 						mtk_cooler_amddulthro_dprintk_always("HIGH-->HIGH: step %d\n", new_step);
@@ -269,7 +269,7 @@ static int judge_throttling(int index, int is_on, int interval)
 			case LOW_STAT:
 				if (throttling_pre_stat > LOW_STAT) {
 				    // 1st up throttle
-				    int new_step = 
+				    int new_step =
 				        up_throttle(&amddulthro, low_step);
 
 					mtk_cooler_amddulthro_dprintk_always("MID/HIGH-->LOW: step %d\n", new_step);
@@ -283,16 +283,16 @@ static int judge_throttling(int index, int is_on, int interval)
 						if (low_rst_time >= low_rst_max && !is_reset) {
 						    // rst
                             rst_throttle(&amddulthro);
-						    
+
 							mtk_cooler_amddulthro_dprintk_always("over rst time=%d\n", low_rst_time);
 
 							low_rst_time = low_rst_max;
 							is_reset = true;
 						} else if(!is_reset) {
 						    // keep up throttle
-                            int new_step = 
+                            int new_step =
 				                up_throttle(&amddulthro, low_step);
-						    
+
 							low_rst_time++;
 
 							mtk_cooler_amddulthro_dprintk_always("LOW-->LOW: step %d\n", new_step);
@@ -352,7 +352,7 @@ static int amddulthro_cooler_upper_set_cur_state(struct thermal_cooling_device *
 	} else {
 		ret = judge_throttling(1, 0, polling_interval);
 	}
-	if (ret != 0) 
+	if (ret != 0)
 	    mtk_cooler_amddulthro_dprintk_always("[%s] ret=%d\n", __func__, ret);
     return ret;
 }
@@ -395,7 +395,7 @@ static int amddulthro_cooler_lower_set_cur_state(struct thermal_cooling_device *
 	} else {
 		ret = judge_throttling(0, 0, polling_interval);
 	}
-	if (ret != 0) 
+	if (ret != 0)
 	    mtk_cooler_amddulthro_dprintk_always("[%s] ret=%d\n", __func__, ret);
 	return ret;
 }
@@ -437,7 +437,7 @@ static void mtk_cooler_amddulthro_unregister_ltf(void)
 
 int amddulthro_param_read(struct seq_file *m, void *v)
 {
-    seq_printf(m, "[up]\t%3d(sec)\t%2d\n[low]\t%3d(sec)\t%2d\nrst=%2d\ninterval=%d\nmax_step=%d", 
+    seq_printf(m, "[up]\t%3d(sec)\t%2d\n[low]\t%3d(sec)\t%2d\nrst=%2d\ninterval=%d\nmax_step=%d",
                   up_duration, up_step, low_duration, low_step, low_rst_max, polling_interval, amddulthro.max_level);
 #if 0
 	int ret;
@@ -449,7 +449,7 @@ int amddulthro_param_read(struct seq_file *m, void *v)
 
 	memcpy(buf, tmp, ret*sizeof(char));
 #endif
-	mtk_cooler_amddulthro_dprintk_always("[%s] [up]%d %d, [low]%d %d, rst=%d, interval=%d, max_step=%d\n", __func__, up_duration, 
+	mtk_cooler_amddulthro_dprintk_always("[%s] [up]%d %d, [low]%d %d, rst=%d, interval=%d, max_step=%d\n", __func__, up_duration,
 		up_step, low_duration, low_step, low_rst_max, polling_interval, amddulthro.max_level);
 
 	return 0;
@@ -553,6 +553,7 @@ ssize_t amddulthro_pid_write(struct file *file, const char __user *buf, size_t l
 	int ret = 0;
 	char tmp[MAX_LEN] = {0};
 
+	len = (len < (MAX_LEN-1)) ? len : (MAX_LEN-1);
 	/* write data to the buffer */
 	if ( copy_from_user(tmp, buf, len) ) {
 		return -EFAULT;

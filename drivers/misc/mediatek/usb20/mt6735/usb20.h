@@ -89,7 +89,7 @@ extern void fan5405_set_opa_mode(kal_uint32 val);
 extern void fan5405_set_otg_pl(kal_uint32 val);
 extern void fan5405_set_otg_en(kal_uint32 val);
 extern kal_uint32 fan5405_reg_config_interface(kal_uint8 RegNum, kal_uint8 val);
-#elif defined(CONFIG_MTK_NCP1851_SUPPORT) || defined(CONFIG_MTK_BQ24196_SUPPORT)
+#elif defined(CONFIG_MTK_NCP1851_SUPPORT)
 extern void tbl_charger_otg_vbus(kal_uint32 mode);
 #elif defined(CONFIG_MTK_BQ24261_SUPPORT)
 extern void bq24261_set_en_boost(kal_uint32 val);
@@ -98,6 +98,9 @@ extern void bq24296_set_otg_config(kal_uint32 val);
 extern void bq24296_set_boostv(kal_uint32 val);
 extern void bq24296_set_boost_lim(kal_uint32 val);
 extern void bq24296_set_en_hiz(kal_uint32 val);
+#elif defined(CONFIG_MTK_BQ24196_SUPPORT)
+extern void bq24196_set_otg_config(kal_uint32 val);
+extern void bq24196_set_boost_lim(kal_uint32 val);
 #elif defined CONFIG_MTK_NCP1854_SUPPORT
 extern void ncp1854_set_chg_en(kal_uint32 val);
 extern void ncp1854_set_otg_en(kal_uint32 val);

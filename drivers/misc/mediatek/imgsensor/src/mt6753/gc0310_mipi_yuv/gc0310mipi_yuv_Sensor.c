@@ -54,12 +54,12 @@ static DEFINE_SPINLOCK(GC0310_drv_lock);
 #define GC0310YUV_DEBUG
 
 #ifdef GC0310YUV_DEBUG
-#define SENSORDB printk
+#define SENSORDB pr_debug
 #else
 #define SENSORDB(x,...)
 #endif
 
-#define GC0310_TEST_PATTERN_CHECKSUM (0xfd769299)
+#define GC0310_TEST_PATTERN_CHECKSUM (0x9db2de6e)
 
 kal_bool GC0310_night_mode_enable = KAL_FALSE;
 kal_uint16 GC0310_CurStatus_AWB = 0;
@@ -521,6 +521,19 @@ void GC0310_MIPI_GetExifInfo(uintptr_t exifAddr)
 {
     SENSOR_EXIF_INFO_STRUCT* pExifInfo = (SENSOR_EXIF_INFO_STRUCT*)exifAddr;
     pExifInfo->FNumber = 28;
+	int preGain =GC0310_read_cmos_sensor(0x71);
+	int postGain =GC0310_read_cmos_sensor(0x72);
+
+
+	if(!(postGain>0x40)){
+		pExifInfo->RealISOValue = AE_ISO_100 * 100;
+	}else if(!(postGain>0x80)){
+		pExifInfo->RealISOValue = AE_ISO_200 * 100;
+	}else if(!(postGain>0xc0)){
+		pExifInfo->RealISOValue = AE_ISO_400 * 100;
+	}else {
+		pExifInfo->RealISOValue = AE_ISO_400 * 100;
+	}
 //    pExifInfo->AEISOSpeed = GC0310_Driver.isoSpeed;
 //    pExifInfo->AWBMode = S5K4ECGX_Driver.awbMode;
 //    pExifInfo->CapExposureTime = S5K4ECGX_Driver.capExposureTime;

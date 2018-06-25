@@ -1,4 +1,3 @@
-/* BEGIN PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/
 #ifndef BUILD_LK
 #include <linux/string.h>
 #endif
@@ -362,13 +361,11 @@ static void lcm_get_params(LCM_PARAMS *params)
 	params->dsi.lcm_esd_check_table[0].count        = 1;
 	params->dsi.lcm_esd_check_table[0].para_list[0] = 0x01;
 	//begin:haobing modified
-	/*BEGIN PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 	//improve clk quality
 	
 	//params->dsi.pll_div1=0;		// div1=0,1,2,3;div1_real=1,2,4,4 ----0: 546Mbps  1:273Mbps
 	//params->dsi.pll_div2=1;		// div2=0,1,2,3;div1_real=1,2,4,4	
 	//params->dsi.fbk_div =21;    	// fref=26MHz, fvco=fref*(fbk_div)*2/(div1_real*div2_real)	
-	/*END PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 	//end:haobing modified
 
 }
@@ -628,11 +625,9 @@ static void lcm_update(unsigned int x, unsigned int y,
 	data_array[1]= (y1_MSB<<24)|(y0_LSB<<16)|(y0_MSB<<8)|0x2b;
 	data_array[2]= (y1_LSB);
 	dsi_set_cmdq(data_array, 3, 1);
-         /*BEGIN PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
          //delete high speed packet
 	//data_array[0]=0x00290508;
 	//dsi_set_cmdq(data_array, 1, 1);
-         /*END PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 	
 	data_array[0]= 0x002c3909;
 	dsi_set_cmdq(data_array, 1, 0);	
@@ -693,4 +688,3 @@ LCM_DRIVER r63319_wqhd_dsi_vdo_truly_lcm_drv=
 #endif
    
 };
-/* END PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/

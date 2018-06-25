@@ -8,61 +8,7 @@
 
 
 
-/*
-** $Log: rlm_domain.h $
-**
-** 01 23 2013 eason.tsai
-** [BORA00002255] [MT6630 Wi-Fi][Driver] develop
-** Rollback //BORA/DEV/MT6630WIFI_DRV/include/mgmt/rlm_domain.h to revision 1
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 09 29 2011 cm.chang
- * NULL
- * Change the function prototype of rlmDomainGetChnlList()
- *
- * 09 08 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * Use new fields ucChannelListMap and ucChannelListIndex in NVRAM
- *
- * 08 31 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * .
- *
- * 06 01 2011 cm.chang
- * [WCXRP00000756] [MT6620 Wi-Fi][Driver] 1. AIS follow channel of BOW 2. Provide legal channel function
- * Provide legal channel function based on domain
- *
- * 12 07 2010 cm.chang
- * [WCXRP00000238] MT6620 Wi-Fi][Driver][FW] Support regulation domain setting from NVRAM and supplicant
- * 1. Country code is from NVRAM or supplicant
- * 2. Change band definition in CMD/EVENT.
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 28 2010 cm.chang
- * [WPD00003841][LITE Driver] Migrate RLM/CNM to host driver
- * 1st draft code for RLM module
- *
- * 02 23 2010 kevin.huang
- * [BORA00000603][WIFISYS] [New Feature] AAA Module Support
- * Add support scan channel 1~14 and update scan result's frequency infou1rwduu`wvpghlqg|n`slk+mpdkb
- *
- * 01 13 2010 cm.chang
- * [BORA00000018]Integrate WIFI part into BORA for the 1st time
- * Provide query function about full channle list.
- *
- * Dec 1 2009 mtk01104
- * [BORA00000018] Integrate WIFI part into BORA for the 1st time
- * Declare public rDomainInfo
- *
-**
-*/
+
 
 #ifndef _RLM_DOMAIN_H
 #define _RLM_DOMAIN_H
@@ -338,13 +284,7 @@
 #define MIB_REG_DOMAIN_JAPAN            0x40	/* MPHPT (Japan) */
 #define MIB_REG_DOMAIN_OTHER            0x00	/* other */
 
-#if CFG_SUPPORT_PWR_LIMIT_COUNTRY
 
-
-#define POWER_LIMIT_TABLE_NULL 			0xFFFF
-#define MAX_TX_POWER     				63
-#define MIN_TX_POWER     				-64
-#define MAX_CMD_SUPPORT_CHANNEL_NUM  	64
 
 /*2.4G*/
 #define BAND_2G4_LOWER_BOUND 1   
@@ -358,6 +298,14 @@
 #define UNII2C_UPPER_BOUND   144 
 #define UNII3_LOWER_BOUND    149  
 #define UNII3_UPPER_BOUND    173 
+
+
+#if CFG_SUPPORT_PWR_LIMIT_COUNTRY
+
+#define POWER_LIMIT_TABLE_NULL 			0xFFFF
+#define MAX_TX_POWER     				63
+#define MIN_TX_POWER     				-64
+#define MAX_CMD_SUPPORT_CHANNEL_NUM  	64
 
 #endif
 
@@ -377,6 +325,8 @@ typedef enum _ENUM_POWER_LIMIT_T {
 	PWR_LIMIT_NUM
 } ENUM_POWER_LIMIT_T, *P_ENUM_POWER_LIMIT_T;
 
+#endif
+
 typedef enum _ENUM_POWER_LIMIT_SUBBAND_T {
 	POWER_LIMIT_2G4         = 0,
 	POWER_LIMIT_UNII1       = 1,
@@ -386,7 +336,6 @@ typedef enum _ENUM_POWER_LIMIT_SUBBAND_T {
 	POWER_LIMIT_SUBAND_NUM
 } ENUM_POWER_LIMIT_SUBBAND_T, *P_ENUM_POWER_LIMIT_SUBBAND_T;
 
-#endif
 
 
 /* Define channel offset in unit of 5MHz bandwidth */
@@ -579,6 +528,13 @@ typedef struct _SUBBAND_CHANNEL_T {
 *                                 M A C R O S
 ********************************************************************************
 */
+#define CAL_CH_OFFSET_80M(_PRIMARY_CH, _CENTRAL_CH) \
+			(((_PRIMARY_CH - _CENTRAL_CH ) + 6) >> 2)
+			
+#define CAL_CH_OFFSET_160M(_PRIMARY_CH, _CENTRAL_CH) \
+			(((_PRIMARY_CH - _CENTRAL_CH ) + 14) >> 2)
+
+
 
 /*******************************************************************************
 *                   F U N C T I O N   D E C L A R A T I O N S
@@ -601,6 +557,14 @@ BOOLEAN rlmDomainIsLegalChannel(P_ADAPTER_T prAdapter, ENUM_BAND_T eBand, UINT_8
 
 UINT_32 rlmDomainSupOperatingClassIeFill(PUINT_8 pBuf);
 
+BOOLEAN rlmDomainCheckChannelEntryValid(P_ADAPTER_T prAdapter, UINT_8 ucCentralCh);
+
+UINT_8 rlmDomainGetCenterChannel(ENUM_BAND_T eBand, UINT_8 ucPriChannel, ENUM_CHNL_EXT_T eExtend);
+
+BOOLEAN rlmDomainIsValidRfSetting (P_ADAPTER_T prAdapter, ENUM_BAND_T eBand, 
+	UINT_8 ucPriChannel, ENUM_CHNL_EXT_T eExtend, 
+	ENUM_CHANNEL_WIDTH_T eChannelWidth, UINT_8 ucChannelS1, UINT_8 ucChannelS2);
+ 
 #if CFG_SUPPORT_PWR_LIMIT_COUNTRY
 
 BOOLEAN
@@ -609,12 +573,6 @@ rlmDomainCheckPowerLimitValid (
 	COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION         rPowerLimitTableConfiguration,      
 	UINT_8          								ucPwrLimitNum
     );
-BOOLEAN
-rlmDomainCheckChannelEntryValid(
-    P_ADAPTER_T     prAdapter,
-    UINT_8          ucCentralCh
-    );
-
 
 VOID
 rlmDomainCheckCountryPowerLimitTable (

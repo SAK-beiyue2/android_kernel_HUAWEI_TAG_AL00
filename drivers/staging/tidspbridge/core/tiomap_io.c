@@ -268,10 +268,7 @@ int write_ext_dsp_data(struct bridge_dev_context *dev_context,
 					     &ul_ext_base);
 			}
 			if (!ret) {
-				/* DR  OMAPS00013235 : DLModules array may be
-				 * in EXTMEM. It is expected that DYNEXTMEM and
-				 * EXTMEM are contiguous, so checking for the
-				 * upper bound at EXTEND should be Ok. */
+				
 				if (symbols_reloaded)
 					ret =
 					    dev_get_symbol

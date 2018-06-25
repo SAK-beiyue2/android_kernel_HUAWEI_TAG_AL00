@@ -9,24 +9,7 @@
 
 
 
-/*
-** $Log: rate.h $
- *
- * 09 03 2010 kevin.huang
- * NULL
- * Refine #include sequence and solve recursive/nested #include issue
- *
- * 07 08 2010 cp.wu
- * 
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 10 2010 cp.wu
- * [WPD00003833][MT6620 and MT5931] Driver migration 
- * add buildable & linkable ais_fsm.c
- * 
- * related reference are still waiting to be resolved
- *
-*/
+
 
 #ifndef _RATE_H
 #define _RATE_H

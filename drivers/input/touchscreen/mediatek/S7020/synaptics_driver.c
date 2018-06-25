@@ -24,12 +24,10 @@
 #define CONFIG_ID 0x30303033
 //#define TPD_UPDATE_FIRMWARE
 
-/* < DTS2012031404176  linghai 20120314 begin */
 #ifdef TPD_HAVE_BUTTON
 static int tpd_keys_local[TPD_KEY_COUNT]=TPD_KEYS;
 static int tpd_keys_dim_local_wvga[TPD_KEY_COUNT][4]=TPD_KEYS_DIM;
 #endif
-/* DTS2012031404176  linghai 20120314 end> */
 //add by huxin
 #ifdef HAVE_TOUCH_KEY
 const u16 touch_key_array[] = { KEY_MENU, KEY_HOMEPAGE, KEY_BACK};
@@ -123,9 +121,7 @@ extern int fwu_check_version(void);
 
 
 static const struct i2c_device_id tpd_id[] = {{TPD_DEVICE,0},{}};
-/* < DTS2012040603460 gkf61766 20120406 begin */
 static unsigned short force[] = {0,0x70,I2C_CLIENT_END,I2C_CLIENT_END};
-/* < DTS2012040603460 gkf61766 20120406 end */
 static const unsigned short * const forces[] = { force, NULL };
 //static struct i2c_client_address_data addr_data = { .forces = forces, };
 static struct i2c_board_info __initdata i2c_tpd={ I2C_BOARD_INFO("mtk-tpd", (0x38))};

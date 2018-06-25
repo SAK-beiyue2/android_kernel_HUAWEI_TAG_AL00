@@ -669,13 +669,11 @@ musb_rx_reinit(struct musb *musb, struct musb_qh *qh, struct musb_hw_ep *ep)
 	/* Set RXMAXP with the FIFO size of the endpoint
 	 * to disable double buffer mode.
 	 */
-	//ALPS00798316, Enable DMA RxMode1
 	if (musb->double_buffer_not_ok)
 		musb_writew(ep->regs, MUSB_RXMAXP, ep->max_packet_sz_rx);
 	else
 		musb_writew(ep->regs, MUSB_RXMAXP,
 				qh->maxpacket); //qh->maxpacket | ((qh->hb_mult - 1) << 11));
-	//ALPS00798316, Enable DMA RxMode1
 
 	ep->rx_reinit = 0;
 }
@@ -761,6 +759,10 @@ static void musb_ep_program(struct musb *musb, u8 epnum,
 	u16			packet_sz = qh->maxpacket;
 	u8			use_dma = 1;
 	u16			csr;
+
+	if (qh->type == USB_ENDPOINT_XFER_ISOC) {
+		use_dma = 0;
+	}
 
 	DBG(4, "%s hw%d urb %p spd%d dev%d ep%d%s "
 				"h_addr%02x h_port%02x bytes %d\n",
@@ -952,9 +954,7 @@ finish:
 
         if (/*(is_cppi_enabled() || tusb_dma_omap()) &&*/ dma_channel) {
 		/* Candidate for DMA */
-//ALPS00798316, Enable DMA RxMode1
 #if 0
-//ALPS00798316, Enable DMA RxMode1
                 dma_channel->actual_len = 0L;
                 qh->segsize = len;
 
@@ -982,7 +982,6 @@ finish:
                     csr |= MUSB_RXCSR_DMAENAB;
 #endif          
 
-//ALPS00798316, Enable DMA RxMode1
 #else
 			dma_channel->actual_len = 0L;
 			qh->segsize = len;
@@ -1080,7 +1079,6 @@ finish:
 
 			}
 #endif
-//ALPS00798316, Enable DMA RxMode1
         }
 
         csr |= MUSB_RXCSR_H_REQPKT;//ask packet from the device
@@ -1811,16 +1809,13 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 	if (dma && (rx_csr & MUSB_RXCSR_DMAENAB)) {
 		xfer_len = dma->actual_len;
 
-//ALPS00798316, Enable DMA RxMode1
 		//DBG(7, "urb->actual_length = %d, xfer_len = %d, urb->transfer_buffer_length = %d, dma->actual_len=%d, qh->maxpacket = %d \n", urb->actual_length, xfer_len, urb->transfer_buffer_length, dma->actual_len, qh->maxpacket);
 		#if 0
-//ALPS00798316, Enable DMA RxMode1
 		val &= ~(MUSB_RXCSR_DMAENAB
 			| MUSB_RXCSR_H_AUTOREQ
 			| MUSB_RXCSR_AUTOCLEAR
 			| MUSB_RXCSR_RXPKTRDY);
 
-//ALPS00798316, Enable DMA RxMode1
 		#else
 		val &= ~(MUSB_RXCSR_DMAENAB
 			| MUSB_RXCSR_H_AUTOREQ
@@ -1828,7 +1823,6 @@ void musb_host_rx(struct musb *musb, u8 epnum)
 			| MUSB_RXCSR_RXPKTRDY
 			| MUSB_RXCSR_DMAMODE);//should be clear!
 		#endif
-//ALPS00798316, Enable DMA RxMode1
 
 		musb_writew(hw_ep->regs, MUSB_RXCSR, val);
 

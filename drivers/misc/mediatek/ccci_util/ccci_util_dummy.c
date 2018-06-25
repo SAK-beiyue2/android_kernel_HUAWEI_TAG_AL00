@@ -6,6 +6,10 @@
 #include <linux/module.h>
 #include <linux/poll.h>
 
+void __weak ccci_power_off(void)
+{
+	return;
+}
 int __weak exec_ccci_kern_func_by_md_id(int md_id, unsigned int id, char *buf, unsigned int len)
 {
 printk("[ccci/dummy] %s is not supported!\n",__FUNCTION__);

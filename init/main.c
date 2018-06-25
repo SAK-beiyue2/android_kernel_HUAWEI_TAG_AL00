@@ -89,6 +89,10 @@
 #include <asm/smp.h>
 #endif
 
+#ifdef CONFIG_LOG_JANK
+#include <linux/log_jank.h>
+#endif
+
 static int kernel_init(void *);
 
 extern void init_IRQ(void);
@@ -897,6 +901,10 @@ static noinline void __init kernel_init_freeable(void)
 	sched_init_smp();
 
 	do_basic_setup();
+
+#ifdef CONFIG_LOG_JANK
+    LOG_JANK_V(JLID_BOOT_PROGRESS_KERNEL_END,"JL_BOOT_PROGRESS_KERNEL_END");
+#endif
 
 	/* Open the /dev/console on the rootfs, this should never fail */
 	if (sys_open((const char __user *) "/dev/console", O_RDWR, 0) < 0)

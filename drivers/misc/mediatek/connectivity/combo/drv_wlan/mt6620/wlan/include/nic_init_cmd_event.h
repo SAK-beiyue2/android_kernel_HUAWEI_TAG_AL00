@@ -9,38 +9,7 @@
 
 
 
-/*
-** $Log: nic_init_cmd_event.h $
- *
- * 09 26 2011 cp.wu
- * [WCXRP00001011] [MT6628 Wi-Fi] Firmware Download Agent: make CRC validation as an optional feature
- * add definition for disabling CRC32 validation (for MT6628 only)
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
- *
- * 03 12 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * add two option for ACK and ENCRYPTION for firmware download
- *
- * 03 01 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * add command/event definitions for initial states
- *
- * 02 10 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * implement host-side firmware download logic
- *
- * 02 08 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * prepare for implementing fw download logic
- *
-*/
+
 #ifndef _NIC_INIT_CMD_EVENT_H
 #define _NIC_INIT_CMD_EVENT_H
 

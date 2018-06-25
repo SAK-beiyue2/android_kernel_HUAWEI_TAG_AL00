@@ -11,23 +11,7 @@
 
 
 
-/*
-** $Log: gl_cfg80211.c $
-**
-** 09 12 2012 wcpadmin
-** [ALPS00276400] Remove MTK copyright and legal header on GPL/LGPL related packages
-** .
-**
-** 11 23 2012 yuche.tsai
-** [ALPS00398671] [Acer-Tablet] Remove Wi-Fi Direct completely
-** Fix bug of WiFi may reboot under user load, when WiFi Direct is removed..
-**
-** 08 29 2012 chinglan.wang
-** [ALPS00349655] [Need Patch] [Volunteer Patch] [ALPS.JB] Daily build warning on [mt6575_phone_mhl-eng]
-** .
- *
-**
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S

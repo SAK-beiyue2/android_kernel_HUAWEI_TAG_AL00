@@ -1927,6 +1927,10 @@ extern unsigned int gEnableReduceRegWrite;
 #define DISP_REG_SMI_LARB_MMU_EN                                   			(DISPSYS_SMI_LARB0_BASE+0xfc0)
 
 // -------------------------------------------------------------
+// DSI
+#define DISP_REG_DSI_STATE								(DISPSYS_DSI0_BASE + 0x004)
+
+// -------------------------------------------------------------
 // DPI
 #define DISP_REG_DPI_EN								(DISPSYS_DPI_BASE + 0x000)
 #define DISP_REG_DPI_RST								(DISPSYS_DPI_BASE + 0x004)
@@ -2199,6 +2203,7 @@ extern unsigned int gEnableReduceRegWrite;
 #define DISP_OVL_SEPARATE_MUTEX_ID (DISP_MUTEX_DDP_LAST+1)  // other disp will not see mutex 4
 #define DISP_REG_CONFIG_MUTEX_INTEN                              	(DISPSYS_MUTEX_BASE + 0x000)
 #define DISP_REG_CONFIG_MUTEX_INTSTA                             (DISPSYS_MUTEX_BASE + 0x004)
+#define DISP_REG_CONFIG_MUTEX_HW_DCM                           (DISPSYS_MUTEX_BASE + 0x008)
 #define DISP_REG_CONFIG_MUTEX0_EN                                	(DISPSYS_MUTEX_BASE + 0x020)
 #define DISP_REG_CONFIG_MUTEX0_RST                               	(DISPSYS_MUTEX_BASE + 0x028)
 #define DISP_REG_CONFIG_MUTEX0_MOD                               	(DISPSYS_MUTEX_BASE + 0x02C)

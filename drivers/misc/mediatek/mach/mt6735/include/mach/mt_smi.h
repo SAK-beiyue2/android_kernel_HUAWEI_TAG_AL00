@@ -96,6 +96,8 @@ typedef struct
 
 #define MTK_MMDVFS_CMD_TYPE_SET		0
 #define MTK_MMDVFS_CMD_TYPE_QUERY	1
+#define MTK_MMDVFS_CMD_TYPE_MMSYS_SET	2
+
 
 // GMP start
 typedef enum

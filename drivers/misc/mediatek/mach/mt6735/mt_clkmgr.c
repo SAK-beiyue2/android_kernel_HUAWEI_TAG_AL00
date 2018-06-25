@@ -76,34 +76,20 @@ void __iomem  *clk_venc_gcon_base;
 
 #define TAG     "[Power/clkmgr] "
 
-#define clk_err(fmt, args...)       \
-    pr_err(TAG fmt, ##args)
-#define clk_warn(fmt, args...)      \
-    pr_warn(TAG fmt, ##args)
-#define clk_info(fmt, args...)      \
-    pr_info(TAG fmt, ##args)
-#define clk_dbg(fmt, args...)       \
-    pr_info(TAG fmt, ##args)
+#define clk_err(fmt, args...)
+#define clk_warn(fmt, args...)
+#define clk_info(fmt, args...)
+#define clk_dbg(fmt, args...)
 
 #else
 
 #define TAG     "[Power/clkmgr] "
 
-#define clk_err(fmt, args...)       \
-    printk(KERN_ERR TAG);           \
-    printk(KERN_CONT fmt, ##args)
-#define clk_warn(fmt, args...)      \
-    printk(KERN_WARNING TAG);       \
-    printk(KERN_CONT fmt, ##args)
-#define clk_info(fmt, args...)      \
-    printk(KERN_NOTICE TAG);        \
-    printk(KERN_CONT fmt, ##args)
-#define clk_dbg(fmt, args...)       \
-    printk(KERN_INFO TAG);          \
-    printk(KERN_CONT fmt, ##args)
-#define clk_ver(fmt, args...)       \
-    printk(KERN_DEBUG TAG);         \
-    printk(KERN_CONT fmt, ##args)
+#define clk_err(fmt, args...)
+#define clk_warn(fmt, args...)
+#define clk_info(fmt, args...)
+#define clk_dbg(fmt, args...)
+#define clk_ver(fmt, args...)
 
 #endif
 
@@ -3848,8 +3834,9 @@ void msdc_clk_status(int * status) { *status = 0; }
 #define VDE_PWR_STA_MASK    (0x1 << 7)
 #define ISP_PWR_STA_MASK    (0x1 << 5)
 #define MFG_PWR_STA_MASK    (0x1 << 4)
+#define DIS_PWR_STA_MASK    (0x1 << 3)
 
-bool clkmgr_idle_can_enter(unsigned int *condition_mask, unsigned int *block_mask)
+bool clkmgr_idle_can_enter(unsigned int *condition_mask, unsigned int *block_mask, enum idle_mode mode)
 {
     int i,j;
     unsigned int sd_mask = 0;
@@ -3880,8 +3867,14 @@ bool clkmgr_idle_can_enter(unsigned int *condition_mask, unsigned int *block_mas
 
 #ifdef PLL_CLK_LINK
     sta = clk_readl(SPM_PWR_STATUS);
-    if (sta & (MFG_PWR_STA_MASK | ISP_PWR_STA_MASK | VDE_PWR_STA_MASK | VEN_PWR_STA_MASK))
-        return false;
+
+    if (mode == dpidle) {
+        if (sta & (MFG_PWR_STA_MASK | ISP_PWR_STA_MASK | VDE_PWR_STA_MASK | VEN_PWR_STA_MASK | DIS_PWR_STA_MASK))
+            return false;
+    } else if (mode == soidle) {
+    	if (sta & (MFG_PWR_STA_MASK | ISP_PWR_STA_MASK | VDE_PWR_STA_MASK | VEN_PWR_STA_MASK))
+            return false;
+    }
 #endif
     return true;
 }

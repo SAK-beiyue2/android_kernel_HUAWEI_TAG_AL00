@@ -29,8 +29,6 @@ ifneq ($(CONFIG_MTK_GIC),y)
 obj-y   += irq/
 endif
 
-obj-y	+= hardwareinfo/   
-
 obj-$(CONFIG_MTK_CPU_STRESS)	+= cpu_stress/
 obj-$(CONFIG_MTK_LASTPC)	    += lastpc/
 obj-$(CONFIG_MTK_DBG_DUMP) += dbg_dump/
@@ -167,7 +165,6 @@ obj-$(CONFIG_ZRAM)	+= mlog/
 
 #obj-y	+= cam_cal/src/$(MTK_PLATFORM)/dummy_eeprom/
 
-obj-$(CONFIG_MTK_CAM_CAL_S5K3L2OTP_SUPPORT) += cam_cal/src/$(MTK_PLATFORM)/s5k3l2_eeprom/
 obj-y	+= lens/
 obj-y	+= imgsensor/src/
 
@@ -324,3 +321,4 @@ ifneq ($(CONFIG_CUSTOM_KERNEL_SENSORHUB),"")
 obj-y	+= sensorHub/
 endif
 endif
+obj-y	+= hardwareinfo/

@@ -42,6 +42,18 @@ extern void proc_remove(struct proc_dir_entry *);
 extern void remove_proc_entry(const char *, struct proc_dir_entry *);
 extern int remove_proc_subtree(const char *, struct proc_dir_entry *);
 
+/*
+ * proc_hq_dbg.c
+ * add by chenhuazhen for hq_debug proc interface
+ */
+struct hq_dbg_entry {
+	char * name;
+	struct file_operations proc_operations;
+};
+//extern int proc_hq_dbg_create_entry(const char *name,read_proc_t *read_proc,write_proc_t *write_proc);
+extern struct proc_dir_entry * proc_hq_dbg_mkdir(const char *name);
+extern int proc_hq_dbg_add(char * name,struct hq_dbg_entry hq_debug[],int size);
+
 #else /* CONFIG_PROC_FS */
 
 static inline void proc_flush_task(struct task_struct *task)

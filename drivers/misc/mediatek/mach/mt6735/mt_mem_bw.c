@@ -38,6 +38,12 @@ unsigned long long get_mem_bw(void)
     long long value;
     int emi_dcm_disable;
 
+#if DUMP_DEBUG_REGISTER    
+    if (emidumpstatus)
+	  {
+		    return 0;
+	  }
+#endif	
 #if DISABLE_FLIPPER_FUNC    
 return 0;
 #endif
@@ -166,6 +172,9 @@ static int __init mon_kernel_init(void)
 {
     int ret = 0;
     int emi_dcm_disable;
+#if DUMP_DEBUG_REGISTER     
+    emidumpstatus = 0;
+#endif
     
     BM_Init();
 
@@ -203,6 +212,7 @@ static int __init mon_kernel_init(void)
         printk("fail to register mem_bw driver @ %s()\n", __func__);
         platform_device_unregister(&mt_mem_bw_pdev);
     }
+
 out:
     return ret;       
 }

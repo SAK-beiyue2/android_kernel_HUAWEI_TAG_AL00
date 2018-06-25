@@ -13,48 +13,7 @@
 
 
 
-/*
-** $Log: Gl_req.h $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
- *
- * 05 20 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * 1) integrate OID_GEN_NETWORK_LAYER_ADDRESSES with CMD_ID_SET_IP_ADDRESS
- * 2) buffer statistics data for 2 seconds
- * 3) use default value for adhoc parameters instead of 0
- *
- * 02 10 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * 1) remove unused function in nic_rx.c [which has been handled in que_mgt.c]
- *  *  *  *  *  *  *  *  *  * 2) firmware image length is now retrieved via NdisFileOpen
- *  *  *  *  *  *  *  *  *  * 3) firmware image is not structured by (P_IMG_SEC_HDR_T) anymore
- *  *  *  *  *  *  *  *  *  * 4) nicRxWaitResponse() revised
- *  *  *  *  *  *  *  *  *  * 5) another set of TQ counter default value is added for fw-download state
- *  *  *  *  *  *  *  *  *  * 6) Wi-Fi load address is now retrieved from registry too
- *
- * 02 09 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * .
-**  \main\maintrunk.MT6620WiFiDriver_Prj\4 2009-04-15 20:18:45 GMT mtk01084
-**  prevent LINT error on NDIS definition
-**  \main\maintrunk.MT6620WiFiDriver_Prj\3 2009-04-08 17:48:11 GMT mtk01084
-**  modify the interface of downloading image from D3 to D0
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-03-10 20:40:48 GMT mtk01426
-**  Init for develop
-**
-*/
+
 
 #ifndef _GL_REQ_H
 #define _GL_REQ_H

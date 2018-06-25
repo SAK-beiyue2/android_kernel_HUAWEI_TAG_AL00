@@ -30,6 +30,10 @@
 
 #include "power.h"
 
+#ifdef CONFIG_LOG_JANK
+#include <linux/log_jank.h>
+#endif
+
 #define MTK_SOLUTION 1
 
 struct pm_sleep_state pm_states[PM_SUSPEND_MAX] = {
@@ -456,6 +460,12 @@ static void pm_suspend_marker(char *annotation)
 int pm_suspend(suspend_state_t state)
 {
 	int error;
+#ifdef CONFIG_LOG_JANK
+    if (state == PM_SUSPEND_ON)
+        LOG_JANK_D(JLID_KERNEL_PM_SUSPEND_WAKEUP, "%s,state=%d","JL_KERNEL_PM_SUSPEND_WAKEUP", state);
+    else
+        LOG_JANK_D(JLID_KERNEL_PM_SUSPEND_SLEEP, "%s,state=%d","JL_KERNEL_PM_SUSPEND_SLEEP", state);
+#endif
 
 	if (state <= PM_SUSPEND_ON || state >= PM_SUSPEND_MAX)
 		return -EINVAL;

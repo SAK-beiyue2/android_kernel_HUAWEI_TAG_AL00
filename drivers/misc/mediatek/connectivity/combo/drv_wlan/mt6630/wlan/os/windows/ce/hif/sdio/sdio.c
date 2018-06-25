@@ -9,49 +9,7 @@
 
 
 
-/*
-** $Log: sdio.c $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 03 14 2011 terry.wu
- * [WCXRP00000521] [MT6620 Wi-Fi][Driver] Remove non-standard debug message
- * Revert windows debug message.
- *
- * 11 10 2010 cp.wu
- * [WCXRP00000166] [MT6620 Wi-Fi][Driver] use SDIO CMD52 for enabling/disabling interrupt to reduce transaction period
- * add kalDevWriteWithSdioCmd52() for CE platform
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
-**  \main\maintrunk.MT6620WiFiDriver_Prj\10 2009-05-07 16:46:13 GMT mtk01426
-**  Add CIS Content Dump
-**  \main\maintrunk.MT6620WiFiDriver_Prj\9 2009-03-24 09:46:56 GMT mtk01084
-**  fix LINT error
-**  \main\maintrunk.MT6620WiFiDriver_Prj\8 2009-03-23 16:56:52 GMT mtk01084
-**  add kalDevReadAfterWriteWithSdioCmd52()
-**  \main\maintrunk.MT6620WiFiDriver_Prj\7 2009-03-17 10:40:52 GMT mtk01426
-**  Move TxServiceThread to Kal layer
-**  \main\maintrunk.MT6620WiFiDriver_Prj\6 2009-03-17 09:48:50 GMT mtk01426
-**  Update TxServiceThread to kalTxServiceThread
-**  \main\maintrunk.MT6620WiFiDriver_Prj\5 2009-03-17 09:46:43 GMT mtk01426
-**  Move TxServiceThread to kal layer
-**  \main\maintrunk.MT6620WiFiDriver_Prj\4 2009-03-16 16:40:31 GMT mtk01461
-**  Fix for coding style - rTxReqEvent
-**  \main\maintrunk.MT6620WiFiDriver_Prj\3 2009-03-16 09:11:40 GMT mtk01461
-**  Update TX PATH API
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-03-10 20:29:30 GMT mtk01426
-**  Init for develop
-**
-*/
+
 
 /*******************************************************************************
 *                E X T E R N A L   R E F E R E N C E S

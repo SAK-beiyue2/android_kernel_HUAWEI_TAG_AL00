@@ -9,16 +9,7 @@
 
 
 
-/*
-** $Log: m6630def.h $
-**
-** 10 25 2012 cp.wu
-** [BORA00002227] [MT6630 Wi-Fi][Driver] Update for Makefile and HIFSYS modifications
-** update for windows build system
-** a) remove MT6620/MT5931/MT6628 related part
-** b) add for MT6630 build
-**
-*/
+
 
 #ifndef _M6630DEF_H
 #define _M6630DEF_H

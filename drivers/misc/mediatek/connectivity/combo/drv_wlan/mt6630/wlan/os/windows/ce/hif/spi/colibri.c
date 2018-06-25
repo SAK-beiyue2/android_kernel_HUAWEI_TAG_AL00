@@ -9,26 +9,7 @@
 
 
 
-/*
-** $Log: colibri.c $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-04-29 20:13:47 GMT mtk01104
-**  Fix bug. It needs OR, not AND in insteaGPIOConfigBackup() and GPIOConfigRestore()
-**  \main\maintrunk.MT6620WiFiDriver_Prj\1 2009-04-24 21:13:20 GMT mtk01104
-**  Initial version
-*/
+
 
 /******************************************************************************
 *                         C O M P I L E R   F L A G S

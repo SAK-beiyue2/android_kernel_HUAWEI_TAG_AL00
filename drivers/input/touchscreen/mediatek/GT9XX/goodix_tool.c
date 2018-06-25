@@ -377,6 +377,10 @@ static s32 goodix_tool_write(struct file *filp, const char __user *buff, unsigne
 	GTP_DEBUG("addr:0x%02x%02x.", cmd_head.addr[0], cmd_head.addr[1]);
 	GTP_DEBUG("len:%d.", (s32) len);
 	GTP_DEBUG("buf[20]:0x%02x.", buff[CMD_HEAD_LENGTH]);
+	if(cmd_head.data_len>DATA_LENGTH)
+			cmd_head.data_len=DATA_LENGTH;
+	if(cmd_head.addr_len>GTP_ADDR_LENGTH)
+			cmd_head.addr_len=GTP_ADDR_LENGTH;
 
 	if (1 == cmd_head.wr) {
 		/* copy_from_user(&cmd_head.data[cmd_head.addr_len], &buff[CMD_HEAD_LENGTH], cmd_head.data_len); */
@@ -474,6 +478,13 @@ static s32 goodix_tool_write(struct file *filp, const char __user *buff, unsigne
 	{
 		show_len = 0;
 		total_len = 0;
+
+		if ((cmd_head.data == NULL)  || (cmd_head.data_len >= DATA_LENGTH)
+				|| (cmd_head.data_len >= (len - CMD_HEAD_LENGTH))) {
+			GTP_ERROR("copy_from_user data out of range.");
+			return -EINVAL;
+		}
+
 		memset(cmd_head.data, 0, cmd_head.data_len + 1);
 		memcpy(cmd_head.data, &buff[CMD_HEAD_LENGTH], cmd_head.data_len);
 		GTP_DEBUG("update firmware, filename: %s", cmd_head.data);

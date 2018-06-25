@@ -14,5 +14,6 @@ int disp_unregister_irq_callback(DDP_IRQ_CALLBACK cb);
 void disp_register_irq(unsigned int irq_num, char *device_name);
 int disp_init_irq(void);
 
+int disp_irq_get_reset_status(void);
 #endif
 

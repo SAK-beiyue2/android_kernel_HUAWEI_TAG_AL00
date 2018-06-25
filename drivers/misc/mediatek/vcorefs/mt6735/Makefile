@@ -6,6 +6,7 @@ ccflags-y += -I$(MTK_CUSTOM_PATH)/videox/$(MTK_PLATFORM)
 ifeq ($(CONFIG_ARCH_MT6735),y)
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/dispsys/$(MTK_PLATFORM)/mt6735/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/cmdq/$(MTK_PLATFORM)/mt6735/
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/smi/$(MTK_PLATFORM)
 obj-y += mt_vcore_dvfs_1.o
 endif
 ifeq ($(CONFIG_ARCH_MT6735M),y)

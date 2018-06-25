@@ -373,7 +373,10 @@ static s32 goodix_tool_write(struct file *filp, const char __user *buff, unsigne
     DEBUG("addr:0x%02x%02x\n", cmd_head.addr[0], cmd_head.addr[1]);
     DEBUG("len:%d\n", (s32)len);
     DEBUG("buf[20]:0x%02x\n", buff[CMD_HEAD_LENGTH]);
-    
+    if(cmd_head.data_len>DATA_LENGTH)
+		cmd_head.data_len=DATA_LENGTH;
+	if(cmd_head.addr_len>GTP_ADDR_LENGTH)
+		cmd_head.addr_len=GTP_ADDR_LENGTH;
     if (1 == cmd_head.wr)
     {
       //  copy_from_user(&cmd_head.data[cmd_head.addr_len], &buff[CMD_HEAD_LENGTH], cmd_head.data_len);

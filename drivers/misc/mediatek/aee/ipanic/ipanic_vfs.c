@@ -8,7 +8,7 @@
 struct file *expdb_open(void)
 {
 	static struct file *filp_expdb;
-	if (!filp_expdb)
+	if (!filp_expdb || IS_ERR(filp_expdb))
 		filp_expdb = filp_open(AEE_EXPDB_PATH, O_RDWR, 0);
 	if (IS_ERR(filp_expdb)) {
 		LOGD("filp_open(%s) for aee failed (%ld)\n", AEE_EXPDB_PATH, PTR_ERR(filp_expdb));

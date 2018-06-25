@@ -17,7 +17,7 @@
 
      
  // ============================================================ //
- //define
+ //define   
  // ============================================================ //
 #define STATUS_OK    0
 #define STATUS_FAIL	1
@@ -191,7 +191,7 @@ static kal_uint32 charging_hw_init(void *data)
 #ifdef HIGH_BATTERY_VOLTAGE_SUPPORT
 	pmic_set_register_value(PMIC_RG_VBAT_OV_VTH,3);//VBAT_OV_VTH, 4.4V,
 #else
-	pmic_set_register_value(PMIC_RG_VBAT_OV_VTH,2);//VBAT_OV_VTH, 4.3V,
+	pmic_set_register_value(PMIC_RG_VBAT_OV_VTH,1);//VBAT_OV_VTH, 4.3V,
 #endif
 	pmic_set_register_value(PMIC_RG_BATON_EN,1);//BATON_EN
 
@@ -281,12 +281,18 @@ static kal_uint32 charging_enable(void *data)
 }
 
 
+
 static kal_uint32 charging_set_cv_voltage(void *data)
 {
     kal_uint32 status = STATUS_OK;
     kal_uint16 register_value;
-
+	kal_uint32 cv_voltage = *(kal_uint32 *)(data);
+#if defined(HIGH_BATTERY_VOLTAGE_SUPPORT)
+	cv_voltage = BATTERY_VOLT_04_350000_V;
+#endif
     register_value = charging_parameter_to_value(VBAT_CV_VTH, GETARRAYNUM(VBAT_CV_VTH) ,*(kal_uint32 *)(data));
+
+	cv_voltage=VBAT_CV_VTH[register_value];
 
 /*
     #if 0

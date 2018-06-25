@@ -96,9 +96,6 @@ static void disp_aal_notify_frame_dirty(void)
 	unsigned long flags;
 
 	AAL_DBG("disp_aal_notify_frame_dirty()");
-#ifdef MTK_DISP_IDLE_LP
-	disp_exit_idle_ex("disp_aal_notify_frame_dirty");
-#endif
 	spin_lock_irqsave(&g_aal_hist_lock, flags);
 	/* Interrupt can be disabled until dirty histogram is retrieved */
 	g_aal_dirty_frame_retrieved = 0;

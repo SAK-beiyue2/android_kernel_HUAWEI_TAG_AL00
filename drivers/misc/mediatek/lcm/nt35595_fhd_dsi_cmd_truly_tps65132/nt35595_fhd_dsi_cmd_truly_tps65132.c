@@ -1269,4 +1269,3 @@ LCM_DRIVER nt35595_fhd_dsi_cmd_truly_tps65132_lcm_drv=
 	 .update         = lcm_update,
      .switch_mode		= lcm_switch_mode,
 };
-/* END PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/

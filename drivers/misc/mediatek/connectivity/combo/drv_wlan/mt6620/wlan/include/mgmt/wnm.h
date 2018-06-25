@@ -9,15 +9,7 @@
 
 
 
-/*
-** $Log: wnm.h $
- *
- * 01 05 2012 tsaiyuan.hsu
- * [WCXRP00001157] [MT6620 Wi-Fi][FW][DRV] add timing measurement support for 802.11v
- * add timing measurement support for 802.11v.
- *
- *
-*/
+
 
 #ifndef _WNM_H
 #define _WNM_H

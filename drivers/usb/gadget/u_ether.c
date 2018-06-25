@@ -748,7 +748,6 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 	u16			cdc_filter;
 	bool			multi_pkt_xfer = false;
 
-	//ALPS00542120
 	static unsigned int okCnt = 0, busyCnt = 0;
 	static int firstShot = 1, diffSec;
 	static struct timeval tv_last, tv_cur;

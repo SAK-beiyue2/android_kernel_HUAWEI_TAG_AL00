@@ -53,8 +53,8 @@ typedef struct{
 /* ***********************************FM config for customer: start****************************** */
 /* ***************************************************************************************** */
 /* RX */
-#define FM_RX_RSSI_TH_LONG_MT6627    -296	/* FM radio long antenna RSSI threshold(-4dBuV) */
-#define FM_RX_RSSI_TH_SHORT_MT6627   -296	/* FM radio short antenna RSSI threshold(-4dBuV) */
+#define FM_RX_RSSI_TH_LONG_MT6627    -274	/* FM radio long antenna RSSI threshold(-4dBuV) */
+#define FM_RX_RSSI_TH_SHORT_MT6627   -274	/* FM radio short antenna RSSI threshold(-4dBuV) */
 #define FM_RX_DESENSE_RSSI_MT6627   -258
 #define FM_RX_PAMD_TH_MT6627          -12
 #define FM_RX_MR_TH_MT6627           -67

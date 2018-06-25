@@ -22,7 +22,7 @@ int als_data_report(struct input_dev *dev, int value, int status)
 	//force trigger data update after sensor enable.
 	if (cxt->is_get_valid_als_data_after_enable == false)
 	{
-		input_report_abs(dev, EVENT_TYPE_ALS_VALUE, value+1);
+		value++;
 		cxt->is_get_valid_als_data_after_enable = true;
 	}
   	input_report_abs(dev, EVENT_TYPE_ALS_VALUE, value);

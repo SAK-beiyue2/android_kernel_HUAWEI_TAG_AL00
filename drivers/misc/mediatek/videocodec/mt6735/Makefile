@@ -27,5 +27,6 @@ obj-$(CONFIG_MTK_VIDEOCODEC_DRIVER) += vcodec_kernel_driver.o
 ccflags-y += \
     -I$(srctree)/drivers/misc/mediatek/videocodec/$(MTK_PLATFORM)/common/drv/inc		 \
     -I$(srctree)/include/linux/vcodec                   \
-    -I$(srctree)/include/linux/vcodec/kernel
+    -I$(srctree)/include/linux/vcodec/kernel            \
+    -I$(srctree)/drivers/misc/mediatek/smi/$(MTK_PLATFORM)
 

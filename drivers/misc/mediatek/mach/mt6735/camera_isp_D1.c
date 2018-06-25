@@ -4022,10 +4022,13 @@ static long	ISP_Buf_CTRL_FUNC(unsigned long	Param)
 									ISP_FBC_DUMP(rt_dma, 1,	0, 0, 0);
 					}
 #endif
-					spin_lock_irqsave(&(IspInfo.SpinLockIrq[irqT_Lock]), flags);
+					/*	copy_from_user()/copy_to_user() might sleep when page fault,
+						it can't use in atomic context, e.g. spin_lock_irqsave()      */
+					/* spin_lock_irqsave(&(IspInfo.SpinLockIrq[irqT_Lock]), flags);*/
 					if (0 != rt_buf_ctrl.ex_data_ptr) {
 						/* borrow deque_buf.data memory	, in order to shirnk memory	required,avoid compile err */
 						if (copy_from_user(&deque_buf.data[0], (void __user	*)rt_buf_ctrl.ex_data_ptr, sizeof(ISP_RT_BUF_INFO_STRUCT)) == 0) {
+							spin_lock_irqsave(&(IspInfo.SpinLockIrq[irqT_Lock]), flags);
 							/*	*/
 							i =	0;
 							if (deque_buf.data[0].bufIdx !=	0xFFFF)	{
@@ -4089,13 +4092,14 @@ static long	ISP_Buf_CTRL_FUNC(unsigned long	Param)
 #endif
 							/* spin_unlock_irqrestore(&(IspInfo.SpinLockIrq[irqT]),	flags);*/
 					} else {
-						spin_unlock_irqrestore(&(IspInfo.SpinLockIrq[irqT_Lock]), flags);
+						/* spin_unlock_irqrestore(&(IspInfo.SpinLockIrq[irqT_Lock]), flags);*/
 						LOG_ERR("[rtbc][ENQUE_ext]:copy_from_user fail");
 						/* LOG_ERR("[rtbc][ENQUE_ext]:copy_from_user fail, dst_buf(0x%lx), user_buf(0x%lx)",
 							&deque_buf.data[0],	rt_buf_ctrl.ex_data_ptr); */
 						return -EAGAIN;
 					}
 				} else	{/*	this case for camsv	& pass1	fw rtbc	*/
+					spin_lock_irqsave(&(IspInfo.SpinLockIrq[irqT_Lock]), flags);
 					for (i = 0; i <	ISP_RT_BUF_SIZE; i++) {
 						/*	*/
 						if (pstRTBuf->ring_buf[rt_dma].data[i].base_pAddr == rt_buf_info.base_pAddr) {
@@ -4194,6 +4198,7 @@ static long	ISP_Buf_CTRL_FUNC(unsigned long	Param)
 									}
 								}
 							} else {
+								spin_unlock_irqrestore(&(IspInfo.SpinLockIrq[irqT_Lock]), flags);
 								LOG_ERR("[rtbc]error:dma(%d) r not being activated(%d)", rt_dma, pstRTBuf->ring_buf[rt_dma].active);
 								return -EFAULT;
 							}
@@ -4220,6 +4225,7 @@ static long	ISP_Buf_CTRL_FUNC(unsigned long	Param)
 								}
 							}
 						} else {
+							spin_unlock_irqrestore(&(IspInfo.SpinLockIrq[irqT_Lock]), flags);
 							LOG_ERR("[rtbc]error:dma(%d) r not being activated(%d)", rt_dma, pstRTBuf->ring_buf[rt_dma].active);
 							return -EFAULT;
 						}
@@ -6098,8 +6104,6 @@ static MINT32 ISP_REGISTER_IRQ_USERKEY(char *userName)
 	char m_UserName[USERKEY_STR_LEN];/* local veriable for saving Username from user space */
 	MBOOL bCopyFromUser = MTRUE;
 
-	spin_lock(&SpinLock_UserKey);
-
 	if (NULL == userName) {
 		LOG_ERR(" [regUser] userName is NULL\n");
 	} else {
@@ -6117,6 +6121,7 @@ static MINT32 ISP_REGISTER_IRQ_USERKEY(char *userName)
 			bCopyFromUser = MFALSE;
 
 		if (MTRUE == bCopyFromUser) {
+			spin_lock(&SpinLock_UserKey);
 			/*check String length, add end */
 			if (length == USERKEY_STR_LEN) {
 				/*string length too long */
@@ -6137,8 +6142,8 @@ static MINT32 ISP_REGISTER_IRQ_USERKEY(char *userName)
 					if (strcmp(IrqUserKey_UserInfo[i].userName, m_UserName) == 0) {
 						key = IrqUserKey_UserInfo[i].userKey;
 						break;
+					}
 				}
-			}
 
 				/* 3.return new userkey for user if the user had not registered before */
 				if (key > 0) {
@@ -6164,11 +6169,12 @@ static MINT32 ISP_REGISTER_IRQ_USERKEY(char *userName)
 					}
 				}
 			}
+			spin_unlock(&SpinLock_UserKey);
 		} else {
 			LOG_ERR(" [regUser] copy_from_user failed (%d)\n", i);
 		}
 	}
-	spin_unlock(&SpinLock_UserKey);
+
 	LOG_INF("User(%s)key(%d)\n", userName, key);
 	return key;
 }
@@ -9775,78 +9781,8 @@ static MINT32 ISP_DumpRegToProc(
 	MINT32 *pEof,
 	void *pData)
 {
-	char *p	= pPage;
-	MINT32 Length =	0;
-	MUINT32	i =	0;
-	MINT32 ret = 0;
-	/*	*/
-	LOG_DBG("- E. pPage: %p. off: %d. Count: %d.", pPage, (unsigned	int)off, Count);
-	/*	*/
-	p += sprintf(p,	" MT6593 ISP Register\n");
-	p += sprintf(p,	"======	top	====\n");
-	for (i = 0x0; i	<= 0x1AC; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	p += sprintf(p,	"======	dma	====\n");
-	for (i = 0x200;	i <= 0x3D8; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n\r", (unsigned	int)(ISP_ADDR +	i),	(unsigned int)ISP_RD32(ISP_ADDR	+ i));
-
-	p += sprintf(p,	"======	tg ====\n");
-	for (i = 0x400;	i <= 0x4EC; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	p += sprintf(p,	"======	cdp	(including EIS)	====\n");
-	for (i = 0xB00;	i <= 0xDE0; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	p += sprintf(p,	"======	seninf ====\n");
-	for (i = 0x4000; i <= 0x40C0; i	+= 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	for (i = 0x4100; i <= 0x41BC; i	+= 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	for (i = 0x4200; i <= 0x4208; i	+= 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	for (i = 0x4300; i <= 0x4310; i	+= 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	for (i = 0x43A0; i <= 0x43B0; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	for (i = 0x4400; i <= 0x4424; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	for (i = 0x4500; i <= 0x4520; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	for (i = 0x4600; i <= 0x4608; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	for (i = 0x4A00; i <= 0x4A08; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-
-	 p += sprintf(p, "====== 3DNR ====\n");
-
-	for (i = 0x4F00; i <= 0x4F38; i += 4)
-		p += sprintf(p,	"+0x%08x 0x%08x\n", (unsigned int)(ISP_ADDR	+ i), (unsigned	int)ISP_RD32(ISP_ADDR +	i));
-	/*	*/
-	*ppStart = pPage + off;
-	/*	*/
-	Length = p - pPage;
-	if (Length > off)
-		Length -= off;
-	else
-		Length = 0;
-
-	/*	*/
-
-	ret = Length < Count ? Length : Count;
-
-	LOG_DBG("- X. ret: %d.", ret);
-
-	return ret;
+	LOG_ERR("ISP_DumpRegToProc: Not implement");
+	return 0;
 }
 
 /*******************************************************************************
@@ -9855,55 +9791,15 @@ static MINT32 ISP_DumpRegToProc(
 static MINT32  ISP_RegDebug(
 	struct file	*pFile,	const char *pBuffer, unsigned long	Count, void	*pData)
 {
-	char RegBuf[64];
-	MUINT32	CopyBufSize = (Count < (sizeof(RegBuf) - 1)) ? (Count) : (sizeof(RegBuf) - 1);
-	MUINT32	Addr = 0;
-	MUINT32	Data = 0;
-
-	LOG_DBG("- E. pFile: %p. pBuffer: %p. Count: %d.", pFile, pBuffer, (int)Count);
-	/*	*/
-	if (copy_from_user(RegBuf, pBuffer, CopyBufSize)) {
-		LOG_ERR("copy_from_user() fail.");
-		return -EFAULT;
-	}
-
-	/*	*/
-	if (sscanf(RegBuf, "%x %x", &Addr, &Data) == 2) {
-		ISP_WR32(ISP_ADDR_CAMINF + Addr, Data);
-		LOG_DBG("Write => Addr:	0x%08X,	Write Data:	0x%08X.	Read Data: 0x%08X.",
-			(int)(ISP_ADDR_CAMINF + Addr),	(int)Data, (int)ioread32(ISP_ADDR_CAMINF + Addr));
-	} else if (sscanf(RegBuf, "%x",	&Addr) == 1) {
-		LOG_DBG("Read => Addr: 0x%08X, Read	Data: 0x%08X.",	(int)(ISP_ADDR_CAMINF +	Addr), (int)ioread32(ISP_ADDR_CAMINF + Addr));
-	}
-	/*	*/
-	LOG_DBG("- X. Count: %d.", (int)Count);
-	return Count;
+	LOG_ERR("ISP_RegDebug: Not implement");
+	return 0;
 }
 
-static MUINT32 proc_regOfst;
 static MINT32 CAMIO_DumpRegToProc(
 	char *pPage, char **ppStart, off_t off, MINT32	Count, MINT32 *pEof, void *pData)
 {
-	char *p	= pPage;
-	MINT32 Length =	0;
-	MINT32 ret = 0;
-	/*	*/
-	LOG_DBG("- E. pPage: %p. off: %d. Count: %d.", pPage, (int)off,	Count);
-	p += sprintf(p,	"reg_0x%lx = 0x%08x \n", ISP_ADDR_CAMINF+proc_regOfst, ioread32(ISP_ADDR_CAMINF + proc_regOfst));
-
-	*ppStart = pPage + off;
-	/*	*/
-	Length = p - pPage;
-	if (Length > off)
-		Length -= off;
-	else
-		Length = 0;
-
-	ret = Length < Count ? Length :	Count;
-
-	LOG_DBG("- X. ret: %d.", ret);
-
-	return ret;
+	LOG_ERR("CAMIO_DumpRegToProc: Not implement");
+	return 0;
 }
 
 /*******************************************************************************
@@ -9915,31 +9811,8 @@ static MINT32  CAMIO_RegDebug(
 	unsigned long	Count,
 	void *pData)
 {
-	char RegBuf[64];
-	MUINT32	CopyBufSize = (Count < (sizeof(RegBuf) - 1)) ? (Count) : (sizeof(RegBuf) - 1);
-	MUINT32	Addr = 0;
-	MUINT32	Data = 0;
-	LOG_DBG("- E. pFile: %p. pBuffer: %p. Count: %d.", pFile, pBuffer, (int)Count);
-
-	/*	*/
-	if (copy_from_user(RegBuf, pBuffer, CopyBufSize)) {
-		LOG_ERR("copy_from_user() fail.");
-		return -EFAULT;
-	}
-
-	/*	*/
-	if (sscanf(RegBuf, "%x %x", &Addr, &Data) == 2) {
-		proc_regOfst = Addr;
-		ISP_WR32(ISP_GPIO_ADDR + Addr, Data);
-		LOG_DBG("Write => Addr:	0x%08X,	Write Data: 0x%08X.	Read Data: 0x%08X.",
-			(int)(ISP_GPIO_ADDR + Addr), (int)Data, (int)ioread32(ISP_GPIO_ADDR + Addr));
-	} else if (sscanf(RegBuf, "%x",	&Addr) == 1) {
-		proc_regOfst = Addr;
-		LOG_DBG("Read => Addr: 0x%08X, Read Data: 0x%08X.",	(int)(ISP_GPIO_ADDR	+ Addr), (int)ioread32(ISP_GPIO_ADDR + Addr));
-	}
-	/*	*/
-	LOG_DBG("- X. Count: %d.", (int)Count);
-	return Count;
+	LOG_ERR("CAMIO_RegDebug: Not implement");
+	return 0;
 }
 /*******************************************************************************
 *

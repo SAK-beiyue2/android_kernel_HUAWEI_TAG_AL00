@@ -168,6 +168,11 @@ typedef enum
 #define MTK_FB_RDMA1_SUPPORT
 
 /**
+ * Support manual control MUTEX HW_DCM
+ */
+#define MANUAL_MUTEX_HW_DCM
+
+/**
  * Support OD engine.
  */
 //#define MTK_FB_OD_SUPPORT

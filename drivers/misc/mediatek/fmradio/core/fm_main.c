@@ -413,7 +413,7 @@ fm_s32 fm_rds_read(struct fm *fmp, fm_s8 *dst, fm_s32 len)
 		   } else {
 		   WCN_DBG(FM_ALT | MAIN, "fm_read wait err\n");
 		   return 0;
-		   } *//*event wait caused AP stop RDS thread and re-read RDS, which caused issue ALPS00595367 */
+		   } */
 
 		WCN_DBG(FM_DBG | MAIN, "fm_read no event now\n");
 		return 0;

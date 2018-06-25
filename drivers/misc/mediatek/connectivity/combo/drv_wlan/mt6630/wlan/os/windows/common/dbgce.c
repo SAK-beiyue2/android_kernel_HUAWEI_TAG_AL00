@@ -8,33 +8,7 @@
 
 
 
-/*
-** $Log: dbgce.c $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 01 04 2011 cp.wu
- * [WCXRP00000338] [MT6620 Wi-Fi][Driver] Separate kalMemAlloc into kmalloc and vmalloc implementations to ease physically continous memory demands
- * separate kalMemAlloc() into virtually-continous and physically-continous type to ease slab system pressure
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
-**  \main\maintrunk.MT6620WiFiDriver_Prj\4 2009-09-09 17:27:53 GMT mtk01084
-**  modify for debug functions
-**  \main\maintrunk.MT6620WiFiDriver_Prj\3 2009-04-17 18:15:55 GMT mtk01426
-**  Don't use dynamic memory allocate for debug message
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-03-10 20:36:47 GMT mtk01426
-**  Init for develop
-**
-*/
+
 
 /*******************************************************************************
 *                E X T E R N A L   R E F E R E N C E S

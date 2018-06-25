@@ -11,105 +11,7 @@
 
 
 
-/*
-** $Log: gl_cfg80211.c $
-**
-** 09 05 2013 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** correct calls to wlanoidSetBssid()
-**
-** 08 28 2013 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** fix typo
-**
-** 08 28 2013 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** add more protection in case cfg80211_sched_scan_request->match_sets[] == NULL
-**
-** 08 28 2013 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** fix for KE issues because refering to wrong data member
-**
-** 08 23 2013 wh.su
-** [BORA00002446] [MT6630] [Wi-Fi] [Driver] Update the security function code
-** Add GTK re-key driver handle function
-**
-** 08 19 2013 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** use kalMemFree() instead of kfree()
-**
-** 08 19 2013 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** change to use dynamic-allocated memory for schedule scan to avoid stack overflow
-**
-** 08 15 2013 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** enlarge  match_ssid_num to 16 for PNO support
-**
-** 08 12 2013 cp.wu
-** [BORA00002227] [MT6630 Wi-Fi][Driver] Update for Makefile and HIFSYS modifications
-** 1. fix on cancel_remain_on_channel() interface
-** 2. queue initialization for another linux kal API
-**
-** 08 09 2013 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** 1. integrate scheduled scan functionality
-** 2. condition compilation for linux-3.4 & linux-3.8 compatibility
-** 3. correct CMD queue access to reduce lock scope
-**
-** 07 30 2013 cp.wu
-** [BORA00002725] [MT6630][Wi-Fi] Add MGMT TX/RX support for Linux port
-** add kernel version awareness for building success between different version of linux kernel
-**
-** 07 29 2013 cp.wu
-** [BORA00002725] [MT6630][Wi-Fi] Add MGMT TX/RX support for Linux port
-** Preparation for porting remain_on_channel support
-**
-** 07 23 2013 wh.su
-** [BORA00002446] [MT6630] [Wi-Fi] [Driver] Update the security function code
-** Sync the latest jb2.mp 11w code as draft version
-** Not the CM bit for avoid wapi 1x drop at re-key
-**
-** 07 05 2013 wh.su
-** [BORA00002446] [MT6630] [Wi-Fi] [Driver] Update the security function code
-** Fix to let the wpa-psk ok
-**
-** 07 02 2013 wh.su
-** [BORA00002446] [MT6630] [Wi-Fi] [Driver] Update the security function code
-** Refine security BMC wlan index assign
-** Fix some compiling warning
-**
-** 07 01 2013 wh.su
-** [BORA00002446] [MT6630] [Wi-Fi] [Driver] Update the security function code
-** Add some debug code, fixed some compiling warning
-**
-** 03 20 2013 wh.su
-** [BORA00002446] [MT6630] [Wi-Fi] [Driver] Update the security function code
-** Add the security code for wlan table assign operation
-**
-** 11 15 2012 cp.wu
-** [BORA00002253] [MT6630 Wi-Fi][Driver][Firmware] Add NLO and timeout mechanism to SCN module
-** sync..
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
-**
-** 08 30 2012 cp.wu
-** [WCXRP00001269] [MT6620 Wi-Fi][Driver] cfg80211 porting merge back to DaVinci
-** check pending scan only by the pointer instead of fgIsRegistered flag.
-**
-** 08 24 2012 cp.wu
-** [WCXRP00001269] [MT6620 Wi-Fi][Driver] cfg80211 porting merge back to DaVinci
-** .
-**
-** 08 24 2012 cp.wu
-** [WCXRP00001269] [MT6620 Wi-Fi][Driver] cfg80211 porting merge back to DaVinci
-** cfg80211 support merge back from ALPS.JB to DaVinci - MT6620 Driver v2.3 branch.
- *
-**
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S
@@ -487,35 +389,62 @@ mtk_cfg80211_get_station(struct wiphy *wiphy,
 			MAC2STR(mac), MAC2STR(arBssid)));
 		return -ENOENT;
 	}
+	
+    /* 2. fill TX rate */
+    if (prGlueInfo->eParamMediaStateIndicated != PARAM_MEDIA_STATE_CONNECTED) {
+        /* not connected */
+        DBGLOG(REQ, WARN, ("not yet connected\n"));
+    } else {
+        rStatus = kalIoctl(prGlueInfo,
+            wlanoidQueryLinkSpeed,
+            &u4Rate,
+            sizeof(u4Rate),
+            TRUE,
+            FALSE,
+            FALSE,
+            &u4BufLen);
 
-	/* 2. fill TX rate */
-	rStatus = kalIoctl(prGlueInfo,
-			   wlanoidQueryLinkSpeed,
-			   &u4Rate, sizeof(u4Rate), TRUE, FALSE, FALSE, &u4BufLen);
+        sinfo->filled |= STATION_INFO_TX_BITRATE;
 
-	if (rStatus != WLAN_STATUS_SUCCESS) {
-		DBGLOG(REQ, WARN, ("unable to retrieve link speed\n"));
-	} else {
-		sinfo->filled |= STATION_INFO_TX_BITRATE;
-		sinfo->txrate.legacy = u4Rate / 1000;	/* convert from 100bps to 100kbps */
-	}
+        if ((rStatus != WLAN_STATUS_SUCCESS) || (u4Rate == 0)) {
+            /*
+            DBGLOG(REQ, WARN, ("unable to retrieve link speed\n"));
+            */
+            DBGLOG(REQ, WARN, ("last link speed\n"));
+            sinfo->txrate.legacy = prGlueInfo->u4LinkSpeedCache;
+        }  else {
+            /*
+            sinfo->filled |= STATION_INFO_TX_BITRATE;
+            */
+            sinfo->txrate.legacy = u4Rate / 1000; /* convert from 100bps to 100kbps */
+            prGlueInfo->u4LinkSpeedCache = u4Rate / 1000;
+        }
+    }
 
-	if (prGlueInfo->eParamMediaStateIndicated != PARAM_MEDIA_STATE_CONNECTED) {
-		/* not connected */
-		DBGLOG(REQ, WARN, ("not yet connected\n"));
-	} else {
-		/* 3. fill RSSI */
-		rStatus = kalIoctl(prGlueInfo,
-				   wlanoidQueryRssi,
-				   &i4Rssi, sizeof(i4Rssi), TRUE, FALSE, FALSE, &u4BufLen);
+    /* 3. fill RSSI */
+    if (prGlueInfo->eParamMediaStateIndicated != PARAM_MEDIA_STATE_CONNECTED) {
+        /* not connected */
+        DBGLOG(REQ, WARN, ("not yet connected\n"));
+    } else {
+        rStatus = kalIoctl(prGlueInfo,
+            wlanoidQueryRssi,
+            &i4Rssi,
+            sizeof(i4Rssi),
+            TRUE,
+            FALSE,
+            FALSE,
+            &u4BufLen);
 
-		if (rStatus != WLAN_STATUS_SUCCESS) {
-			DBGLOG(REQ, WARN, ("unable to retrieve link speed\n"));
-		} else {
-			sinfo->filled |= STATION_INFO_SIGNAL;
-			sinfo->signal = i4Rssi;	/* dBm */
-		}
-	}
+        sinfo->filled |= STATION_INFO_SIGNAL;
+
+        if ((rStatus != WLAN_STATUS_SUCCESS) || (i4Rssi == PARAM_WHQL_RSSI_MIN_DBM) || (i4Rssi == PARAM_WHQL_RSSI_MAX_DBM)) {
+            DBGLOG(REQ, WARN, ("last rssi\n"));
+            sinfo->signal = prGlueInfo->i4RssiCache;
+        } else {
+            sinfo->signal = i4Rssi; /* dBm */
+            prGlueInfo->i4RssiCache = i4Rssi;
+        }
+    }
 
 	/* Get statistics from net_dev */
 	prDevStats = (struct net_device_stats *)kalGetStats(ndev);
@@ -741,7 +670,7 @@ mtk_cfg80211_connect(struct wiphy *wiphy,
 	ENUM_PARAM_ENCRYPTION_STATUS_T eEncStatus;
 	ENUM_PARAM_AUTH_MODE_T eAuthMode;
 	UINT_32 cipher;
-	PARAM_SSID_T rNewSsid;
+	PARAM_CONNECT_T rNewSsid;
 	BOOLEAN fgCarryWPSIE = FALSE;
 	ENUM_PARAM_OP_MODE_T eOpMode;
 	UINT_32 i, u4AkmSuite = 0;
@@ -1068,30 +997,17 @@ mtk_cfg80211_connect(struct wiphy *wiphy,
 		}
 	}
 
-	if (sme->ssid_len > 0) {
-		/* connect by SSID */
-		COPY_SSID(rNewSsid.aucSsid, rNewSsid.u4SsidLen, sme->ssid, sme->ssid_len);
+	rNewSsid.u4CenterFreq = sme->channel ? sme->channel->center_freq:0;
+	rNewSsid.pucBssid = sme->bssid;
+	rNewSsid.pucSsid = sme->ssid;
+	rNewSsid.u4SsidLen = sme->ssid_len;
+	rStatus = kalIoctl(prGlueInfo, wlanoidSetConnect,  (PVOID) &rNewSsid, sizeof(PARAM_CONNECT_T),
+	       				 FALSE, FALSE, TRUE, &u4BufLen);
 
-		rStatus = kalIoctl(prGlueInfo,
-				   wlanoidSetSsid,
-				   (PVOID) & rNewSsid,
-				   sizeof(PARAM_SSID_T), FALSE, FALSE, TRUE, &u4BufLen);
-
-		if (rStatus != WLAN_STATUS_SUCCESS) {
-			DBGLOG(REQ, WARN, ("set SSID:%lx\n", rStatus));
-			return -EINVAL;
-		}
-	} else {
-		/* connect by BSSID */
-		rStatus = kalIoctl(prGlueInfo,
-				   wlanoidSetBssid,
-				   (PVOID) sme->bssid, MAC_ADDR_LEN, FALSE, FALSE, TRUE, &u4BufLen);
-
-		if (rStatus != WLAN_STATUS_SUCCESS) {
-			DBGLOG(REQ, WARN, ("set BSSID:%lx\n", rStatus));
-			return -EINVAL;
-		}
-	}
+    if (rStatus != WLAN_STATUS_SUCCESS) {
+        DBGLOG(REQ, WARN, ("set SSID:%x\n", rStatus));
+        return -EINVAL;
+    }
 #if 0
 	if (sme->bssid != NULL && 1 /* prGlueInfo->fgIsBSSIDSet */) {
 		/* connect by BSSID */
@@ -2812,7 +2728,7 @@ mtk_cfg80211_testmode_get_lte_channel(IN struct wiphy *wiphy,
 #define CHN_DIRTY_WEIGHT_UPPERBOUND 4
 
 
-	BOOLEAN fgIsReady = FALSE, fgIsFistRecord = TRUE;
+	BOOLEAN fgIsReady = FALSE;
 	BOOLEAN fgIsPureAP;
 
 
@@ -2947,13 +2863,17 @@ mtk_cfg80211_testmode_get_lte_channel(IN struct wiphy *wiphy,
 		}
 
 		fgIsReady = prGlueInfo->prAdapter->rWifiVar.rChnLoadInfo.fgDataReadyBit;
-		PreferChannels[0].u2APNum = 0xFFFF;
-		PreferChannels[1].u2APNum = 0xFFFF;
+		PreferChannels[0].ucChannel = 0;  	// default channel : ch1 
+		PreferChannels[1].ucChannel = 0;  	// default channel : ch1 
+		PreferChannels[0].u2APNum = 0xFFFF; // default channel score  : 0xFFFF
+		PreferChannels[1].u2APNum = 0xFFFF; // default channel score  : 0xFFFF
 
 		/* (u4TempSafeChannelBitmask & BIT(1) == 1) -> 2G Ch1 is valid */
-		if (u4TempSafeChannelBitmask == 0)
+		if (u4TempSafeChannelBitmask == 0) {
+			DBGLOG(P2P, WARN, ("  Can't get any safe channel from fw!?\n"));
 			u4TempSafeChannelBitmask = BITS(1, (ucMax_24G_Chn_List));
-		DBGLOG(P2P, INFO, ("   u4TempSafeChannelBitmask=%08x\n", u4TempSafeChannelBitmask));
+		}
+		DBGLOG(P2P, INFO, ("   SafeChannelBitmask=%08x\n", u4TempSafeChannelBitmask));
 
 		ucChValidCnt = 0;
 		for (ucIdx = ucDefaultIdx; ucIdx < ucMax_24G_Chn_List; ucIdx++) {
@@ -2966,8 +2886,7 @@ mtk_cfg80211_testmode_get_lte_channel(IN struct wiphy *wiphy,
 				PreferChannels[0].ucChannel = ucIdx;
 				PreferChannels[0].u2APNum = ar2_4G_ChannelLoadingWeightScore[ucIdx].u2APNum;
 			} else {
-				if ((PreferChannels[1].u2APNum >= ar2_4G_ChannelLoadingWeightScore[ucIdx].u2APNum) || (fgIsFistRecord == 1)) {
-					fgIsFistRecord = FALSE;
+				if (PreferChannels[1].u2APNum >= ar2_4G_ChannelLoadingWeightScore[ucIdx].u2APNum) {
 					PreferChannels[1].ucChannel = ucIdx;
 					PreferChannels[1].u2APNum = ar2_4G_ChannelLoadingWeightScore[ucIdx].u2APNum;
 				}

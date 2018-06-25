@@ -1,4 +1,5 @@
 #include <linux/kernel.h>
+#include <linux/delay.h>
 #include <asm/io.h>
 
 #include <mach/mt_reg_base.h>
@@ -11,7 +12,15 @@
 static unsigned char g_cBWL;
 static void __iomem *EMI_BASE_ADDR = NULL;
 static void __iomem *DRAMCNAO_BASE_ADDR;
+#if DUMP_DEBUG_REGISTER 
+static void __iomem *infracfg_base;
+static void __iomem *gpio_base;
 
+static unsigned long infracfg_ao_base;
+#define INFRACFG_AO_BASE        (infracfg_ao_base)      //0xF0000000
+#define	INFRA_GLOBALCON_DCMCTL (INFRACFG_AO_BASE + 0x050) //0x10000050
+#define INFRACFG_AO_NODE "mediatek,INFRACFG_AO"
+#endif
 void BM_Init(void)
 {
 
@@ -37,6 +46,46 @@ void BM_Init(void)
 		  return -1;
 	  }
 	
+#if DUMP_DEBUG_REGISTER 
+    /* infracfg_ao @ 0x10000000*/
+    node = of_find_compatible_node(NULL, NULL, "mediatek,INFRACFG_AO");
+    if (!node) 
+    {
+            printk("error: cannot find node - mediatek,INFRACFG_AO\n"); 
+            BUG();
+    }
+    infracfg_ao_base = (unsigned long)of_iomap(node, 0);
+    if(!infracfg_ao_base) {
+            printk("error: cannot iomap - mediatek,INFRACFG_AO\n");
+            BUG();
+    }
+
+    /* INFRACFG @ 0x10201000 */
+    node = of_find_compatible_node(NULL, NULL, "mediatek,INFRACFG");
+    if (!node) 
+    {
+            printk("error: cannot find node - mediatek,INFRACFG\n"); 
+            BUG();
+    }
+    infracfg_base = (unsigned long)of_iomap(node, 0);
+    if(!infracfg_base) {
+            printk("error: cannot iomap - mediatek,INFRACFG\n");
+            BUG();
+    }
+
+    /* GPIO @ 0x10211000 */
+    node = of_find_compatible_node(NULL, NULL, "mediatek,GPIO");
+    if (!node) 
+    {
+            printk("error: cannot find node - mediatek,GPIO\n"); 
+            BUG();
+    }
+    gpio_base = (unsigned long)of_iomap(node, 0);
+    if(!gpio_base) {
+            printk("error: cannot iomap - mediatek,GPIO\n");
+            BUG();
+    }          
+#endif      	
     g_cBWL = 0;
 
     /*
@@ -545,6 +594,53 @@ unsigned int DRAMC_GetInterbankCount(DRAMC_Cnt_Type CountType)
     return iCount;
 }
 
+#if DUMP_DEBUG_REGISTER     
+void dump_emi_registers(void)
+{
+    void __iomem *debug_top;
+    
+    emidumpstatus = 1;
+    // Disable Infra DCM
+    mt_reg_sync_writel(readl(IOMEM(INFRA_GLOBALCON_DCMCTL)) & ~(0x1<<1 | 0x1<<8), INFRA_GLOBALCON_DCMCTL);   // *INFRA_GLOBALCON_DCMCTL	&= ~(0x1<<1 | 0x1<<8); -> Disable infra DCM and clock gated  
+
+    // Enable EMI bus monitor
+    BM_SetEmiDcm(0x40);                        //*EMI_CONM |= 0x1<<30;     -> Disable EMI internal clock gated
+    mt_reg_sync_writel(0x00200010, EMI_BMEN);  //*EMI_BMEN  = 0x00200010;  -> Reset counter, set TSCT for GPU(M5) and read only
+    BM_SetLatencyCounter();                    //*EMI_BMEN2 = 0x02000000;  -> Enable latency monitor
+    mt_reg_sync_writel(0x00000020, EMI_MSEL);  //*EMI_MSEL  = 0x00000020;  -> Set TSCT2 for GPU(M5)
+    mt_reg_sync_writel(0x00000C02, EMI_BMRW0); //*EMI_BMRW0 = 0x00000C02;  -> Set M5 latency monitor for read + write, and TSCT2 for write only
+    BM_Enable(1);   //*EMI_BMEN |= 0x1;   -> Enable bus monitor
+
+    // Wait for a while
+    mdelay(1000);
+
+    // Get latency result
+    BM_Pause();     //*EMI_BMEN |= 0x2;   -> Pause bus monitor
+
+    // Get latency result
+    pr_err("GPU(M5) total latency = 0x%x\n", BM_GetLatencyCycle(6));            // dump *EMI_TTYPE6;  -> GPU(M5) total latency
+    pr_err("GPU(M5) total transaction = 0x%x\n", BM_GetLatencyCycle(14));       // dump *EMI_TTYPE14; -> GPU(M5) total transaction
+    pr_err("GPU(M5) read transaction = 0x%x\n", BM_GetTransCount(1));           // dump *EMI_TSCT     -> GPU(M5) read transaction
+    pr_err("GPU(M5) write transaction = 0x%x\n", BM_GetTransCount(2));          // dump *EMI_TSCT2    -> GPU(M5) write transaction           
+
+    // Get other register information
+    pr_err("EMI_CONI  = 0x%x\n", readl(IOMEM(EMI_CONI)));      // GPU OSTD setting when LTE busy
+    pr_err("EMI_TEST0 = 0x%x\n", readl(IOMEM(EMI_TEST0)));     // OSTD setting of M0~M3
+    pr_err("EMI_TEST1 = 0x%x\n", readl(IOMEM(EMI_TEST1)));     // OSTD settinf of M4~M5
+    pr_err("EMI_ARBF  = 0x%x\n", readl(IOMEM(EMI_ARBF)));      // Arbitration setting for GPU(M5)
+    pr_err("EMI_ARBG_2ND = 0x%x\n", readl(IOMEM(EMI_ARBG_2ND)));   // Arbitration setting for GPU(M5) when LTE busy
+    
+    mt_reg_sync_writel(0x3, (infracfg_base+0x108));       //0x10201108 = 3
+    mt_reg_sync_writel(0x1, (infracfg_ao_base+0x508));    //0x10000508 = 1
+    mt_reg_sync_writel(0x2, (gpio_base+0x6D0));           //0x102116D0 = 2
+
+    debug_top = ioremap(0x104A0000, 0x1000);
+    mt_reg_sync_writel(0xC5ACCE55, (debug_top + 0xFB0));  //write 0x104A0FB0 = 0xC5ACCE55 
+    mt_reg_sync_writel(0x1 | 0x8,  (debug_top + 0x084));  //write 0x104A0084 = 0x1 | 0x8 //dbg_mon0_en | (eco_dbgsys_mon_addr[1] ^ eco_dbgsys_mon_addr[2])
+    pr_err("0x104A0080 = 0x%x\n", readl(IOMEM(debug_top + 0x080)));   //read 0x104A0080
+    emidumpstatus = 0;
+}
+#endif    
 unsigned int DRAMC_GetIdleCount(void)
 {
     return readl(IOMEM(DRAMC_IDLE_COUNT));

@@ -109,7 +109,11 @@ extern int mtkpasr_drop_page(struct page *page);
 extern unsigned char mtkpasr_log_buf[4096];
 #endif
 
+#ifndef CONFIG_64BIT
 #define MTKPASR_EXHAUSTED	(low_wmark_pages(MTKPASR_ZONE) + pageblock_nr_pages)
+#else
+#define MTKPASR_EXHAUSTED	(low_wmark_pages(MTKPASR_ZONE) + (pageblock_nr_pages >> 1))
+#endif
 /* Show mem banks */
 int mtkpasr_show_banks(char *buf)
 {

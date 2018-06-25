@@ -155,7 +155,7 @@
 		reserve-memory-ccci_md1 {
 			compatible = "reserve-memory-ccci_md1";
 			no-map;
-			size = <0 0x3810000>; // md_size+smem_size
+			size = <0 0x3010000>; // md_size+smem_size
 			alignment = <0 0x2000000>;
 			alloc-ranges = <0 0x40000000 0 0xC0000000>;
 		};
@@ -163,7 +163,7 @@
 		consys-reserve-memory {
 			compatible = "consys-reserve-memory";
 			no-map;
-			size = <0 0x200000>;
+			size = <0 0x100000>;
 			alignment = <0 0x200000>;
 		};
 
@@ -573,9 +573,9 @@
 			interrupts = <0 128 0x2>;
 		};
 
-		CQDMA@0x10212c00 {
+		CQDMA@0x10217C00 {
 			compatible = "mediatek,CQDMA";
-			reg = <0x10212c00 0x1000>;
+			reg = <0x10217C00 0x1000>;
 			interrupts = <0 143 0x8>;
 			nr_channel = <1>;
                 };
@@ -1177,9 +1177,9 @@
 			      <0x10211A70 0x000C>,  /*DISP_DPI_IO_DRIVING1 */
 			      <0x10211974 0x000C>,  /*DISP_DPI_IO_DRIVING2 */
 			      <0x10211B70 0x000C>,  /*DISP_DPI_IO_DRIVING3 */
-			      <0x10206044 0x000C>,  /*DISP_DPI_TIMING1 */
-			      <0x10206514 0x000C>,  /*DISP_DPI_TIMING2 */
-			      <0x10206558 0x000C>,  /*DISP_DPI_TIMING3 */
+			      <0 0>,  /*DISP_DPI_TIMING1 */
+			      <0 0>,  /*DISP_DPI_TIMING2 */
+			      <0 0>,  /*DISP_DPI_TIMING3 */
 			      <0x102100A0 0x1000>,  /*DISP_TVDPLL_CFG6 */
 			      <0x10209270 0x1000>,  /*DISP_TVDPLL_CON0 */
 			      <0x10209274 0x1000>,  /*DISP_TVDPLL_CON1 */

@@ -99,7 +99,7 @@ unsigned int gPrefetchControl = 0;
 // enable it when use UART to grab log
 unsigned int gEnableUartLog = 0;
 // mutex SOF at raing edge of vsync, can save more time for cmdq config
-unsigned int gEnableMutexRisingEdge = 1; 
+unsigned int gEnableMutexRisingEdge = 0;
 // only write dirty register, reduce register number write by cmdq
 unsigned int gEnableReduceRegWrite = 0;
 
@@ -108,9 +108,11 @@ unsigned int gDumpESDCMD = 0;
 
 unsigned int gESDEnableSODI = 1;
 unsigned int gEnableOVLStatusCheck = 0;
+unsigned int gEnableDSIStateCheck = 0;
 
 unsigned int gResetRDMAEnable = 1;
 unsigned int gEnableSWTrigger = 0; 
+unsigned int gMutexFreeRun = 1; 
 
 unsigned int gResetOVLInAALTrigger = 0;
 unsigned int gDisableOVLTF = 0;
@@ -833,10 +835,43 @@ static void process_dbg_opt(const char *opt)
         {
             ASSERT(0);  
         }
+        else if(enable==47)
+        {
+            if(gEnableDSIStateCheck==0)
+              gEnableDSIStateCheck = 1;
+            else
+              gEnableDSIStateCheck = 0;
+
+            printk("DDP: gEnableDSIStateCheck=%d\n", gEnableDSIStateCheck);    
+            sprintf(buf, "gEnableDSIStateCheck: %d\n", gEnableDSIStateCheck);   
+        }
+        else if(enable==48)
+        {
+            if(gMutexFreeRun==0)
+              gMutexFreeRun = 1;
+            else
+              gMutexFreeRun = 0;
+
+            printk("DDP: gMutexFreeRun=%d\n", gMutexFreeRun);    
+            sprintf(buf, "gMutexFreeRun: %d\n", gMutexFreeRun);     
+        }
     }
     else if (0 == strncmp(opt, "mmp", 3))
     {
         init_ddp_mmp_events();
+    }
+    else if (0 == strncmp(opt, "tui:", 4))
+    {
+        if (0 == strncmp(opt + 4, "on", 2))
+        {  
+            display_enter_tui();
+            printk("enter tui\n");
+        }
+        else if (0 == strncmp(opt + 4, "off", 3))
+        {
+            display_exit_tui();
+            printk("leave tui\n");
+        }
     }
     else
     {

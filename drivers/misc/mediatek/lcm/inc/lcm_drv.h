@@ -454,7 +454,7 @@ typedef struct
 typedef struct {
     unsigned char cmd;
     unsigned char count;
-    unsigned char para_list[2];
+    unsigned char para_list[6];
 } LCM_esd_check_item;
 typedef enum
 {

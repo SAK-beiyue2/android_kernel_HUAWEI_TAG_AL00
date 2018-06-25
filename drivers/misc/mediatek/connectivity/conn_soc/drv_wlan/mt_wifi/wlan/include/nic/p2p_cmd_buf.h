@@ -11,18 +11,7 @@
 
 
 
-/*
-** $Log: p2p_cmd_buf.h $
- *
- * 07 17 2012 yuche.tsai
- * NULL
- * Compile no error before trial run.
- *
- * 12 22 2010 cp.wu
- * [WCXRP00000283] [MT6620 Wi-Fi][Driver][Wi-Fi Direct] Implementation of interface for supporting Wi-Fi Direct Service Discovery
- * 1. header file restructure for more clear module isolation
- * 2. add function interface definition for implementing Service Discovery callbacks
-*/
+
 
 #ifndef _P2P_CMD_BUF_H
 #define _P2P_CMD_BUF_H

@@ -624,11 +624,9 @@ static void lcm_update(unsigned int x, unsigned int y,
     data_array[1]= (y1_MSB<<24)|(y0_LSB<<16)|(y0_MSB<<8)|0x2b;
     data_array[2]= (y1_LSB);
     dsi_set_cmdq(data_array, 3, 1);
-    /*BEGIN PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
     //delete high speed packet
     //data_array[0]=0x00290508;
     //dsi_set_cmdq(data_array, 1, 1);
-    /*END PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 
     data_array[0]= 0x002c3909;
     dsi_set_cmdq(data_array, 1, 0);	
@@ -695,4 +693,3 @@ LCM_DRIVER r63419_fhd_truly_phantom_lcm_drv=
 #endif
 
 };
-/* END PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/

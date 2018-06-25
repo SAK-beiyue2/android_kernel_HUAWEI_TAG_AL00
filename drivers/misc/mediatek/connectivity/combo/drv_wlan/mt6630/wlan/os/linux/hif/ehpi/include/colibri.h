@@ -10,36 +10,7 @@
 
 
 
-/*
-** $Log: colibri.h $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 04 06 2011 cp.wu
- * [WCXRP00000540] [MT5931][Driver] Add eHPI8/eHPI16 support to Linux Glue Layer
- * 1. do not check for pvData inside wlanNetCreate() due to it is NULL for eHPI  port
- * 2. update perm_addr as well for MAC address
- * 3. not calling check_mem_region() anymore for eHPI
- * 4. correct MSC_CS macro for 0-based notation
- *
- * 04 01 2011 cp.wu
- * [WCXRP00000540] [MT5931][Driver] Add eHPI8/eHPI16 support to Linux Glue Layer
- * 1. simplify config.h due to aggregation options could be also applied for eHPI/SPI interface
- * 2. use spin-lock instead of semaphore for protecting eHPI access because of possible access from ISR
- * 3. request_irq() API has some changes between linux kernel 2.6.12 and 2.6.26
- *
- * 03 23 2011 cp.wu
- * [WCXRP00000540] [MT5931][Driver] Add eHPI8/eHPI16 support to Linux Glue Layer
- * apply multi-queue operation only for linux kernel > 2.6.26
- *
- * 03 11 2011 cp.wu
- * [WCXRP00000540] [MT5931][Driver] Add eHPI8/eHPI16 support to Linux Glue Layer
- * add porting layer for eHPI.
-**
-*/
+
 #ifndef _COLIBRI_H
 #define _COLIBRI_H
 /*******************************************************************************

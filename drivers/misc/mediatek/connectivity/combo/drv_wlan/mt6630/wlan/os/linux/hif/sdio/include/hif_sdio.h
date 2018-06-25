@@ -8,48 +8,7 @@
 
 */
 
-/*
-** $Log: $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 06 13 2012 yuche.tsai
- * NULL
- * Update maintrunk driver.
- * Add support for driver compose assoc request frame.
- *
- * 05 02 2012 terry.wu
- * NULL
- * Fix build error if HAVE_AEE_FEATURE = n
- *
- * 04 12 2012 terry.wu
- * NULL
- * Add AEE message support
- * 1) Show AEE warning(red screen) if SDIO access error occurs
 
- *
- * 03 02 2012 terry.wu
- * NULL
- * Enable CFG80211 Support.
- *
- * 08 18 2010 jeffrey.chang
- * NULL
- * support multi-function sdio
- *
- * 07 25 2010 george.kuo
- *
- * Move hif_sdio driver to linux directory.
- *
- * 07 23 2010 george.kuo
- *
- * Add MT6620 driver source tree
- * , including char device driver (wmt, bt, gps), stp driver, interface driver (tty ldisc and hif_sdio), and bt hci driver.
-**
-**
-*/
 
 #ifndef _HIF_SDIO_H
 #define _HIF_SDIO_H

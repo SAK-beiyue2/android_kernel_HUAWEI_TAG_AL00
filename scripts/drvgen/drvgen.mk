@@ -86,12 +86,31 @@ DRVGEN_TOOL := $(PWD)/tools/dct/DrvGen
 DWS_FILE := $(PWD)/$(DRVGEN_PATH)/codegen.dws
 DRVGEN_PREBUILT_PATH := $(PWD)/$(DRVGEN_PATH)
 DRVGEN_PREBUILT_CHECK := $(filter-out $(wildcard $(addprefix $(DRVGEN_PREBUILT_PATH)/,$(ALL_DRVGEN_FILE))),$(addprefix $(DRVGEN_PREBUILT_PATH)/,$(ALL_DRVGEN_FILE)))
-
+#wangyuchao custom codegen dws
+HQ_PROJECT_DEFALUT_PATH := $(PWD)/../device/huaqin/$(HQ_PROJECT)/default
+HQ_PROJECT_CLIENT_PATH  := $(PWD)/../device/huaqin/$(HQ_PROJECT)/$(HQ_CLIENT)
+HQ_CUST_DWS_FILE := $(PWD)/../vendor/mediatek/proprietary/custom/$(MTK_PROJECT)/kernel/dct/dct/codegen.dws
+# DCT Path
+DCT_PATH := $(HQ_PROJECT_CLIENT_PATH)/drv/codegen.dws
+ifneq ($(strip $(wildcard $(DCT_PATH))), )
+LOCAL_DCT_PATH := $(DCT_PATH)
+else
+LOCAL_DCT_PATH := $(HQ_PROJECT_DEFALUT_PATH)/drv/codegen.dws
+endif
+.PHONY: hqcustgen
+hqcustgen:
+	@echo www gen kernel codegen dws
+ifneq ($(strip $(wildcard $(LOCAL_DCT_PATH))),)
+	$(hide) cp $(LOCAL_DCT_PATH) $(DWS_FILE) -f
+	$(hide) cp $(LOCAL_DCT_PATH) $(HQ_CUST_DWS_FILE) -f
+endif
+$(info DWS_FILE=$(PWD))
+$(info DWS_FILE22= $(HQ_CUST_DWS_FILE))
 .PHONY: drvgen
 drvgen: $(DRVGEN_FILE_LIST)
 ifneq ($(DRVGEN_PREBUILT_CHECK),)
 
-$(DRVGEN_OUT)/inc/cust_kpd.h: $(DRVGEN_TOOL) $(DWS_FILE)
+$(DRVGEN_OUT)/inc/cust_kpd.h: $(DRVGEN_TOOL) $(DWS_FILE) hqcustgen
 	@mkdir -p $(dir $@)
 	@$(DRVGEN_TOOL) $(DWS_FILE) $(DRVGEN_OUT_PATH) $(DRVGEN_OUT_PATH) kpd_h
 
@@ -176,7 +195,7 @@ $(DRVGEN_OUT)/cust_clk_buf.dtsi: $(DRVGEN_TOOL) $(DWS_FILE)
 	@$(DRVGEN_TOOL) $(DWS_FILE) $(DRVGEN_OUT_PATH) $(DRVGEN_OUT_PATH) clk_buf_dtsi
 
 else
-$(DRVGEN_FILE_LIST): $(DRVGEN_OUT)/% : $(DRVGEN_PREBUILT_PATH)/%
+$(DRVGEN_FILE_LIST): $(DRVGEN_OUT)/% : $(DRVGEN_PREBUILT_PATH)/%  hqcustgen
 	@mkdir -p $(dir $@)
 	cp -f $< $@
 endif

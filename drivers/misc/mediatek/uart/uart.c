@@ -1253,7 +1253,6 @@ static void mtk_uart_dma_vfifo_callback(void *data)
         /*the data must be read before return from callback, otherwise, the interrupt
           will be triggered again and again*/
         mtk_uart_dma_vfifo_rx_tasklet((unsigned long)uart);
-        //return; [ALPS00031975]
     } else if (dma->dir == DMA_TO_DEVICE) {
     }
     tasklet_schedule(&dma->tasklet);
@@ -1402,12 +1401,10 @@ static void mtk_uart_dma_free(struct mtk_uart *uart,
         del_timer_sync(&dma->vfifo->timer);
     if (dma->vfifo && hrtimer_active(&dma->vfifo->flush))
         hrtimer_cancel(&dma->vfifo->flush);
-    /* [ALPS00030487] tasklet_kill function may schedule, so release spin lock first,
-     *			after release, set spin lock again.
-     */
-    spin_unlock_irqrestore(&uart->port.lock, flags); /* [ALPS00030487] Add this */
+    
+    spin_unlock_irqrestore(&uart->port.lock, flags);
     tasklet_kill(&dma->tasklet);
-    spin_lock_irqsave(&uart->port.lock, flags); /* [ALPS00030487] Add this */
+    spin_lock_irqsave(&uart->port.lock, flags);
     mtk_uart_reset_dma(dma);
     mtk_uart_vfifo_disable(uart, dma->vfifo);    
     mtk_uart_vfifo_free(uart, dma->vfifo);      
@@ -1422,15 +1419,7 @@ static void mtk_uart_dma_free(struct mtk_uart *uart,
 static void mtk_uart_set_baud(struct mtk_uart *uart , int baudrate)
 { 
     if (uart->port.flags & ASYNC_SPD_CUST) {
-    	/**
-    	 * [ALPS00137126] Begin
-    	 * Because the origin design of custom baudrate in linux is for low speed case, we add some
-    	 * modify to support high speed case. 
-    	 * NOTE: If the highest bit of "custom_divisor" is ONE, we will use custom_divisor store baudrate
-    	 * directly. That means(we suppose unsigned int is 32 bits):
-    	 *     custom_divisor[31] == 1, then custom_divisor[30..0] == custom baud rate
-    	 *     custom_divisor[31] == 0, then custom_divisor[30..0] == sysclk/16/baudrate
-    	 */
+    	
     	if(uart->port.custom_divisor & (1<<31) ){
     	    baudrate = uart->port.custom_divisor&(~(1<<31));
     	    if( baudrate > (uart->sysclk>>2) ) /* Baud rate should not more than sysclk/4 */
@@ -1444,7 +1433,6 @@ static void mtk_uart_set_baud(struct mtk_uart *uart , int baudrate)
             } else {
                 baudrate = uart->custom_baud;
             }
-    	 /* [ALPS00137126] End */
         }
         MSG(CFG, "CUSTOM, baudrate = %d, divisor = %d\n", baudrate, uart->port.custom_divisor);
     }
@@ -1836,9 +1824,9 @@ static int mtk_uart_startup(struct uart_port *port)
     /* allocate irq line */
     //ret = request_irq(port->irq, mtk_uart_irq, 0, DRV_NAME, uart);
 #ifdef CONFIG_OF
-    ret = request_irq(port->irq, (irq_handler_t)mtk_uart_irq, uart->setting->irq_flags, DRV_NAME, uart); /* [ALPS00142658] Fix incompatible pointer type waning */
+    ret = request_irq(port->irq, (irq_handler_t)mtk_uart_irq, uart->setting->irq_flags, DRV_NAME, uart);
 #else
-    ret = request_irq(port->irq, (irq_handler_t)mtk_uart_irq, IRQF_LEVEL_TRIGGER_POLARITY, DRV_NAME, uart); /* [ALPS00142658] Fix incompatible pointer type waning */
+    ret = request_irq(port->irq, (irq_handler_t)mtk_uart_irq, IRQF_LEVEL_TRIGGER_POLARITY, DRV_NAME, uart);
 #endif
     if (ret)
         return ret;
@@ -2158,7 +2146,7 @@ static void mtk_uart_config_port(struct uart_port *port, int flags)
 static int mtk_uart_verify_port(struct uart_port *port,
     struct serial_struct *ser)
 {
-#if ( defined(ENABLE_DEBUG)||defined(SERIAL_STRUCT_EXT) ) /* [ALPS00142658] Fix unused variable waring */
+#if ( defined(ENABLE_DEBUG)||defined(SERIAL_STRUCT_EXT) )
     struct mtk_uart* uart = (struct mtk_uart*)port;
 #endif        
     int ret = 0;
@@ -2193,8 +2181,7 @@ static int mtk_uart_get_poll_char(struct uart_port *port)
 {   /* don't care vfifo setting */
     struct mtk_uart *uart = (struct mtk_uart *)port;
     
-    /* [ALPS00033048] For Linux 2.6.35 kgdb chagne, using while loop may block kgdb,
-     * return NO_POLL_CHAR directly if no data to read */
+    
     #if 0
     while (!(uart->read_status(uart) & UART_LSR_DR))
         cpu_relax();
@@ -2202,7 +2189,6 @@ static int mtk_uart_get_poll_char(struct uart_port *port)
     if (!mtk_uart_data_ready(uart))
         return NO_POLL_CHAR;
     #endif
-    /* End of [ALPS00033048] */
 
     return mtk_uart_read_byte(uart);
 }

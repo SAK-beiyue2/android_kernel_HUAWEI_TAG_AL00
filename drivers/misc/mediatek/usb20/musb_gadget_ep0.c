@@ -326,13 +326,12 @@ __acquires(musb->lock)
 				if (!musb_ep->busy && request) {
 					DBG(0, "restarting the request\n");
 					musb_ep_restart(musb, request);
-				} else if (!is_in) { //Modification for ALPS00451478 
+				} else if (!is_in) {
 					csr  = musb_readw(regs, MUSB_RXCSR);
 					DBG(0, "no more request, clear the RXPKTRDY to avoid error RX FIFO/DMA read!! csr = 0x%x\n", csr);
 					csr &= ~(MUSB_RXCSR_RXPKTRDY);
 					musb_writew(regs, MUSB_RXCSR, csr);
 				}
-				//Modification for ALPS00451478
 
 				/* select ep0 again */
 				musb_ep_select(mbase, 0);

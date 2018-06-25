@@ -495,7 +495,7 @@ VOID rlmUpdateParamsForAP(P_ADAPTER_T prAdapter, P_BSS_INFO_T prBssInfo, BOOLEAN
 				eHtProtectMode = HT_PROTECT_MODE_NON_HT;
 			} else if (!(prStaRec->u2HtCapInfo & HT_CAP_INFO_SUP_CHNL_WIDTH)) {
 				/* 20MHz-only */
-				if (eHtProtectMode == HT_PROTECT_MODE_NONE) {
+				if ((eHtProtectMode == HT_PROTECT_MODE_NONE) && (prBssInfo->eBssSCO != CHNL_EXT_SCN)) {
 					eHtProtectMode = HT_PROTECT_MODE_20M;
 				}
 			}

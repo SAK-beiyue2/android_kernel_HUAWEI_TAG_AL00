@@ -1,6 +1,6 @@
 /*****************************************************************************
- *
- * Filename:
+ *  
+ * Filename: 
  * ---------
  *    battery_common.c
  *
@@ -12,11 +12,11 @@
  * ------------
  *   This Module defines functions of mt6323 Battery charging algorithm
  *   and the Anroid Battery service for updating the battery status
- *
+ * 
  * Author:
  * -------
  * Oscar Liu
- *
+ * 
  ****************************************************************************/
 #include <linux/init.h>		/* For init/exit macros */
 #include <linux/module.h>	/* For MODULE_ marcros  */
@@ -78,6 +78,7 @@
 #include "mach/mtk_rtc.h"
 #include <linux/reboot.h>
 
+#include "cust_pmic.h"
 
 
 #if defined(CONFIG_MTK_DUAL_INPUT_CHARGER_SUPPORT)
@@ -91,8 +92,6 @@
 /* Battery Logging Entry */
 /* ////////////////////////////////////////////////////////////////////////////// */
 int Enable_BATDRV_LOG = BAT_LOG_CRTI;
-/* static struct proc_dir_entry *proc_entry; */
-char proc_bat_data[32];
 
 /* ///////////////////////////////////////////////////////////////////////////////////////// */
 /* // Smart Battery Structure */
@@ -211,6 +210,8 @@ static struct hrtimer battery_kthread_timer;
 kal_bool g_battery_soc_ready = KAL_FALSE;
 extern BOOL bat_spm_timeout;
 extern U32 sleep_total_time;
+extern kal_uint8 fg_ipoh_reset;
+
 
 /* ////////////////////////////////////////////////////////////////////////////// */
 /* FOR ADB CMD */
@@ -458,15 +459,17 @@ EXPORT_SYMBOL(wake_up_bat3);
 
 static ssize_t bat_log_write(struct file *filp, const char __user *buff, size_t len, loff_t *data)
 {
-	if (copy_from_user(&proc_bat_data, buff, len)) {
+	char proc_bat_data;
+
+	if ((len <= 0) || copy_from_user(&proc_bat_data, buff, 1)) {
 		battery_log(BAT_LOG_FULL, "bat_log_write error.\n");
 		return -EFAULT;
 	}
 
-	if (proc_bat_data[0] == '1') {
+	if (proc_bat_data == '1') {
 		battery_log(BAT_LOG_CRTI, "enable battery driver log system\n");
 		Enable_BATDRV_LOG = 1;
-	} else if (proc_bat_data[0] == '2') {
+	} else if (proc_bat_data == '2') {
 		battery_log(BAT_LOG_CRTI, "enable battery driver log system:2\n");
 		Enable_BATDRV_LOG = 2;
 	} else {
@@ -1623,6 +1626,43 @@ static void battery_update(struct battery_data *bat_data)
 	battery_log(BAT_LOG_CRTI,
 			    "[kernel][battery_update] SOC %d,UI_SOC2 %d, status %d\n",
 			    BMT_status.SOC,BMT_status.UI_SOC2, bat_data->BAT_STATUS);
+
+#ifdef DLPT_POWER_OFF_EN
+    #ifndef DISABLE_DLPT_FEATURE
+		extern int dlpt_check_power_off(void);
+		if(bat_data->BAT_CAPACITY <= DLPT_POWER_OFF_THD)
+		{
+			static kal_uint8 cnt=0;
+			battery_log(BAT_LOG_CRTI, "[DLPT_POWER_OFF_EN] run\n");
+			
+			//if(bat_data->BAT_CAPACITY==0)
+			//{
+			//	  bat_data->BAT_CAPACITY=1;
+			//	  battery_log(BAT_LOG_CRTI, "[DLPT_POWER_OFF_EN] SOC=0 but keep %d\n", bat_data->BAT_CAPACITY);
+			//}
+			if(dlpt_check_power_off()==1)
+			{
+				bat_data->BAT_CAPACITY=0;
+				cnt++;
+				battery_log(BAT_LOG_CRTI, "[DLPT_POWER_OFF_EN] SOC=%d to power off , cnt=%d \n", bat_data->BAT_CAPACITY,cnt);
+	
+				if(cnt>=2)
+				{
+					kernel_restart("DLPT reboot system");
+				}
+			}
+			else
+			{
+				cnt=0;
+			}
+		}
+		else
+		{
+			battery_log(BAT_LOG_CRTI, "[DLPT_POWER_OFF_EN] disable(%d)\n", bat_data->BAT_CAPACITY);
+		}
+    #endif
+#endif
+	
 	power_supply_changed(bat_psy);
 }
 
@@ -1946,10 +1986,26 @@ void mt_battery_GetBatteryData(void)
 	    mt_battery_average_method(BATTERY_AVG_CURRENT, &batteryCurrentBuffer[0], ICharging, &icharging_sum,
 				      batteryIndex);
 
+	if (previous_SOC == -1 && bat_vol <= V_0PERCENT_TRACKING) {
+		previous_SOC = 0;
+		if (ZCV != 0) {
+			battery_log(BAT_LOG_CRTI,
+					    "battery voltage too low, use ZCV to init average data.\n");
+			BMT_status.bat_vol =
+			    mt_battery_average_method(BATTERY_AVG_VOLT, &batteryVoltageBuffer[0], ZCV, &bat_sum,
+						      batteryIndex);
+		} else {
+			battery_log(BAT_LOG_CRTI,
+					    "battery voltage too low, use V_0PERCENT_TRACKING + 100 to init average data.\n");
+			BMT_status.bat_vol =
+			    mt_battery_average_method(BATTERY_AVG_VOLT, &batteryVoltageBuffer[0], V_0PERCENT_TRACKING + 100, &bat_sum,
+						      batteryIndex);
+		}
+	} else {
 	BMT_status.bat_vol =
 	    mt_battery_average_method(BATTERY_AVG_VOLT, &batteryVoltageBuffer[0], bat_vol, &bat_sum,
 				      batteryIndex);
-
+	}
 	BMT_status.temperature =
 	    mt_battery_average_method(BATTERY_AVG_TEMP, &batteryTempBuffer[0], temperature, &temperature_sum,
 				      batteryIndex);
@@ -2616,6 +2672,8 @@ void do_chrdet_int_task(void)
 
 }
 
+extern void fgauge_algo_run_get_init_data(void);
+extern kal_bool init_flag;
 
 void BAT_thread(void)
 {
@@ -2630,6 +2688,13 @@ void BAT_thread(void)
 
 	if (bat_spm_timeout) {
 		wakeup_fg_algo((FG_MAIN + FG_RESUME));
+	} else if (fg_ipoh_reset){
+		battery_log(BAT_LOG_CRTI,
+		"[FG BAT_thread]FG_MAIN+FG_INIT  .\n");
+		init_flag = false;
+		fgauge_algo_run_get_init_data();
+		wakeup_fg_algo((FG_MAIN + FG_INIT));
+		fg_ipoh_reset=0;
 	} else {
 		wakeup_fg_algo(FG_MAIN);
 	}
@@ -3049,7 +3114,6 @@ void charger_hv_detect_sw_workaround_init(void)
 				    "[%s]: failed to create charger_hv_detect_sw_workaround thread\n",
 				    __func__);
 	}
-	check_battery_exist();
 	battery_log(BAT_LOG_CRTI, "charger_hv_detect_sw_workaround_init : done\n");
 }
 
@@ -3847,6 +3911,9 @@ static int battery_pm_event(struct notifier_block *notifier, unsigned long pm_ev
 {
 	switch(pm_event) {
 	case PM_HIBERNATION_PREPARE: /* Going to hibernate */
+		pr_warn("[%s] pm_event %lu (IPOH)\n", __func__, pm_event);
+		fg_ipoh_reset=1;
+		return NOTIFY_DONE;	
 	case PM_RESTORE_PREPARE: /* Going to restore a saved image */
 	case PM_SUSPEND_PREPARE: /* Going to suspend the system */
 		pr_warn("[%s] pm_event %lu\n", __func__, pm_event);

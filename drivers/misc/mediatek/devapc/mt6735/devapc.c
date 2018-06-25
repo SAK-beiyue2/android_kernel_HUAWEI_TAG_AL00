@@ -1013,7 +1013,6 @@ static int devapc_suspend(struct platform_device *dev, pm_message_t state)
 static int devapc_resume(struct platform_device *dev)
 {
     DEVAPC_MSG("[DEVAPC] module resume. \n");
-    start_devapc();
 
     return 0;
 }

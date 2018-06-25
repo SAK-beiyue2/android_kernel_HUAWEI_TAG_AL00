@@ -492,92 +492,100 @@ static MUINT32 g_DmaErr_p1[nDMA_ERR] = {0};
         usec = do_div( sec, 1000000);\
 }
 #if 1
-#define IRQ_LOG_KEEPER(irq,ppb,logT,fmt,...) do{\
-    char* ptr; \
-    char* pDes;\
-    MUINT32* ptr2 = &gSvLog[irq]._cnt[ppb][logT];\
-    unsigned int str_leng;\
-    if(_LOG_ERR == logT) {\
-        str_leng = NORMAL_STR_LEN*ERR_PAGE; \
-    }else if(_LOG_DBG == logT){\
-        str_leng = NORMAL_STR_LEN*DBG_PAGE; \
-    }else if(_LOG_INF == logT) {\
-        str_leng = NORMAL_STR_LEN*INF_PAGE;\
-    }else {\
-        str_leng = 0;\
-    }\
-    ptr = pDes = (char*)&(gSvLog[irq]._str[ppb][logT][gSvLog[irq]._cnt[ppb][logT]]);    \
-    sprintf((char*)(pDes),fmt,##__VA_ARGS__);   \
-    if('\0'!= gSvLog[irq]._str[ppb][logT][str_leng -1 ]) {\
-        LOG_ERR("log str over flow(%d)",irq);\
-    }\
-    while(*ptr++ != '\0') {        \
-        (*ptr2)++;\
-    }     \
-}while(0);
+#define IRQ_LOG_KEEPER(irq, ppb, logT, fmt, ...) do {\
+	if (irq >= _IRQ_MAX) {\
+		LOG_ERR("IRQ_LOG_KEEPER : Array Max Size Exceeded!");\
+	} else {\
+		char *ptr; \
+		char *pDes;\
+		MUINT32 *ptr2 = &gSvLog[irq]._cnt[ppb][logT];\
+		unsigned int str_leng;\
+		if (_LOG_ERR == logT) {\
+			str_leng = NORMAL_STR_LEN*ERR_PAGE; \
+		} else if (_LOG_DBG == logT) {\
+			str_leng = NORMAL_STR_LEN*DBG_PAGE; \
+		} else if (_LOG_INF == logT) {\
+			str_leng = NORMAL_STR_LEN*INF_PAGE;\
+		} else {\
+			str_leng = 0;\
+		} \
+		ptr = pDes = (char *)&(gSvLog[irq]._str[ppb][logT][gSvLog[irq]._cnt[ppb][logT]]);    \
+		sprintf((char *)(pDes), fmt, ##__VA_ARGS__);   \
+		if ('\0' != gSvLog[irq]._str[ppb][logT][str_leng - 1]) {\
+			LOG_ERR("log str over flow(%d)", irq);\
+		} \
+		while (*ptr++ != '\0') { \
+			(*ptr2)++;\
+		} \
+	} \
+} while (0);
 #else
 #define IRQ_LOG_KEEPER(irq,ppb,logT,fmt,...)  pr_debug("KEEPER[%s] " fmt, __FUNCTION__, ##__VA_ARGS__)
 #endif
 
 #if 1
-#define IRQ_LOG_PRINTER(irq,ppb_in,logT_in) do{\
-    SV_LOG_STR* pSrc = &gSvLog[irq];\
-    char* ptr;\
-    MUINT32 i;\
-    MINT32 ppb=0;\
-    MINT32 logT=0;\
-    if(ppb_in>1){\
-        ppb = 1;\
-    }else{\
-        ppb = ppb_in;\
-    }\
-    if(logT_in > _LOG_ERR){\
-        logT = _LOG_ERR;\
-    }else{\
-        logT = logT_in;\
-    }\
-    ptr = pSrc->_str[ppb][logT];\
-    if(0!= pSrc->_cnt[ppb][logT]){\
-        if(_LOG_DBG == logT){\
-            for(i=0;i<DBG_PAGE;i++){\
-                if(ptr[NORMAL_STR_LEN*(i+1) - 1] != '\0') {\
-                    ptr[NORMAL_STR_LEN*(i+1) - 1] = '\0';\
-                    LOG_DBG("%s",&ptr[NORMAL_STR_LEN*i]);\
-                }else{\
-                    LOG_DBG("%s",&ptr[NORMAL_STR_LEN*i]);\
-                    break;\
-                }\
-            }\
-        }\
-        else if(_LOG_INF == logT) {\
-            for(i=0;i<INF_PAGE;i++){\
-                if(ptr[NORMAL_STR_LEN*(i+1) - 1] != '\0') {\
-                    ptr[NORMAL_STR_LEN*(i+1) - 1] = '\0';\
-                    LOG_INF("%s",&ptr[NORMAL_STR_LEN*i]);\
-                }else{\
-                    LOG_INF("%s",&ptr[NORMAL_STR_LEN*i]);\
-                    break;\
-                }\
-            }\
-        }\
-        else if(_LOG_ERR == logT) {\
-            for(i=0;i<ERR_PAGE;i++){\
-                if(ptr[NORMAL_STR_LEN*(i+1) - 1] != '\0') {\
-                    ptr[NORMAL_STR_LEN*(i+1) - 1] = '\0';\
-                    LOG_ERR("%s",&ptr[NORMAL_STR_LEN*i]);\
-                }else{\
-                    LOG_ERR("%s",&ptr[NORMAL_STR_LEN*i]);\
-                    break;\
-                }\
-            }\
-        }\
-        else {\
-            LOG_ERR("N.S.%d",logT);\
-        }\
-        ptr[0] = '\0';\
-        pSrc->_cnt[ppb][logT] = 0;\
-    }\
-}while(0);
+#define IRQ_LOG_PRINTER(irq, ppb_in, logT_in) do {\
+	if (irq >= _IRQ_MAX) {\
+		LOG_ERR("IRQ_LOG_PRINTER : Array Max Size Exceeded !");\
+	} else {\
+		SV_LOG_STR *pSrc = &gSvLog[irq];\
+		char *ptr;\
+		MUINT32 i;\
+		MINT32 ppb = 0;\
+		MINT32 logT = 0;\
+		if (ppb_in > 1) {\
+			ppb = 1;\
+		} else{\
+			ppb = ppb_in;\
+		} \
+		if (logT_in > _LOG_ERR) {\
+			logT = _LOG_ERR;\
+		} else{\
+			logT = logT_in;\
+		} \
+		ptr = pSrc->_str[ppb][logT];\
+		if (0 != pSrc->_cnt[ppb][logT]) {\
+			if (_LOG_DBG == logT) {\
+				for (i = 0; i < DBG_PAGE; i++) {\
+					if (ptr[NORMAL_STR_LEN*(i+1) - 1] != '\0') {\
+						ptr[NORMAL_STR_LEN*(i+1) - 1] = '\0';\
+						LOG_DBG("%s", &ptr[NORMAL_STR_LEN*i]);\
+					} else{\
+						LOG_DBG("%s", &ptr[NORMAL_STR_LEN*i]);\
+						break;\
+					} \
+				} \
+			} \
+			else if (_LOG_INF == logT) {\
+				for (i = 0; i < INF_PAGE; i++) {\
+					if (ptr[NORMAL_STR_LEN*(i+1) - 1] != '\0') {\
+						ptr[NORMAL_STR_LEN*(i+1) - 1] = '\0';\
+						LOG_INF("%s", &ptr[NORMAL_STR_LEN*i]);\
+					} else{\
+						LOG_INF("%s", &ptr[NORMAL_STR_LEN*i]);\
+						break;\
+					} \
+				} \
+			} \
+			else if (_LOG_ERR == logT) {\
+				for (i = 0; i < ERR_PAGE; i++) {\
+					if (ptr[NORMAL_STR_LEN*(i+1) - 1] != '\0') {\
+						ptr[NORMAL_STR_LEN*(i+1) - 1] = '\0';\
+						LOG_ERR("%s", &ptr[NORMAL_STR_LEN*i]);\
+					} else{\
+						LOG_ERR("%s", &ptr[NORMAL_STR_LEN*i]);\
+						break;\
+					} \
+				} \
+			} \
+			else {\
+				LOG_ERR("N.S.%d", logT);\
+			} \
+			ptr[0] = '\0';\
+			pSrc->_cnt[ppb][logT] = 0;\
+		} \
+	} \
+} while (0);
 
 
 #else
@@ -1395,11 +1403,12 @@ static long ISP_Buf_CTRL_FUNC_FRMB(unsigned long Param)
                                 ISP_FBC_DUMP(rt_dma,1,0,0,0);
                             }
 #endif
-                            spin_lock_irqsave(&(IspInfo_FrmB.SpinLockIrq[irqT_Lock]), flags);
+                            // copy_from/to_user might sleep when page-fault, can't call in atomic contex
+                            //spin_lock_irqsave(&(IspInfo_FrmB.SpinLockIrq[irqT_Lock]), flags);
                             if ( 0 != rt_buf_ctrl.ex_data_ptr ) {
                                 //borrow deque_buf.data memory , in order to shirnk memory required,avoid compile err
                                 if(copy_from_user(&deque_buf.data[0], (void __user*)rt_buf_ctrl.ex_data_ptr, sizeof(ISP_RT_BUF_INFO_STRUCT_FRMB)) == 0) {
-                                    //
+                                    spin_lock_irqsave(&(IspInfo_FrmB.SpinLockIrq[irqT_Lock]), flags);
                                     i = 0;
                                     if (deque_buf.data[0].bufIdx != 0xFFFF){
                                         //replace the specific buffer with the same bufIdx
@@ -1467,11 +1476,12 @@ static long ISP_Buf_CTRL_FUNC_FRMB(unsigned long Param)
                                 }
                                 else{
                                     LOG_ERR("cpy from user fail\n");
-                                    spin_unlock_irqrestore(&(IspInfo_FrmB.SpinLockIrq[irqT_Lock]), flags);
+                                    //spin_unlock_irqrestore(&(IspInfo_FrmB.SpinLockIrq[irqT_Lock]), flags);
                                     return -EFAULT;
                                 }
                             }
                             else {//this case for camsv & pass1 fw rtbc
+                                spin_lock_irqsave(&(IspInfo_FrmB.SpinLockIrq[irqT_Lock]), flags);
                                 for (i=0;i<ISP_RT_BUF_SIZE;i++) {
                                     //
                                     if ( pstRTBuf_FrmB->ring_buf[rt_dma].data[i].base_pAddr == rt_buf_info.base_pAddr ) {
@@ -1561,6 +1571,7 @@ static long ISP_Buf_CTRL_FUNC_FRMB(unsigned long Param)
                                                 }
                                             }
                                             else {
+                                                spin_unlock_irqrestore(&(IspInfo_FrmB.SpinLockIrq[irqT_Lock]), flags);
                                                 LOG_ERR("[rtbc]error:dma(%d) r not being activated(%d)",rt_dma,pstRTBuf_FrmB->ring_buf[rt_dma].active);
                                                 return -EFAULT;
                                             }
@@ -1588,6 +1599,7 @@ static long ISP_Buf_CTRL_FUNC_FRMB(unsigned long Param)
                                             }
                                         }
                                         else {
+                                            spin_unlock_irqrestore(&(IspInfo_FrmB.SpinLockIrq[irqT_Lock]), flags);
                                             LOG_ERR("[rtbc]error:dma(%d) r not being activated(%d)",rt_dma,pstRTBuf_FrmB->ring_buf[rt_dma].active);
                                             return -EFAULT;
                                         }
@@ -3264,8 +3276,6 @@ static MINT32 ISP_REGISTER_IRQ_USERKEY(char* userName)
     char m_UserName[USERKEY_STR_LEN];//local veriable for saving Username from user space
     MBOOL bCopyFromUser = MTRUE;
 
-    spin_lock(&SpinLock_UserKey);
-
     if(NULL == userName){
         LOG_ERR(" [regUser] userName is NULL\n");
     }else{
@@ -3273,7 +3283,6 @@ static MINT32 ISP_REGISTER_IRQ_USERKEY(char* userName)
         length = strnlen_user(userName, USERKEY_STR_LEN);
         if(length == 0){
             LOG_ERR(" [regUser] userName address is not valid\n");
-            spin_unlock(&SpinLock_UserKey);
             return key;
         }
 
@@ -3285,6 +3294,7 @@ static MINT32 ISP_REGISTER_IRQ_USERKEY(char* userName)
 
         if(MTRUE == bCopyFromUser)
         {
+            spin_lock(&SpinLock_UserKey);
             //check String length, add end
             if(length == USERKEY_STR_LEN) //string length too long
             {
@@ -3323,13 +3333,13 @@ static MINT32 ISP_REGISTER_IRQ_USERKEY(char* userName)
                     FirstUnusedIrqUserKey++;
                 }
             }
+            spin_unlock(&SpinLock_UserKey);
         }
         else
         {
             LOG_ERR(" [regUser] copy_from_user failed (%d)\n", i);
         }
     }
-    spin_unlock(&SpinLock_UserKey);
     return key;
 }
 

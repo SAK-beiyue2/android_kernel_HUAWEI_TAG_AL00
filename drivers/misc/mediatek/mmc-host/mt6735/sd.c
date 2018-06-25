@@ -98,6 +98,18 @@
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
 #endif
+//#define CONFIG_HUAWEI_KERNEL
+#ifdef CONFIG_HUAWEI_KERNEL
+extern int mmc_debug_mask;
+module_param_named(debug_mask, mmc_debug_mask, int, 
+				   S_IRUGO | S_IWUSR | S_IWGRP);
+#define HUAWEI_DBG(fmt, args...) \
+	do { \
+	    if (mmc_debug_mask) \
+		    printk(fmt, args); \
+	} while (0)
+#endif /* CONFIG_HUAWEI_KERNEL */
+
 /* function declaration */
 void msdc_dump_gpd_bd(int id);
 
@@ -3051,7 +3063,21 @@ static void msdc_restore_emmc_setting(struct msdc_host *host)
 	sdr_set_field(MSDC_PATCH_BIT2, MSDC_PB2_RESPWAITCNT, host->saved_para.resp_wait_cnt);
 }
 
+static void msdc_recovery_sd_tune_path(struct msdc_host *host)
+{
+	void __iomem *base = host->base;
 
+	if (host->hw->host_function == MSDC_SD) {
+		sdr_set_field(MSDC_PATCH_BIT2, 0x1 << 28, 0);
+		sdr_set_field(MSDC_PATCH_BIT2, 0x1 << 15, 1);
+#if defined(CONFIG_ARCH_MT6735) || defined(CONFIG_ARCH_MT6753)
+		sdr_write32(MSDC_PAD_TUNE0,   0x00000000);
+#else
+		sdr_write32(MSDC_PAD_TUNE0,   0x00008000);
+#endif
+	}
+
+}
 static void msdc_pm(pm_message_t state, void *data)
 {
     struct msdc_host *host = (struct msdc_host *)data;
@@ -3588,12 +3614,8 @@ static unsigned int msdc_command_start(struct msdc_host   *host,
 	u32 resp;
 	unsigned long tmo;
 	struct mmc_command *sbc = NULL;
-#ifdef MTK_MSDC_USE_CACHE
-	if ((host->mmc->caps2 & MMC_CAP2_CACHE_CTRL) && (host->autocmd & MSDC_AUTOCMD23)) {
-		if (host->data && host->data->mrq && host->data->mrq->sbc)
-			sbc = host->data->mrq->sbc;
-	}
-#endif
+	if (host->data && host->data->mrq && host->data->mrq->sbc && (host->autocmd & MSDC_AUTOCMD23))
+		sbc = host->data->mrq->sbc;
 
 	/* Protocol layer does not provide response type, but our hardware needs
 	 * to know exact type, not just size!
@@ -3918,10 +3940,12 @@ static unsigned int msdc_command_resp_polling(struct msdc_host   *host,
 				*rsp = sdr_read32(SDC_RESP0);
 				/* workaround for latch error */
 				if (((cmd->opcode == 13) || (cmd->opcode == 25)) && (*rsp & R1_OUT_OF_RANGE) 
-					&& (host->hw->host_function != MSDC_SDIO)) {
+					&& (host->hw->host_function == MSDC_EMMC)) {
 					pr_err("[%s]: msdc%d XXX CMD<%d> resp<0x%.8x>,bit31=1,force make crc error\n",
 						__func__, host->id, cmd->opcode, *rsp);
 					cmd->error = (unsigned int)-EIO;
+					if (cmd->opcode == 25)
+						msdc_reset_hw(host->id);
 				}
 				break;
 			}
@@ -4574,6 +4598,15 @@ static void msdc_dma_start(struct msdc_host *host)
 	sdr_set_bits(MSDC_INTEN, wints);
 
     N_MSG(DMA, "DMA start");
+
+    /* Schedule delayed work to check if data0 keeps busy */
+    if (host->data && host->data->flags & MMC_DATA_WRITE && host->hw->host_function == MSDC_SD) {
+        host->write_timeout_ms = min_t(u32, max_t(u32,
+            host->data->blocks * 500,
+                host->data->timeout_ns / 1000000), 270 * 1000);
+        schedule_delayed_work(&host->write_timeout, msecs_to_jiffies(host->write_timeout_ms));
+        N_MSG(DMA, "DMA Data Busy Timeout:%u ms, schedule_delayed_work", host->write_timeout_ms);
+    }
 }
 
 static void msdc_dma_stop(struct msdc_host *host)
@@ -4582,6 +4615,14 @@ static void msdc_dma_stop(struct msdc_host *host)
 	int retry = 500;
 	int count = 1000;
 	u32 wints = MSDC_INTEN_XFER_COMPL | MSDC_INTEN_DATTMO | MSDC_INTEN_DATCRCERR ;
+
+	/* Clear DMA data busy timeout */
+	if (host->data && host->data->flags & MMC_DATA_WRITE && host->hw->host_function == MSDC_SD) {
+		cancel_delayed_work(&host->write_timeout);
+		N_MSG(DMA, "DMA Data Busy Timeout:%u ms, cancel_delayed_work", host->write_timeout_ms);
+		host->write_timeout_ms = 0; /* clear timeout */
+	} 
+
 	/* handle autocmd12 error in msdc_irq */
 	if(host->autocmd & MSDC_AUTOCMD12)
 		wints |= MSDC_INT_ACMDCRCERR | MSDC_INT_ACMDTMO | MSDC_INT_ACMDRDY;
@@ -7651,6 +7692,11 @@ static void msdc_ops_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	BUG_ON(mrq == NULL);
 	if ((host->hw->host_function == MSDC_SDIO) && !wake_lock_active(&host->trans_lock))
 		wake_lock(&host->trans_lock);
+#ifdef CONFIG_HUAWEI_KERNEL 
+    HUAWEI_DBG("HUAWEI %s: starting CMD%u arg %08x flags %08x\n",
+		 mmc_hostname(host->mmc), mrq->cmd->opcode,
+		 mrq->cmd->arg, mrq->cmd->flags);
+#endif
 
 #ifdef MTK_SDIO30_ONLINE_TUNING_SUPPORT //same as CONFIG_SDIOAUTOK_SUPPORT
 	if (host->id == 2){ //6630 in msdc2@Denali
@@ -7676,6 +7722,12 @@ static void msdc_ops_request(struct mmc_host *mmc, struct mmc_request *mrq)
 
 	if ((host->hw->host_function == MSDC_SDIO) && wake_lock_active(&host->trans_lock))
 		wake_unlock(&host->trans_lock);
+#ifdef CONFIG_HUAWEI_KERNEL
+    HUAWEI_DBG("HUAWEI %s: req end (CMD%u): %08x %08x %08x %08x\n",
+			mmc_hostname(host->mmc), mrq->cmd->opcode,
+			mrq->cmd->resp[0], mrq->cmd->resp[1],
+			mrq->cmd->resp[2], mrq->cmd->resp[3]);
+#endif 
 
 	return;
 }
@@ -7755,6 +7807,13 @@ static void msdc_ops_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	u32 hs400 = 0, state = 0;
 	/* unsigned long flags; */
 	u32 cur_rxdly0, cur_rxdly1;
+#ifdef CONFIG_HUAWEI_KERNEL 
+    HUAWEI_DBG("%s: clock %uHz busmode %u powermode %u cs %u Vdd %u "
+		"width %u timing %u\n",
+		 mmc_hostname(mmc), ios->clock, ios->bus_mode,
+		 ios->power_mode, ios->chip_select, ios->vdd,
+		 ios->bus_width, ios->timing);
+#endif
 
 #ifdef MT_SD_DEBUG
 	static char *vdd[] = {
@@ -7892,6 +7951,9 @@ static void msdc_ops_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 		msdc_select_clksrc(host, hw->clk_src);
 
     }
+
+    if((host->mclk==0)&&(ios->clock!=0))
+          msdc_recovery_sd_tune_path(host);
 
     if (host->mclk != ios->clock || host->state != state) { /* not change when clock Freq. not changed state need set clock*/
         if(ios->clock >= 25000000) {
@@ -8708,6 +8770,83 @@ static irqreturn_t msdc_irq(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+/* Add this function to check if no interrupt back after write.         *
+ * It may occur when write crc revice, but busy over data->timeout_ns   */
+static void msdc_check_write_timeout(struct work_struct *work)
+{
+	struct msdc_host *host = container_of(work, struct msdc_host, write_timeout.work);
+	void __iomem *base = host->base;
+
+	struct mmc_data  *data = host->data;
+	struct mmc_request *mrq = host->mrq;
+	struct mmc_host *mmc = host->mmc;
+
+	u32 status = 0;
+	u32 state = 0;
+	u32 err = 0;
+	unsigned long tmo;
+
+	if (!data || !mrq || !mmc)
+		return;
+
+	pr_err("[%s]: XXX DMA Data Write Busy Timeout: %u ms, CMD<%d>",
+		__func__, host->write_timeout_ms, mrq->cmd->opcode);
+
+	if (msdc_async_use_dma(data->host_cookie) && (host->tune == 0)) {
+		msdc_dump_info(host->id);
+
+		msdc_dma_stop(host);
+		msdc_dma_clear(host);
+		msdc_reset_hw(host->id);
+
+		tmo = jiffies + POLLING_BUSY;
+
+		/* check the card state, try to bring back to trans state */
+		spin_lock(&host->lock);
+		do {
+			/* if anything goes wrong, let block driver do the error handling. */
+			err = msdc_get_card_status(mmc, host, &status);
+			if (err) {
+				ERR_MSG("CMD13 ERR<%d>", err);
+				break;
+			}
+
+			state = R1_CURRENT_STATE(status);
+			ERR_MSG("check card state<%d>", state);
+			if (state == R1_STATE_DATA || state == R1_STATE_RCV) {
+				ERR_MSG("state<%d> need cmd12 to stop", state);
+				msdc_send_stop(host);
+			} else if (state == R1_STATE_PRG) {
+				ERR_MSG("state<%d> card is busy", state);
+				spin_unlock(&host->lock);
+				msleep(100);
+				spin_lock(&host->lock);
+			}
+
+			if (time_after(jiffies, tmo)) {
+				ERR_MSG("abort timeout. Card stuck in %d state, bad card! remove it!" , state);
+				spin_unlock(&host->lock);
+				msdc_set_bad_card_and_remove(host);
+				spin_lock(&host->lock);
+				break;
+			}
+		} while (state != R1_STATE_TRAN);
+		spin_unlock(&host->lock);
+
+		data->error = (unsigned int)-ETIMEDOUT;
+		host->sw_timeout++;
+
+		if (mrq->done)
+			mrq->done(mrq);
+
+		msdc_gate_clock(host, 1);
+		host->error |= REQ_DAT_ERR;
+	} else {
+		/* do nothing, since legacy mode & async tuning has it own timeout. */
+		/* complete(&host->xfer_done); */
+	}
+}
+
 /*--------------------------------------------------------------------------*/
 /* platform_driver members                                                      */
 /*--------------------------------------------------------------------------*/
@@ -9245,6 +9384,10 @@ int msdc_drv_pm_restore_noirq(struct device *device)
 }
 #endif
 
+#if 1//yinliangliang 151118 add for identify the flash ID
+u32 g_emmc_raw_cid[4]; /* raw card CID */
+struct mmc_host *g_emmc_host = NULL;
+#endif
 
 #ifdef CONFIG_OF
 #if defined(CFG_DEV_MSDC0)
@@ -9460,8 +9603,7 @@ static int msdc_drv_probe(struct platform_device *pdev)
 		mmc->caps2 |= MMC_CAP2_HS400_1_8V_DDR;
 	}
 #endif
-	if(hw->flags & MSDC_DDR)
-		mmc->caps |= MMC_CAP_UHS_DDR50|MMC_CAP_1_8V_DDR;
+
 	if(!(hw->flags & MSDC_REMOVABLE))
 		mmc->caps |= MMC_CAP_NONREMOVABLE;
 	//else
@@ -9532,7 +9674,8 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	host->power_switch   = NULL;
 #ifndef FPGA_PLATFORM
 	msdc_set_host_power_control(host);
-	if ((host->hw->host_function == MSDC_SD) && (host->hw->flags & MSDC_CD_PIN_EN)) {
+	/*some UHS sd card S18A fail,when system reboot without power cycle*/
+	if (host->hw->host_function == MSDC_SD) {
 		msdc_sd_power(host, 1);	/* work around : hot-plug project SD card LDO alway on if no SD card insert */
 		msdc_sd_power(host, 0);
 	}
@@ -9627,6 +9770,7 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	atomic_set(&host->ot_work.autok_done, 0);
 #endif // MTK_SDIO30_ONLINE_TUNING_SUPPORT
 	//INIT_DELAYED_WORK(&host->remove_card, msdc_remove_card);
+	INIT_DELAYED_WORK(&host->write_timeout, msdc_check_write_timeout);
 	spin_lock_init(&host->lock);
 	spin_lock_init(&host->clk_gate_lock);
 	spin_lock_init(&host->remove_bad_card);
@@ -9682,6 +9826,12 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	ret = mmc_add_host(mmc);
 	if (ret)
 		goto free_irq;
+
+	#if 1//yinliangliang 151118 add for identify the flash ID
+    if(0 == pdev->id){ // eMMC host
+	g_emmc_host = mmc; 
+    }
+	#endif
 	if (host->hw->flags & MSDC_SDIO_IRQ) {
 		ghost = host;
 		sdr_set_bits(SDC_CFG, SDC_CFG_SDIOIDE);	/* enable sdio detection */
@@ -9739,6 +9889,13 @@ release:
 
 	return ret;
 }
+#if 1//yinliangliang 151118 add for identify the flash ID
+void msdc_emmc_id_check()
+{
+	memset(g_emmc_raw_cid, 0, sizeof(g_emmc_host->card->raw_cid));
+	memcpy(g_emmc_raw_cid, g_emmc_host->card->raw_cid, sizeof(g_emmc_host->card->raw_cid));
+}
+#endif
 
 /* 4 device share one driver, using "drvdata" to show difference */
 static int msdc_drv_remove(struct platform_device *pdev)

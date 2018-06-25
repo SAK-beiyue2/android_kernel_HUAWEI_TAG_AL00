@@ -103,11 +103,11 @@ typedef struct PM_LAYER_EN{
 }PM_LAYER_EN;
 
 typedef struct PM_LAYER_INFO{
-	int index;
-    int height;
-	int width;
-	int fmt;
-    unsigned int layer_size ;
+	unsigned int index;
+	unsigned int height;
+	unsigned int width;
+	unsigned int fmt;
+	unsigned int layer_size ;
 }PM_LAYER_INFO;
 
 typedef struct ESD_PARA{     

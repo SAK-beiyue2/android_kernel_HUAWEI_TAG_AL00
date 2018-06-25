@@ -81,6 +81,7 @@ void aee_rr_proc_done(struct proc_dir_entry *aed_proc_dir)
 EXPORT_SYMBOL(aee_rr_proc_done);
 
 /* define /sys/bootinfo/powerup_reason */
+extern unsigned aee_rr_last_wdt_status(void);
 static ssize_t powerup_reason_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	int g_boot_reason = 0;
@@ -90,7 +91,7 @@ static ssize_t powerup_reason_show(struct kobject *kobj, struct kobj_attribute *
 		g_boot_reason = br_ptr[12] - '0';
 		LOGE("g_boot_reason=%d\n", g_boot_reason);
 #ifdef CONFIG_MTK_RAM_CONSOLE
-		if (aee_rr_last_fiq_step() != 0)
+		if (aee_rr_last_fiq_step() != 0 || (g_boot_reason == BR_WDT_BY_PASS_PWK && aee_rr_last_wdt_status() != 0 && aee_rr_last_wdt_status() != 2))
 			g_boot_reason = BR_KE_REBOOT;
 #endif
 		return sprintf(buf, "%s\n", boot_reason[g_boot_reason]);

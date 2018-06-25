@@ -1,6 +1,6 @@
 include $(srctree)/drivers/misc/mediatek/Makefile.custom
 
-obj-$(CONFIG_MTK_PMIC)          += pmic.o upmu_common.o pmic_auxadc.o pmic_chr_type_det.o mt6311.o
+obj-$(CONFIG_MTK_PMIC)         += pmic.o upmu_common.o pmic_auxadc.o pmic_chr_type_det.o mt6311.o
 
 ifeq ($(CONFIG_MTK_PMIC_DVT_SUPPORT),y)
      obj-$(CONFIG_MTK_PMIC)     += pmic_dvt.o
@@ -22,10 +22,14 @@ else
                else
                     ifeq ($(CONFIG_MTK_FAN5405_SUPPORT),y)
                         obj-$(CONFIG_MTK_SMART_BATTERY) += fan5405.o charging_hw_fan5405.o
-                    else               
-                    obj-$(CONFIG_MTK_SMART_BATTERY) += charging_hw_pmic.o
+                    else
+                         ifeq ($(CONFIG_MTK_BQ24196_SUPPORT),y)
+                             obj-$(CONFIG_MTK_SMART_BATTERY) += bq24196.o charging_hw_bq24196.o
+                         else
+                             obj-$(CONFIG_MTK_SMART_BATTERY) += charging_hw_pmic.o
+                         endif
+                    endif
                endif
           endif
      endif
-endif
 endif

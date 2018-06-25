@@ -69,6 +69,10 @@
 
 #define FEATURE_STORAGE_PERF_INDEX
 
+#ifdef CONFIG_HW_SD_HEALTH_DETECT
+#include "mmc_health_diag.h"
+#define SD_BLK_TIMEOUT_MS	(1 * 60 * 1000)
+#endif
 
 MODULE_ALIAS("mmc:block");
 #ifdef MODULE_PARAM_PREFIX
@@ -1641,6 +1645,10 @@ static int mmc_blk_err_check(struct mmc_card *card,
 		}
 
 		timeout = jiffies + msecs_to_jiffies(MMC_BLK_TIMEOUT_MS);
+#ifdef CONFIG_HW_SD_HEALTH_DETECT
+		unsigned long sd_timeout;
+		sd_timeout = jiffies + msecs_to_jiffies(SD_BLK_TIMEOUT_MS);
+#endif
 		do {
 			int err = get_card_status(card, &status, 5);
 			if (err) {
@@ -1672,6 +1680,23 @@ static int mmc_blk_err_check(struct mmc_card *card,
 					}
 				}
 			}
+
+#ifdef CONFIG_HW_SD_HEALTH_DETECT
+			if (mmc_card_sd(card)){
+				/* Timeout if the SD never becomes ready for data
+				 * and never leaves the program state.
+				 */
+				if (time_after(jiffies, sd_timeout)) {
+					pr_err("%s: SD card stuck in programming state!"\
+						" %s %s\n", mmc_hostname(card->host),
+						req->rq_disk->disk_name, __func__);
+
+						mmc_diag_sd_health_status(req->rq_disk, MMC_BLK_STUCK_IN_PRG_ERR);
+
+					return MMC_BLK_CMD_ERR;
+				}
+			}
+#endif
 
 			/* Timeout if the device never becomes ready for data
 			 * and never leaves the program state.
@@ -2389,6 +2414,15 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 		return 0;
 	time1 = sched_clock();
 
+#ifdef CONFIG_HW_SD_HEALTH_DETECT
+	if(!strcmp(current->comm,"mmcqd/1"))
+	{
+		mmc_trigger_ro_check(rqc,md->disk,md->read_only);
+		time1 = sched_clock();
+		rq_byte = mmc_calculate_ioworkload_and_rwspeed(time1,rqc,md->disk);
+	}
+#endif
+
 	if (rqc)
 		reqs = mmc_blk_prep_packed_list(mq, rqc);
 #if defined(FEATURE_STORAGE_PERF_INDEX)
@@ -2584,6 +2618,12 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 		type = rq_data_dir(req) == READ ? MMC_BLK_READ : MMC_BLK_WRITE;
 		mmc_queue_bounce_post(mq_rq);
 
+#ifdef CONFIG_HW_SD_HEALTH_DETECT
+		if(mmc_card_sd(card))
+		{
+			mmc_diag_sd_health_status(md->disk,mmc_get_rw_status(status));
+		}
+#endif
 		switch (status) {
 		case MMC_BLK_SUCCESS:
 		case MMC_BLK_PARTIAL:
@@ -2695,6 +2735,12 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *rqc)
 		}
 	} while (ret);
 
+#ifdef CONFIG_HW_SD_HEALTH_DETECT
+	if(!strcmp(current->comm,"mmcqd/1"))
+	{
+		mmc_calculate_rw_size(time1,rq_byte,rqc);
+	}
+#endif
 	return 1;
 
  cmd_abort:
@@ -3204,6 +3250,14 @@ static const struct mmc_fixup blk_fixups[] =
      */
 	MMC_FIXUP(CID_NAME_ANY, CID_MANFID_TOSHIBA, CID_OEMID_ANY, add_quirk_mmc,
 		  MMC_QUIRK_DISABLE_CACHE),
+	/*
+	 * Samsung eMMC after enable cache feature, command will timeout in some condition
+	 */
+	MMC_FIXUP("FJ27MB", CID_MANFID_SAMSUNG, 0x100, add_quirk_mmc,
+		  MMC_QUIRK_DISABLE_CACHE),
+	MMC_FIXUP("FJ25AB", CID_MANFID_SAMSUNG, 0x100, add_quirk_mmc,
+		  MMC_QUIRK_DISABLE_CACHE),
+
 #endif
 
 	/* Hynix 4.41 trim will lead boot up failed. */
@@ -3246,6 +3300,13 @@ static int mmc_blk_probe(struct mmc_card *card)
 
 	mmc_set_drvdata(card, md);
 	mmc_fixup_device(card, blk_fixups);
+
+#ifdef CONFIG_HW_SD_HEALTH_DETECT
+	if(mmc_card_sd(card))
+	{
+		mmc_clear_report_info();
+	}
+#endif
 
 	printk("[%s]: %s by manufacturer settings, quirks=0x%x\n", __func__, md->disk->disk_name, card->quirks);
 

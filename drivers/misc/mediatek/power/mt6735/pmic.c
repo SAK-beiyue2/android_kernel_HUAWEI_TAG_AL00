@@ -219,6 +219,91 @@ U32 pmic_config_interface (U32 RegNum, U32 val, U32 MASK, U32 SHIFT)
     return return_value;
 }
 
+U32 pmic_read_interface_nolock (U32 RegNum, U32 *val, U32 MASK, U32 SHIFT)
+{
+    U32 return_value = 0;
+
+#if defined(CONFIG_PMIC_HW_ACCESS_EN)
+    U32 pmic_reg = 0;
+    U32 rdata;
+
+	  /* pmic wrapper has spinlock protection. pmic do not to do it again */
+    //mt_read_byte(RegNum, &pmic_reg);
+    return_value= pwrap_wacs2(0, (RegNum), 0, &rdata);
+    pmic_reg=rdata;
+    if(return_value!=0)
+    {
+        PMICLOG("[pmic_read_interface] Reg[%x]= pmic_wrap read data fail\n", RegNum);
+        mutex_unlock(&pmic_access_mutex);
+        return return_value;
+    }
+    //PMICLOG"[pmic_read_interface] Reg[%x]=0x%x\n", RegNum, pmic_reg);
+
+    pmic_reg &= (MASK << SHIFT);
+    *val = (pmic_reg >> SHIFT);
+    //PMICLOG"[pmic_read_interface] val=0x%x\n", *val);
+
+#else
+    //PMICLOG("[pmic_read_interface] Can not access HW PMIC\n");
+#endif
+
+    return return_value;
+}
+
+U32 pmic_config_interface_nolock (U32 RegNum, U32 val, U32 MASK, U32 SHIFT)
+{
+    U32 return_value = 0;
+
+#if defined(CONFIG_PMIC_HW_ACCESS_EN)
+    U32 pmic_reg = 0;
+    U32 rdata;
+
+    /* pmic wrapper has spinlock protection. pmic do not to do it again */
+
+    //1. mt_read_byte(RegNum, &pmic_reg);
+    return_value= pwrap_wacs2(0, (RegNum), 0, &rdata);
+    pmic_reg=rdata;
+    if(return_value!=0)
+    {
+        PMICLOG("[pmic_config_interface] Reg[%x]= pmic_wrap read data fail\n", RegNum);
+        mutex_unlock(&pmic_access_mutex);
+        return return_value;
+    }
+    //PMICLOG"[pmic_config_interface] Reg[%x]=0x%x\n", RegNum, pmic_reg);
+
+    pmic_reg &= ~(MASK << SHIFT);
+    pmic_reg |= (val << SHIFT);
+
+    //2. mt_write_byte(RegNum, pmic_reg);
+    return_value= pwrap_wacs2(1, (RegNum), pmic_reg, &rdata);
+    if(return_value!=0)
+    {
+        PMICLOG("[pmic_config_interface] Reg[%x]= pmic_wrap read data fail\n", RegNum);
+        mutex_unlock(&pmic_access_mutex);
+        return return_value;
+    }
+    //PMICLOG"[pmic_config_interface] write Reg[%x]=0x%x\n", RegNum, pmic_reg);
+
+    #if 0
+    //3. Double Check
+    //mt_read_byte(RegNum, &pmic_reg);
+    return_value= pwrap_wacs2(0, (RegNum), 0, &rdata);
+    pmic_reg=rdata;
+    if(return_value!=0)
+    {
+        PMICLOG("[pmic_config_interface] Reg[%x]= pmic_wrap write data fail\n", RegNum);
+        mutex_unlock(&pmic_access_mutex);
+        return return_value;
+    }
+    PMICLOG("[pmic_config_interface] Reg[%x]=0x%x\n", RegNum, pmic_reg);
+    #endif
+
+#else
+    //PMICLOG("[pmic_config_interface] Can not access HW PMIC\n");
+#endif
+
+    return return_value;
+}
 
 //==============================================================================
 // PMIC lock/unlock APIs
@@ -399,6 +484,8 @@ int pmic_read_VMC_efuse(void)
 	{
 		pmic_set_register_value(PMIC_RG_OTP_RD_TRIG,0);
 	}
+
+	udelay(50); /*efuse hw bug, need to wait delay */
 
 	while(pmic_get_register_value(PMIC_RG_OTP_RD_BUSY)==1)
 	{
@@ -1851,13 +1938,14 @@ kal_uint32 ptim_cnt=0;
 
 
 
-void do_ptim(void)
+void do_ptim(kal_bool isSuspend)
 {
 	kal_uint32 i;
 	kal_uint32 vbat_reg;
 
 	//PMICLOG("[do_ptim] start \n");
-	//pmic_auxadc_lock();
+	if(isSuspend==KAL_FALSE)
+		pmic_auxadc_lock();
 	//pmic_set_register_value(PMIC_RG_AUXADC_RST,1);
 	//pmic_set_register_value(PMIC_RG_AUXADC_RST,0);
 
@@ -1904,6 +1992,8 @@ void do_ptim(void)
 	pmic_set_register_value(PMIC_AUXADC_IMPEDANCE_IRQ_CLR,0);
 
 
+	if(isSuspend==KAL_FALSE)
+		pmic_auxadc_unlock();
 	//PMICLOG("[do_ptim2] 0xee8=0x%x  0x2c6=0x%x\n", upmu_get_reg_value(0xee8),upmu_get_reg_value(0x2c6));
 
 	
@@ -2141,7 +2231,7 @@ int get_rac_val(void)
     do
 	{        
         //adc and fg--------------------------------------------------------
-		do_ptim();
+		do_ptim(KAL_TRUE);
 
 		pmic_spm_crit2("[1,Trigger ADC PTIM mode] volt1=%d, curr_1=%d\n", ptim_bat_vol, ptim_R_curr);
 		volt_1=ptim_bat_vol;
@@ -2153,7 +2243,7 @@ int get_rac_val(void)
 		//Wait --------------------------------------------------------------
         
         //adc and fg--------------------------------------------------------
-		do_ptim();
+		do_ptim(KAL_TRUE);
 
 		pmic_spm_crit2("[3,Trigger ADC PTIM mode again] volt2=%d, curr_2=%d\n", ptim_bat_vol, ptim_R_curr);
 		volt_2=ptim_bat_vol;
@@ -2290,7 +2380,7 @@ int get_dlpt_imix(void)
 	for(i=0;i<5;i++)
 	{		 
 		//adc and fg--------------------------------------------------------
-		do_ptim();
+		do_ptim(KAL_FALSE);
 
 		volt[i]=ptim_bat_vol;
 		curr[i]=ptim_R_curr;
@@ -3215,7 +3305,7 @@ kal_uint16 is_battery_remove_pmic(void)
 
 extern bool crystal_exist_status(void);
 
-extern void mt6311_hw_component_detect(void);
+extern kal_uint32 mt6311_hw_component_detect(void);
 
 void PMIC_INIT_SETTING_V1(void)
 {
@@ -3236,7 +3326,7 @@ void PMIC_INIT_SETTING_V1(void)
 
    if(is_ext_buck_exist()==1)
    {
-           PMICLOG("[Kernel_PMIC_INIT_SETTING_V1] 2015-04-13 for turbo...\n");
+           PMICLOG("[Kernel_PMIC_INIT_SETTING_V1] 2015-04-27 for turbo...\n");
 ret = pmic_config_interface(0x4,0x1,0x1,4); // [4:4]: RG_EN_DRVSEL; Ricky
 ret = pmic_config_interface(0xA,0x1,0x1,0); // [0:0]: DDUVLO_DEB_EN; Ricky
 ret = pmic_config_interface(0xA,0x1,0x1,11); // [11:11]: BIAS_GEN_EN_SEL; Luke, in pre-load for SMPS
@@ -3252,10 +3342,12 @@ ret = pmic_config_interface(0xC,0x1,0x1,10); // [10:10]: VUSB_PG_H2L_EN; Ricky
 ret = pmic_config_interface(0xC,0x1,0x1,11); // [11:11]: VSRAM_PG_H2L_EN; Ricky
 ret = pmic_config_interface(0xC,0x1,0x1,12); // [12:12]: VIO28_PG_H2L_EN; Ricky
 ret = pmic_config_interface(0xC,0x1,0x1,13); // [13:13]: VM_PG_H2L_EN; Ricky
+ret = pmic_config_interface(0xE,0x1,0x1,0); // [0:0]: VPROC_PG_ENB; disable PG ,0514 Luke
 ret = pmic_config_interface(0x10,0x1,0x1,5); // [5:5]: UVLO_L2H_DEB_EN; Ricky
 ret = pmic_config_interface(0x16,0x1,0x1,0); // [0:0]: STRUP_PWROFF_SEQ_EN; Ricky
 ret = pmic_config_interface(0x16,0x1,0x1,1); // [1:1]: STRUP_PWROFF_PREOFF_EN; Ricky
 ret = pmic_config_interface(0x1E,0x0,0x1,11); // [11:11]: RG_TESTMODE_SWEN; CC: Test mode, first command
+ret = pmic_config_interface(0x32,0x1,0x1,15); // [15:15]: VPROC_OC_ENB; disable vproc OC, 0514 Luke
 ret = pmic_config_interface(0x40,0x1,0x1,12); // [12:12]: RG_RST_DRVSEL; Ricky
 ret = pmic_config_interface(0x204,0x1,0x1,4); // [4:4]: RG_SRCLKEN_IN0_HW_MODE; Juinn-Ting
 ret = pmic_config_interface(0x204,0x1,0x1,5); // [5:5]: RG_SRCLKEN_IN1_HW_MODE; Juinn-Ting
@@ -3268,6 +3360,9 @@ ret = pmic_config_interface(0x242,0x1,0x1,3); // [3:3]: RG_RTCDET_CK_PDN; Juinn-
 ret = pmic_config_interface(0x248,0x1,0x1,13); // [13:13]: RG_RTC_EOSC32_CK_PDN; Juinn-Ting
 ret = pmic_config_interface(0x248,0x1,0x1,14); // [14:14]: RG_TRIM_75K_CK_PDN; Juinn-Ting
 ret = pmic_config_interface(0x25A,0x1,0x1,9); // [9:9]: RG_75K_32K_SEL; Angela
+ret = pmic_config_interface(0x40E,0x0,0x3,2); // [3:2]: VPROC_OC_WND; update OC debounce timing , 0527, Luke
+ret = pmic_config_interface(0x412,0x0,0x3,2); // [3:2]: VLTE_OC_WND; update OC debounce timing , 0527, Luke
+ret = pmic_config_interface(0x420,0x1,0x1,4); // [4:4]: VPA_EN_OC_SDN_SEL; disable VPA OC,Luke 0424
 ret = pmic_config_interface(0x422,0x0,0x1,0); // [0:0]: VSRAM_TRACK_SLEEP_CTRL; turn off SRAM Tracking,Luke ,04/10
 ret = pmic_config_interface(0x422,0x0,0x1,1); // [1:1]: VSRAM_TRACK_ON_CTRL; turn off SRAM Tracking,Luke ,04/10
 ret = pmic_config_interface(0x422,0x0,0x1,2); // [2:2]: VPROC_TRACK_ON_CTRL; turn off SRAM Tracking,Luke ,04/10
@@ -3283,15 +3378,11 @@ ret = pmic_config_interface(0x450,0x80,0xFF,0); // [7:0]: RG_VSYS22_RSV; Luke,01
 ret = pmic_config_interface(0x452,0x8,0x3F,3); // [8:3]: RG_VSYS22_TRAN_BST; Luke,0204 for VSYS not sleep
 ret = pmic_config_interface(0x462,0x3,0x3,10); // [11:10]: RG_VPA_SLP; Seven Stability
 ret = pmic_config_interface(0x470,0x2,0x7,8); // [10:8]: RG_VLTE_PFM_RIP; for PFM ripple, Luke
-ret = pmic_config_interface(0x482,0x1,0x1,1); // [1:1]: VPROC_VOSEL_CTRL; ShangYing
-ret = pmic_config_interface(0x486,0x0,0x1,0); // [0:0]: VPROC_EN; For D-3T, turn off Vproc,Luke 0413
+ret = pmic_config_interface(0x486,0x1,0x1,0); // [0:0]: VPROC_EN; For D-3T, turn on ,Luke 0413; D-3T Vproc OC issue
 ret = pmic_config_interface(0x488,0x11,0x7F,0); // [6:0]: VPROC_SFCHG_FRATE; 11/20 DVFS raising slewrate,SY
-ret = pmic_config_interface(0x488,0x1,0x1,7); // [7:7]: VPROC_SFCHG_FEN; VSRAM tracking,Fandy
+ret = pmic_config_interface(0x488,0x0,0x1,7); // [7:7]: VPROC_SFCHG_FEN; VSRAM tracking,Fandy
 ret = pmic_config_interface(0x488,0x4,0x7F,8); // [14:8]: VPROC_SFCHG_RRATE; 11/20 DVFS raising slewrate,SY
-ret = pmic_config_interface(0x488,0x1,0x1,15); // [15:15]: VPROC_SFCHG_REN; VSRAM tracking,Fandy
-ret = pmic_config_interface(0x48E,0x28,0x7F,0); // [6:0]: VPROC_VOSEL_SLEEP; 11/20 Sleep mode 0.85V
-ret = pmic_config_interface(0x498,0x3,0x3,0); // [1:0]: VPROC_TRANS_TD; ShangYing
-ret = pmic_config_interface(0x498,0x1,0x3,4); // [5:4]: VPROC_TRANS_CTRL; ShangYing
+ret = pmic_config_interface(0x488,0x0,0x1,15); // [15:15]: VPROC_SFCHG_REN; VSRAM tracking,Fandy
 ret = pmic_config_interface(0x498,0x1,0x1,8); // [8:8]: VPROC_VSLEEP_EN; 11/20 sleep mode by SRCLKEN
 ret = pmic_config_interface(0x49A,0x0,0x3,4); // [5:4]: VPROC_OSC_SEL_SRCLKEN_SEL; ShangYing
 ret = pmic_config_interface(0x49A,0x0,0x3,8); // [9:8]: VPROC_R2R_PDN_SRCLKEN_SEL; ShangYing
@@ -3335,9 +3426,11 @@ ret = pmic_config_interface(0xA06,0x1,0x1,6); // [6:6]: RG_VAUX18_AUXADC_PWDB_EN
 ret = pmic_config_interface(0xA30,0x0,0x1,0); // [0:0]: RG_VEFUSE_MODE_SET; Fandy:Disable VEFUSE
 ret = pmic_config_interface(0xA44,0x1,0x1,1); // [1:1]: RG_TREF_EN; Tim
 ret = pmic_config_interface(0xA46,0x0,0x1,14); // [14:14]: QI_VM_STB; Fandy, disable
+// add by zjy for DRAM external buck power
+ret = pmic_config_interface(0xA48,0x0,0x1,12);  
+// add end
 ret = pmic_config_interface(0xA64,0x2,0x3,4); // [5:4]: RG_VEMC_3V3_VOSEL; 
 ret = pmic_config_interface(0xA88,0x68,0x7F,0); // [6:0]: RG_VSRAM_VOSEL; update for D-3 T VSRAM initial setting,Luke
-ret = pmic_config_interface(0xC14,0x1,0x1,0); // [0:0]: RG_SKIP_OTP_OUT; Fandy: for CORE power(VDVFS1x, VCOREx, VSRAM_DVFS) max voltage limitation.
 ret = pmic_config_interface(0xCBC,0x1,0x1,8); // [8:8]: FG_SLP_EN; Ricky
 ret = pmic_config_interface(0xCBC,0x1,0x1,9); // [9:9]: FG_ZCV_DET_EN; Ricky
 ret = pmic_config_interface(0xCC0,0x24,0xFFFF,0); // [15:0]: FG_SLP_CUR_TH; Ricky
@@ -3369,7 +3462,7 @@ ret = pmic_config_interface(0xF7A,0x1,0x1,7); // [7:7]: RG_ULC_DET_EN; Tim:Align
    }
    else
    {
-   	PMICLOG("[Kernel_PMIC_INIT_SETTING_V1] 2015-04-10...\n");
+   	PMICLOG("[Kernel_PMIC_INIT_SETTING_V1] 2015-04-27...\n");
 ret = pmic_config_interface(0x4,0x1,0x1,4); // [4:4]: RG_EN_DRVSEL; Ricky
 ret = pmic_config_interface(0xA,0x1,0x1,0); // [0:0]: DDUVLO_DEB_EN; Ricky
 ret = pmic_config_interface(0xA,0x1,0x1,11); // [11:11]: BIAS_GEN_EN_SEL; Luke, in pre-load for SMPS
@@ -3401,6 +3494,9 @@ ret = pmic_config_interface(0x242,0x1,0x1,3); // [3:3]: RG_RTCDET_CK_PDN; Juinn-
 ret = pmic_config_interface(0x248,0x1,0x1,13); // [13:13]: RG_RTC_EOSC32_CK_PDN; Juinn-Ting
 ret = pmic_config_interface(0x248,0x1,0x1,14); // [14:14]: RG_TRIM_75K_CK_PDN; Juinn-Ting
 ret = pmic_config_interface(0x25A,0x1,0x1,9); // [9:9]: RG_75K_32K_SEL; Angela
+ret = pmic_config_interface(0x40E,0x0,0x3,2); // [3:2]: VPROC_OC_WND; update OC debounce timing , 0527, Luke
+ret = pmic_config_interface(0x412,0x0,0x3,2); // [3:2]: VLTE_OC_WND; update OC debounce timing , 0527, Luke
+ret = pmic_config_interface(0x420,0x1,0x1,4); // [4:4]: VPA_EN_OC_SDN_SEL; Disable VPA OC shutdown, Luke 0421
 ret = pmic_config_interface(0x422,0x1,0x1,0); // [0:0]: VSRAM_TRACK_SLEEP_CTRL; SRAM Tracking,Fandy
 ret = pmic_config_interface(0x422,0x1,0x1,1); // [1:1]: VSRAM_TRACK_ON_CTRL; SRAM Tracking,Fandy
 ret = pmic_config_interface(0x422,0x1,0x1,2); // [2:2]: VPROC_TRACK_ON_CTRL; SRAM Tracking,Fandy
@@ -3467,8 +3563,10 @@ ret = pmic_config_interface(0xA06,0x1,0x1,6); // [6:6]: RG_VAUX18_AUXADC_PWDB_EN
 ret = pmic_config_interface(0xA30,0x0,0x1,0); // [0:0]: RG_VEFUSE_MODE_SET; Fandy:Disable VEFUSE
 ret = pmic_config_interface(0xA44,0x1,0x1,1); // [1:1]: RG_TREF_EN; Tim
 ret = pmic_config_interface(0xA46,0x0,0x1,14); // [14:14]: QI_VM_STB; Fandy, disable
+// add by zjy for DRAM external buck power
+ret = pmic_config_interface(0xA48,0x0,0x1,12);  
+// add end
 ret = pmic_config_interface(0xA64,0x2,0x3,4); // [5:4]: RG_VEMC_3V3_VOSEL; 
-ret = pmic_config_interface(0xC14,0x1,0x1,0); // [0:0]: RG_SKIP_OTP_OUT; Fandy: for CORE power(VDVFS1x, VCOREx, VSRAM_DVFS) max voltage limitation.
 ret = pmic_config_interface(0xCBC,0x1,0x1,8); // [8:8]: FG_SLP_EN; Ricky
 ret = pmic_config_interface(0xCBC,0x1,0x1,9); // [9:9]: FG_ZCV_DET_EN; Ricky
 ret = pmic_config_interface(0xCC0,0x24,0xFFFF,0); // [15:0]: FG_SLP_CUR_TH; Ricky
@@ -3497,7 +3595,6 @@ ret = pmic_config_interface(0xF74,0x0,0x7,4); // [6:4]: RG_CSDAC_STP_DEC; Tim:Re
 ret = pmic_config_interface(0xF7A,0x1,0x1,2); // [2:2]: RG_CSDAC_MODE; Tim:Align 6323
 ret = pmic_config_interface(0xF7A,0x1,0x1,6); // [6:6]: RG_HWCV_EN; Tim:Align 6323
 ret = pmic_config_interface(0xF7A,0x1,0x1,7); // [7:7]: RG_ULC_DET_EN; Tim:Align 6323
-   
    }
 
 
@@ -4215,6 +4312,12 @@ static int pmic_mt_probe(struct platform_device *dev)
 
 	PMIC_CUSTOM_SETTING_V1();
 	PMICLOG("[PMIC_CUSTOM_SETTING_V1] Done\n");
+
+#ifdef CONFIG_BOOT_AT_INSERT_BAT
+	/* Refer to FAQ14772 */
+#define RG_PWRKEY_RST 0x02A0
+	pmic_config_interface(RG_PWRKEY_RST, 0, 1, 9);
+#endif
 
 //#if defined(CONFIG_MTK_FPGA)
 #if 0

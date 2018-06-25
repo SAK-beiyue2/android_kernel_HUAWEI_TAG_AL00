@@ -53,8 +53,12 @@
 #define AKM09911_RETRY_COUNT	10
 #define AKM09911_DEFAULT_DELAY	100
 
-#define POWER_NONE_MACRO MT65XX_POWER_NONE
+#define GPIO_MSE_EINT_PIN         (GPIO2 | 0x80000000)
+#define GPIO_MSE_EINT_PIN_M_GPIO   GPIO_MODE_00
+#define GPIO_MSE_EINT_PIN_M_CLK   GPIO_MODE_01
+#define GPIO_MSE_EINT_PIN_M_MDEINT   GPIO_MODE_03
 
+#define POWER_NONE_MACRO MT65XX_POWER_NONE
 /**************************
  *** DEBUG
  **************************/
@@ -97,7 +101,9 @@ static struct i2c_client *this_client = NULL;
 /*----------------------------------------------------------------------------*/
 static const struct i2c_device_id akm09911_i2c_id[] = {{AKM09911_DEV_NAME,0},{}};
 //static struct i2c_board_info __initdata i2c_akm09911={ I2C_BOARD_INFO("akm09911", (AKM09911_I2C_ADDRESS>>1))};
-//static struct i2c_board_info __initdata i2c_akm09911={ I2C_BOARD_INFO("akm09911", 0x0D)};
+
+//static struct i2c_board_info __initdata i2c_akm09911={ I2C_BOARD_INFO("akm09911", AKM09911_I2C_ADDRESS>>1)};
+static struct i2c_board_info __initdata i2c_akm09911={ I2C_BOARD_INFO("akm09911", 0x0C)};
 
 /* Maintain  cust info here */
 struct mag_hw mag_cust;
@@ -171,8 +177,7 @@ static DEFINE_MUTEX(akm09911_i2c_mutex);
 
 static void akm09911_power(struct mag_hw *hw, unsigned int on) 
 {
-#ifdef __USE_LINUX_REGULATOR_FRAMEWORK__
-#else
+
 	static unsigned int power_on = 0;
 
 	if(hw->power_id != POWER_NONE_MACRO)
@@ -198,7 +203,7 @@ static void akm09911_power(struct mag_hw *hw, unsigned int on)
 		}
 	}
 	power_on = on;
-#endif
+
 }
 static long AKI2C_RxData(char *rxData, int length)
 {
@@ -2888,7 +2893,7 @@ static int akm09911_m_get_data(int* x ,int* y,int* z, int* status)
 	*x = sensor_data[5] * CONVERT_M;
 	*y = sensor_data[6] * CONVERT_M;
 	*z = sensor_data[7] * CONVERT_M;
-	*status = sensor_data[4];
+	*status = sensor_data[8];
 		
 	mutex_unlock(&sensor_data_mutex);		
 	return 0;
@@ -2948,9 +2953,9 @@ static int akm09911_o_get_data(int* x ,int* y,int* z, int* status)
 {
 	mutex_lock(&sensor_data_mutex);
 	
-	*x = sensor_data[13] * CONVERT_M;
-	*y = sensor_data[14] * CONVERT_M;
-	*z = sensor_data[15] * CONVERT_M;
+	*x = sensor_data[13] * CONVERT_O;
+	*y = sensor_data[14] * CONVERT_O;
+	*z = sensor_data[15] * CONVERT_O;
 	*status = sensor_data[8];
 		
 	mutex_unlock(&sensor_data_mutex);		
@@ -2972,6 +2977,12 @@ static int akm09911_i2c_probe(struct i2c_client *client, const struct i2c_device
 		err = -ENOMEM;
 		goto exit;
 	}
+	mt_set_gpio_out(GPIO_MSE_EINT_PIN,1);
+	mdelay(20);
+	mt_set_gpio_out(GPIO_MSE_EINT_PIN,0);
+	mdelay(20);
+	mt_set_gpio_out(GPIO_MSE_EINT_PIN,1);
+	mdelay(20);
 
 	data->hw = hw;		
 	atomic_set(&data->layout, data->hw->direction);
@@ -2986,6 +2997,7 @@ static int akm09911_i2c_probe(struct i2c_client *client, const struct i2c_device
 	this_client = new_client;	
 
 	/* Check connection */
+	
 	err = AKECS_CheckDevice();
 	if(err < 0)
 	{
@@ -3088,6 +3100,12 @@ static int	akm09911_local_init(void)
 {
 
 	akm09911_power(hw, 1);
+	mt_set_gpio_out(GPIO_MSE_EINT_PIN,1);
+	mdelay(20);
+	mt_set_gpio_out(GPIO_MSE_EINT_PIN,0);
+	mdelay(20);
+	mt_set_gpio_out(GPIO_MSE_EINT_PIN,1);
+	mdelay(20);
 	if(i2c_add_driver(&akm09911_i2c_driver))
 	{
 		MAG_ERR("i2c_add_driver error\n");
@@ -3103,9 +3121,9 @@ static int	akm09911_local_init(void)
 /*----------------------------------------------------------------------------*/
 static int __init akm09911_init(void)
 {
-    const char *name = "mediatek,AKM09911";
-    hw =	get_mag_dts_func(name, hw);
-	if (!hw)
+    const char *name = "akm09911";
+ //   hw =	get_mag_dts_func(name, hw);
+	//if (!hw)
 		hw = get_cust_mag_hw();
 
 	struct i2c_board_info i2c_akm09911={ I2C_BOARD_INFO("akm09911", hw->i2c_addr[0])};

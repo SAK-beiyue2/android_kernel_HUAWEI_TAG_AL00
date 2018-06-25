@@ -164,6 +164,11 @@ typedef enum
 #define MTK_FB_RDMA1_SUPPORT
 
 /**
+ * Support NO LCM display
+ */
+//#define DISP_HELPER_OPTION_NO_LCM_FOR_LOW_POWER_MEASUREMENT
+
+/**
  * The maximum compose layer OVL can support in one pass.
  */
 #define DISP_HW_MAX_LAYER 4

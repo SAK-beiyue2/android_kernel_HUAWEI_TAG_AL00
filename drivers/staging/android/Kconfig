@@ -103,6 +103,11 @@ config MTK_GMO_RAM_OPTIMIZE
 	help
 	  Provide for phone to use memory efficiently.
 
+config LOG_JANK
+	bool "log lank"
+	default n
+	help
+	  log lank.
 
 source "drivers/staging/android/ion/Kconfig"
 

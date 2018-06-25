@@ -60,7 +60,7 @@
 extern unsigned long localtimer_get_counter(void);
 extern int localtimer_set_next_event(unsigned long evt);
 extern void hp_enable_timer(int enable);
-extern bool clkmgr_idle_can_enter(unsigned int *condition_mask, unsigned int *block_mask);
+extern bool clkmgr_idle_can_enter(unsigned int *condition_mask, unsigned int *block_mask, enum idle_mode mode);
 extern void clkmgr_faudintbus_pll2sq(void);
 extern void clkmgr_faudintbus_sq2pll(void);
 /* Check if Turbo mode chip */
@@ -73,28 +73,28 @@ static bool mt_dpidle_chk_golden = 0;
 
 #define INVALID_GRP_ID(grp) (grp < 0 || grp >= NR_GRPS)
 
-//FIXME: Denali early porting
+/* FIXME: early porting */
 #if 1
 void __attribute__((weak))
 bus_dcm_enable(void)
 {
-	//FIXME: Denali early porting
+	/* FIXME: early porting */
 }
 void __attribute__((weak))
 bus_dcm_disable(void)
 {
-	//FIXME: Denali early porting
+	/* FIXME: early porting */
 }
 void __attribute__((weak))
 tscpu_cancel_thermal_timer(void)
 {
-	//FIXME: Denali early porting
+	/* FIXME: early porting */
 }
 
 void __attribute__((weak))
 tscpu_start_thermal_timer(void)
 {
-	//FIXME: Denali early porting
+	/* FIXME: early porting */
 }
 #endif
 
@@ -119,7 +119,11 @@ enum {
 /*Idle handler on/off*/
 static int idle_switch[NR_TYPES] = {
     1,  //dpidle switch
-    1,  //soidle switch
+#ifdef CONFIG_SODI_OFF
+    0,  //soidle off
+#else
+    1,  //soidle on
+#endif    
     1,  //slidle switch
     1,  //rgidle switch
 };
@@ -320,7 +324,7 @@ bool soidle_can_enter(int cpu)
 
     if (soidle_by_pass_cg == 0) {
         memset(soidle_block_mask, 0, NR_GRPS * sizeof(unsigned int));
-        if (!clkmgr_idle_can_enter(soidle_condition_mask, soidle_block_mask)) {
+        if (!clkmgr_idle_can_enter(soidle_condition_mask, soidle_block_mask, soidle)) {
 #if !defined(SODI_CG_CHK_DIS) || (SODI_CG_CHK_DIS == 0)
             reason = BY_CLK;
             goto out;
@@ -509,7 +513,7 @@ static bool dpidle_can_enter(void)
 
     if(dpidle_by_pass_cg==0){
 	    memset(dpidle_block_mask, 0, NR_GRPS * sizeof(unsigned int));
-	    if (!clkmgr_idle_can_enter(dpidle_condition_mask, dpidle_block_mask)) {
+	    if (!clkmgr_idle_can_enter(dpidle_condition_mask, dpidle_block_mask, dpidle)) {
 	        reason = BY_CLK;
 	        goto out;
 	    }
@@ -684,7 +688,7 @@ static bool slidle_can_enter(void)
     }
 
     memset(slidle_block_mask, 0, NR_GRPS * sizeof(unsigned int));
-    if (!clkmgr_idle_can_enter(slidle_condition_mask, slidle_block_mask)) {
+    if (!clkmgr_idle_can_enter(slidle_condition_mask, slidle_block_mask, slidle)) {
         reason = BY_CLK;
         goto out;
     }
@@ -926,7 +930,7 @@ static inline void dpidle_pre_handler(void)
     mtkts_wmt_cancel_thermal_timer();
 #endif
 #endif
-#if 0//FIXME: K2 early porting
+#if 0 /* FIXME: early porting */
     // disable gpu dvfs timer
     mtk_enable_gpu_dvfs_timer(false);
 
@@ -937,7 +941,7 @@ static inline void dpidle_pre_handler(void)
 }
 static inline void dpidle_post_handler(void)
 {
-#if 0//FIXME: K2 early porting
+#if 0 /* FIXME: early porting */
     // disable cpu dvfs timer
     hp_enable_timer(1);
 

@@ -11,32 +11,7 @@
 
 
 
-/*
-** $Log: queue.h $
- *
- * 07 16 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration.
- * bugfix for SCN migration
- * 1) modify QUEUE_CONCATENATE_QUEUES() so it could be used to concatence with an empty queue
- * 2) before AIS issues scan request, network(BSS) needs to be activated first
- * 3) only invoke COPY_SSID when using specified SSID for scan
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
- *
- * 04 20 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * .
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-03-10 20:11:46 GMT mtk01426
-**  Init for develop
-**
-*/
+
 
 #ifndef _QUEUE_H
 #define _QUEUE_H

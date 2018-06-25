@@ -35,7 +35,6 @@
 #include <mach/upmu_hw.h>
 #endif
 
-static void __iomem *APMIXED_BASE_ADDR;
 static void __iomem *CQDMA_BASE_ADDR;
 static void __iomem *DRAMCAO_BASE_ADDR;
 static void __iomem *DDRPHY_BASE_ADDR;
@@ -347,7 +346,7 @@ int enter_pasr_dpd_config(unsigned char segment_rank0,
 {
 	/* for D-3, support run time MRW */
 	unsigned int rank_pasr_segment[2];
-	unsigned int dramc0_spcmd;
+	unsigned int dramc0_spcmd, dramc0_pd_ctrl, dramc0_padctl4;
 	unsigned int i, cnt = 1000;
 
 	rank_pasr_segment[0] = segment_rank0 & 0xFF;	/* for rank0 */
@@ -356,6 +355,16 @@ int enter_pasr_dpd_config(unsigned char segment_rank0,
 
 	/* backup original data */
 	dramc0_spcmd = readl(PDEF_DRAMC0_REG_1E4);
+	dramc0_pd_ctrl = readl(PDEF_DRAMC0_REG_1DC);
+	dramc0_padctl4 = readl(PDEF_DRAMC0_REG_0E4);
+
+	/* Set MIOCKCTRLOFF(0x1dc[26])=1: not stop to DRAM clock! */
+	writel(dramc0_pd_ctrl | 0x04000000, PDEF_DRAMC0_REG_1DC);
+
+	/* fix CKE */
+	writel(dramc0_padctl4 | 0x00000004, PDEF_DRAMC0_REG_0E4);
+
+	udelay(1);
 
 	for (i = 0; i < 2; i++) {
 		/* set MRS settings include rank number, segment information and MRR17 */
@@ -379,6 +388,14 @@ int enter_pasr_dpd_config(unsigned char segment_rank0,
 		/* Mode register write command disable */
 		writel(0x0, PDEF_DRAMC0_REG_1E4);
 	}
+
+	/* release fix CKE */
+	writel(dramc0_padctl4, PDEF_DRAMC0_REG_0E4);
+
+	/* recover Set MIOCKCTRLOFF(0x1dc[26]) */
+	/* Set MIOCKCTRLOFF(0x1DC[26])=0: stop to DRAM clock */
+	writel(dramc0_pd_ctrl, PDEF_DRAMC0_REG_1DC);
+
 	/* writel(0x00000004, PDEF_DRAMC0_REG_088); */
 	pr_warn("[DRAMC0] PASR offset 0x88 = 0x%x\n", readl(PDEF_DRAMC0_REG_088));
 	writel(dramc0_spcmd, PDEF_DRAMC0_REG_1E4);
@@ -752,10 +769,12 @@ unsigned int dram_support_1600_freq(void)
 	unsigned int spbin = ((get_devinfo_with_index(5) & (1<<20)) && (get_devinfo_with_index(5) & (1<<21)) &&
 				(get_devinfo_with_index(5) & (1<<22))) ? 1 : 0;	/* MT6753 or MT6753T */
 	unsigned int ddr1466 = (get_devinfo_with_index(15) & (1<<8)) ? 1 : 0;	/* DDR1466 or DDR1600 */
+        unsigned int downgrade = ((((get_devinfo_with_index(3) >> 0) & 0x7) == 0x4) || 
+		                (((get_devinfo_with_index(3) >> 12) & 0x7) == 0x6)) ? 1 : 0; //CPU 1.3G or GPU 450
 	unsigned result = 0;
 
 	if (spbin == 1) {
-		if (ddr1466 == 1)
+		if ((ddr1466 == 1) || (downgrade == 1))
 			result = 0;
 		else
 			result = 1;
@@ -1077,224 +1096,6 @@ static ssize_t freq_hopping_test_store(struct device_driver *driver,
 }
 #endif
 
-#ifdef DFS_TEST
-void do_DRAM_DFS(int high_freq)
-{
-	U8 ucstatus = 0;
-	U32 u4value, u4HWTrackR0, u4HWTrackR1, u4HWGatingEnable;
-	int ddr_type;
-
-	mutex_lock(&dram_dfs_mutex);
-
-	ddr_type = get_ddr_type();
-	switch (ddr_type) {
-	case TYPE_DDR1:
-		pr_warn("not support DDR1\n");
-		BUG();
-	case TYPE_LPDDR2:
-		pr_warn("[DRAM DFS] LPDDR2\n");
-		break;
-	case TYPE_LPDDR3:
-		pr_warn("[DRAM DFS] LPDDR3\n");
-		break;
-	case TYPE_PCDDR3:
-		pr_warn("not support PCDDR3\n");
-		BUG();
-	default:
-		BUG();
-	}
-
-	if (high_freq == 1)
-		pr_warn("[DRAM DFS] Switch to high frequency\n");
-	else
-		pr_warn("[DRAM DFS] switch to low frequency\n");
-
-	/* DramcEnterSelfRefresh(p, 1); // enter self refresh */
-	/* mcDELAY_US(1); */
-	/* Read back HW tracking first. After shuffle finish, need to copy this value into SW fine tune. */
-
-	if (Reg_Readl((CHA_DRAMCAO_BASE + 0x1c0)) & 0x80000000)
-		u4HWGatingEnable = 1;
-	else
-		u4HWGatingEnable = 0;
-
-	if (u4HWGatingEnable) {
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + 0x028),
-				Reg_Readl((CHA_DRAMCAO_BASE + 0x028)) & (~(0x01 << 30)));	/*  cha DLLFRZ=0 */
-		u4HWTrackR0 = Reg_Readl((CHA_DRAMCNAO_BASE + 0x374));	/*  cha r0 */
-		u4HWTrackR1 = Reg_Readl((CHA_DRAMCNAO_BASE + 0x378));	/*  cha r1 */
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + 0x028),
-				Reg_Readl((CHA_DRAMCAO_BASE + 0x028)) | (0x01 << 30));	/*  cha DLLFRZ=1 */
-	}
-	/* shuffer_done = 0; */
-
-	if (high_freq == 1) {
-		/*  Shuffle to high */
-#ifndef SHUFFER_BY_MD32
-		U32 read_data;
-		U32 bak_data1;
-		U32 bak_data2;
-		U32 bak_data3;
-		U32 bak_data4;
-#else
-		U32 shuffer_to_high = 1;
-#endif
-
-		if (u4HWGatingEnable) {
-			/*  Current is low frequency. Save to low frequency fine tune here */
-			/* because shuffle enable will cause HW GW reload. */
-			Reg_Sync_Writel((CHA_DRAMCAO_BASE + 0x840), u4HWTrackR0);
-			Reg_Sync_Writel((CHA_DRAMCAO_BASE + 0x844), u4HWTrackR1);
-		}
-		/*  MR2 RL/WL set */
-#ifdef DUAL_FREQ_DIFF_RLWL
-		ucDram_Register_Write(0x088, (ddr_type == TYPE_LPDDR3) ? LPDDR3_MODE_REG_2 : LPDDR2_MODE_REG_2);
-#else
-		ucDram_Register_Write(0x088, (ddr_type == TYPE_LPDDR3) ? LPDDR3_MODE_REG_2 : LPDDR2_MODE_REG_2);
-#endif
-
-#ifndef SHUFFER_BY_MD32
-		bak_data1 = Reg_Readl((CHA_DRAMCAO_BASE + (0x77 << 2)));
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + (0x77 << 2)), bak_data1 & ~(0xc0000000));
-
-		Reg_Sync_Writel((CLK_CFG_0_CLR), 0x300);
-		Reg_Sync_Writel((CLK_CFG_0_SET), 0x100);
-
-		bak_data2 = Reg_Readl((CHA_DDRPHY_BASE + (0x190 << 2)));
-		bak_data4 = Reg_Readl((PCM_INI_PWRON0_REG));
-
-		/*  Shuffle to high start. */
-		/*  Reg.28h[17]=1 R_DMSHU_DRAMC */
-		/*  Reg.28h[16]=0 R_DMSHU_LOW */
-		bak_data3 = Reg_Readl((CHA_DRAMCAO_BASE + (0x00a << 2)));
-
-		/*  Block EMI start. */
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + (0x00a << 2)),
-				(bak_data3 & (~0x00030000)) | 0x20000);
-
-		/*  Wait shuffle_end Reg.16ch[0] == 1 */
-		read_data = Reg_Readl((CHA_DRAMCAO_BASE + (0x05b << 2)));
-		while ((read_data & 0x01) != 0x01)
-			read_data = Reg_Readl((CHA_DRAMCAO_BASE + (0x05b << 2)));
-
-		/*  [3:0]=1 : VCO/4 . [4]=0 : RG_MEMPLL_ONEPLLSEL. [12:5] RG_MEMPLL_RSV. RG_MEMPLL_RSV[1]=1 */
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x1a6 << 2)), 0x00001e41);
-		Reg_Sync_Writel((PCM_INI_PWRON0_REG), bak_data4 & (~0x8000000));
-		/*  K2?? *(volatile unsigned int*)(0x10006000) = 0x0b160001?? */
-
-		mcDELAY_US(10);	/*  Wait 1us. */
-
-		Reg_Sync_Writel((CLK_CFG_UPDATE), 0x02);
-
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x190 << 2)), bak_data2 & (~0x01));	/* sync = 1 */
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x190 << 2)), bak_data2 | 0x01);
-		/*  sync back to original. Should be 0. Bu in case of SPM control, */
-		/* need to make sure SPM is not toggling. */
-
-		/* block EMI end. */
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + (0x00a << 2)), bak_data3 & (~0x30000));
-
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + (0x77 << 2)), bak_data1);
-#else
-		while (md32_ipi_send(IPI_DFS, (void *)&shuffer_to_high, sizeof(U32), 1) != DONE)
-			;
-
-		/* while(shuffer_done == 0); */
-		pr_warn("[DRAM DFS] Shuffer to high by MD32\n");
-#endif
-
-		mt_dcm_emi_3pll_mode();
-
-		/*  [3:0]=1 : VCO/4 . [4]=0 : RG_MEMPLL_ONEPLLSEL. [12:5] RG_MEMPLL_RSV. */
-		/* RG_MEMPLL_RSV[1]=0 ==> disable output. */
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x1a6 << 2)), 0x00001e01);
-	} else {
-		/*  Shuffle to low */
-#ifndef SHUFFER_BY_MD32
-		U32 read_data;
-		U32 bak_data1;
-		U32 bak_data2;
-		U32 bak_data3;
-#else
-		U32 shuffer_to_high = 0;
-#endif
-
-		if (u4HWGatingEnable) {
-			/*  Current is low frequency. Save to high frequency fine tune here */
-			/* because shuffle enable will cause HW GW reload. */
-			Reg_Sync_Writel((CHA_DRAMCAO_BASE + 0x94), u4HWTrackR0);
-			Reg_Sync_Writel((CHA_DRAMCAO_BASE + 0x98), u4HWTrackR1);
-		}
-		/*  MR2 RL/WL set */
-#ifdef DUAL_FREQ_DIFF_RLWL
-		ucDram_Register_Write(0x088, (ddr_type == TYPE_LPDDR3) ? LPDDR3_MODE_REG_2_LOW : LPDDR2_MODE_REG_2_LOW);
-#else
-		ucDram_Register_Write(0x088, (ddr_type == TYPE_LPDDR3) ? LPDDR3_MODE_REG_2 : LPDDR2_MODE_REG_2);
-#endif
-
-		/*  [3:0]=1 : VCO/4 . [4]=0 : RG_MEMPLL_ONEPLLSEL. */
-		/* [12:5] RG_MEMPLL_RSV. RG_MEMPLL_RSV[1]=1 */
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x1a6 << 2)), 0x00001e41);
-
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x186 << 2)),
-				Reg_Readl(CHA_DDRPHY_BASE + (0x186 << 2)) | 0x10000);
-		/*  Switch MEMPLL2 reset mode select */
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x189 << 2)),
-				Reg_Readl(CHA_DDRPHY_BASE + (0x189 << 2)) | 0x10000);
-		/*  Switch MEMPLL3 reset mode select */
-
-		mt_dcm_emi_1pll_mode();
-
-#ifndef SHUFFER_BY_MD32
-		bak_data1 = Reg_Readl((CHA_DRAMCAO_BASE + (0x20a << 2)));
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + (0x20a << 2)), bak_data1 & (~0xc0000000));
-
-		Reg_Sync_Writel((CLK_CFG_0_CLR), 0x300);
-		Reg_Sync_Writel((CLK_CFG_0_SET), 0x200);
-
-		bak_data2 = Reg_Readl((CHA_DDRPHY_BASE + (0x190 << 2)));
-
-		/*  Shuffle to low. */
-		/*  Reg.28h[17]=1 R_DMSHU_DRAMC */
-		/*  Reg.28h[16]=1 R_DMSHU_LOW */
-		bak_data3 = Reg_Readl((CHA_DRAMCAO_BASE + (0x00a << 2)));
-
-		/*  Block EMI start. */
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + (0x00a << 2)), bak_data3 | 0x30000);
-
-		/*  Wait shuffle_end Reg.16ch[0] == 1 */
-		read_data = Reg_Readl((CHA_DRAMCAO_BASE + (0x05b << 2)));
-		while ((read_data & 0x01) != 0x01)
-			read_data = Reg_Readl((CHA_DRAMCAO_BASE + (0x05b << 2)));
-
-		/*  [3:0]=1 : VCO/4 . [4]=1 : RG_MEMPLL_ONEPLLSEL. [12:5] RG_MEMPLL_RSV. RG_MEMPLL_RSV[1]=1. [15]=1?? */
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x1a6 << 2)), 0x00009e51);
-
-		Reg_Sync_Writel((CLK_CFG_UPDATE), 0x02);
-
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x190 << 2)), bak_data2 & (~0x01));
-		Reg_Sync_Writel((CHA_DDRPHY_BASE + (0x190 << 2)), bak_data2 | 0x01);
-
-		/*  Block EMI end. */
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + (0x00a << 2)), bak_data3 & (~0x30000));
-		Reg_Sync_Writel((CHA_DRAMCAO_BASE + (0x20a << 2)), bak_data1);
-
-		Reg_Sync_Writel((PCM_INI_PWRON0_REG), Reg_Readl(PCM_INI_PWRON0_REG) | 0x8000000);
-#else
-		while (md32_ipi_send(IPI_DFS, (void *)&shuffer_to_high, sizeof(U32), 1) != DONE)
-			;
-
-		/* while(shuffer_done == 0); */
-		pr_warn("[DRAM DFS] Shuffer to low by MD32\n");
-#endif
-	}
-
-	mutex_unlock(&dram_dfs_mutex);
-
-	/* DramcEnterSelfRefresh(p, 0); // exit self refresh */
-}
-#endif
-
 int DFS_APDMA_early_init(void)
 {
 	phys_addr_t max_dram_size = get_max_DRAM_size();
@@ -1587,49 +1388,6 @@ static ssize_t read_dram_data_rate_store(struct device_driver *driver,
 }
 #endif
 
-#ifdef DFS_TEST
-int dfs_status;
-static ssize_t dram_dfs_show(struct device_driver *driver, char *buf)
-{
-	dfs_status = is_one_pll_mode() ? 0 : 1;
-	return snprintf(buf, PAGE_SIZE,
-			"Current DRAM DFS status : %s, emi_freq = %d\n",
-			dfs_status ? "High frequency" : "Low frequency",
-			mt_get_emi_freq());
-}
-
-static ssize_t dram_dfs_store(struct device_driver *driver, const char *buf,
-			      size_t count)
-{
-	char *p = (char *)buf;
-	unsigned int num;
-
-	num = simple_strtoul(p, &p, 10);
-	dfs_status = is_one_pll_mode() ? 0 : 1;
-	if (num == dfs_status) {
-		if (num == 1)
-			pr_warn("[DRAM DFS] Current DRAM frequency is already high freqency\n");
-		else
-			pr_warn("[DRAM DFS] Current DRAM frequency is already low freqency\n");
-
-		return count;
-	}
-
-	switch (num) {
-	case 0:
-		do_DRAM_DFS(0);
-		break;
-	case 1:
-		do_DRAM_DFS(1);
-		break;
-	default:
-		break;
-	}
-
-	return count;
-}
-#endif
-
 DRIVER_ATTR(emi_clk_mem_test, 0664, complex_mem_test_show,
 	    complex_mem_test_store);
 
@@ -1653,14 +1411,37 @@ DRIVER_ATTR(freq_hopping_test, 0664, freq_hopping_test_show,
 	    freq_hopping_test_store);
 #endif
 
-#ifdef DFS_TEST
-DRIVER_ATTR(dram_dfs, 0664, dram_dfs_show, dram_dfs_store);
+static int dram_probe(struct platform_device *pdev)
+{
+	int ret = 0;
+
+	pr_debug("[DRAMC0] module probe.\n");
+
+	return ret;
+}
+
+static int dram_remove(struct platform_device *dev)
+{
+	return 0;
+}
+
+#ifdef CONFIG_OF
+static const struct of_device_id dram_of_ids[] = {
+	{.compatible = "mediatek,DRAMC0",},
+	{}
+};
 #endif
 
-static struct device_driver dram_test_drv = {
-	.name = "emi_clk_test",
-	.bus = &platform_bus_type,
-	.owner = THIS_MODULE,
+static struct platform_driver dram_test_drv = {
+	.probe = dram_probe,
+	.remove = dram_remove,
+	.driver = {
+		.name = "emi_clk_test",
+		.owner = THIS_MODULE,
+#ifdef CONFIG_OF
+		.of_match_table = dram_of_ids,
+#endif
+		},
 };
 
 static int dram_dt_init(void)
@@ -1669,15 +1450,6 @@ static int dram_dt_init(void)
 	struct device_node *node = NULL;
 
 	/* DTS version */
-	node = of_find_compatible_node(NULL, NULL, "mediatek,APMIXED");
-	if (node) {
-		APMIXED_BASE_ADDR = of_iomap(node, 0);
-		pr_warn("get APMIXED_BASE_ADDR @ %p\n", APMIXED_BASE_ADDR);
-	} else {
-		pr_warn("can't find compatible node\n");
-		return -1;
-	}
-
 	node = of_find_compatible_node(NULL, NULL, "mediatek,CQDMA");
 	if (node) {
 		CQDMA_BASE_ADDR = of_iomap(node, 0);
@@ -1717,8 +1489,8 @@ static int dram_dt_init(void)
 	return ret;
 }
 
-/* extern char __ssram_text, _sram_start, __esram_text; */
-int __init dram_test_init(void)
+/* int __init dram_test_init(void) */
+static int __init dram_test_init(void)
 {
 	int ret = 0;
 
@@ -1730,21 +1502,20 @@ int __init dram_test_init(void)
 		pr_warn("[DRAMC] Device Tree Init Fail\n");
 		return ret;
 	}
-	/* printk(KERN_ERR "sram start = 0x%x, sram end = 0x%x,
-		src=0x%x, dst=0x%x\n",&__ssram_text,&__esram_text, src, dst); */
-	ret = driver_register(&dram_test_drv);
+
+	ret = platform_driver_register(&dram_test_drv);
 	if (ret) {
-		pr_err("fail to create the dram_test driver\n");
+		pr_err("fail to create dram_test platform driver\n");
 		return ret;
 	}
 
-	ret = driver_create_file(&dram_test_drv, &driver_attr_emi_clk_mem_test);
+	ret = driver_create_file(&dram_test_drv.driver, &driver_attr_emi_clk_mem_test);
 	if (ret) {
 		pr_err("fail to create the emi_clk_mem_test sysfs files\n");
 		return ret;
 	}
 #ifdef APDMA_TEST
-	ret = driver_create_file(&dram_test_drv, &driver_attr_dram_dummy_read_test);
+	ret = driver_create_file(&dram_test_drv.driver, &driver_attr_dram_dummy_read_test);
 	if (ret) {
 		pr_err("fail to create the DFS sysfs files\n");
 		return ret;
@@ -1752,7 +1523,7 @@ int __init dram_test_init(void)
 #endif
 
 #ifdef READ_DRAM_TEMP_TEST
-	ret = driver_create_file(&dram_test_drv, &driver_attr_read_dram_temp_test);
+	ret = driver_create_file(&dram_test_drv.driver, &driver_attr_read_dram_temp_test);
 	if (ret) {
 		pr_err("fail to create the read dram temp sysfs files\n");
 		return ret;
@@ -1760,7 +1531,7 @@ int __init dram_test_init(void)
 #endif
 
 #ifdef READ_DRAM_FREQ_TEST
-	ret = driver_create_file(&dram_test_drv, &driver_attr_read_dram_data_rate);
+	ret = driver_create_file(&dram_test_drv.driver, &driver_attr_read_dram_data_rate);
 	if (ret) {
 		pr_err("fail to create the read dram data rate sysfs files\n");
 		return ret;
@@ -1768,20 +1539,13 @@ int __init dram_test_init(void)
 #endif
 
 #ifdef FREQ_HOPPING_TEST
-	ret = driver_create_file(&dram_test_drv, &driver_attr_freq_hopping_test);
+	ret = driver_create_file(&dram_test_drv.driver, &driver_attr_freq_hopping_test);
 	if (ret) {
 		pr_err("fail to create the read dram temp sysfs files\n");
 		return ret;
 	}
 #endif
 
-#ifdef DFS_TEST
-	ret = driver_create_file(&dram_test_drv, &driver_attr_dram_dfs);
-	if (ret) {
-		pr_err("fail to create the dram dfs sysfs files\n");
-		return ret;
-	}
-#endif
 	org_dram_data_rate = get_dram_data_rate();
 	pr_warn("[DRAMC Driver] Dram Data Rate = %d\n", org_dram_data_rate);
 
@@ -1793,4 +1557,12 @@ int __init dram_test_init(void)
 	return ret;
 }
 
+static void __exit dram_test_exit(void)
+{
+	platform_driver_unregister(&dram_test_drv);
+}
+
 arch_initcall(dram_test_init);
+module_exit(dram_test_exit);
+
+MODULE_DESCRIPTION("MediaTek DRAMC Driver v0.1");

@@ -8,21 +8,7 @@
 
 
 
-/*
-** $Log: gl_cfg80211.h $
-** 
-** 09 03 2013 cp.wu
-** add path for reassociation
-** 
-** 09 12 2012 wcpadmin
-** [ALPS00276400] Remove MTK copyright and legal header on GPL/LGPL related packages
-** .
-** 
-** 08 30 2012 chinglan.wang
-** [ALPS00349664] [6577JB][WIFI] Phone can not connect to AP secured with AES via WPS in 802.11n Only
-** .
- *
-*/
+
 
 #ifndef _GL_CFG80211_H
 #define _GL_CFG80211_H
@@ -518,7 +504,7 @@ mtk_p2p_cfg80211_testmode_sw_cmd(
     #error "Please ENABLE kernel config (CONFIG_NL80211_TESTMODE) to support Wi-Fi Direct"
 #endif
 
-
+int	mtk_cfg80211_suspend(struct wiphy *wiphy, struct cfg80211_wowlan *wow);
 /*******************************************************************************
 *                              F U N C T I O N S
 ********************************************************************************

@@ -45,7 +45,9 @@ struct bug_entry {
  * users don't need to reboot ASAP and can mostly shut down cleanly.
  */
 #ifdef __aarch64__
-#define BUG() *((unsigned *)0xdead) = 0x0aee
+#include <asm/memory.h>
+#define VA_START	(UL(0xffffffffffffffff) << VA_BITS)
+#define BUG() *((unsigned *)(VA_START - 0x10000 + 0xdead)) = 0x0aee
 #define HAVE_ARCH_BUG
 #endif
 #ifndef HAVE_ARCH_BUG

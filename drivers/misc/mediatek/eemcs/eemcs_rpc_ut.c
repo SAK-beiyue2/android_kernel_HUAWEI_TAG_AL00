@@ -1,36 +1,4 @@
-/*******************************************************************************
- * Filename:
- * ---------
- *   eemcs_rpc_ut.c
- *
- * Project:
- * --------
- *   MOLY
- *
- * Description:
- * ------------
- *   Implements the CCCI RPC unit test functions
- *
- * Author:
- * -------
- *
- * ==========================================================================
- * $Log$
- *
- * 07 03 2013 ian.cheng
- * [ALPS00837674] [LTE_MD]  EEMCS ALPS.JB5.82LTE.DEV migration
- * [eemcs migration]
- *
- * 05 27 2013 ian.cheng
- * [ALPS00741900] [EEMCS] Modify device major number to 183
- * 1. update eemcs major number to 183
- * 2. fix typo of CCCI_CHNNEL_T
- *
- * 04 30 2013 ian.cheng
- * [ALPS00612780] [EEMCS] Submit EEMCS to ALPS.JB2.MT6582.MT6290.BSP.DEV
- * 1. fix compile warning from RPC.
- *
- ****************************************************************************/
+
 
 #include <linux/module.h>
 #include <linux/limits.h>
@@ -106,7 +74,7 @@ inline KAL_INT32 eemcs_rpc_ut_UL_write_skb_to_swq(CCCI_CHANNEL_T chn, struct sk_
 	KAL_ASSERT(*((kal_uint32 *)ptr) == sizeof(kal_uint32));
 	DBGLOG(RPCD, DBG, "[RPCUT] LV[1]  len = 0x%08X", *((kal_uint32 *)ptr));
 	ptr += sizeof(kal_uint32);
-	//*ptr = (void *)GPIOPin_ut_val;
+// *ptr = (void *)GPIOPin_ut_val;
 	KAL_ASSERT(*((kal_uint32 *)ptr) == ut_ret_val);
 	DBGLOG(RPCD, DBG, "[RPCUT] LV[1]  data= 0x%08X", *((kal_uint32 *)ptr));
 
@@ -185,7 +153,7 @@ void eemcs_rpc_ut_trigger(void)
 	*((kal_uint32 *)ptr) = sizeof(kal_uint32);
 	DBGLOG(RPCD, DBG, "[RPCUT] LV[0]  len= 0x%08X", *((kal_uint32 *)ptr));
 	ptr += sizeof(kal_uint32);
-	//*ptr = (void *)GPIOPin_ut_val;
+// *ptr = (void *)GPIOPin_ut_val;
 	*((kal_uint32 *)ptr) = 0xbeef;
 	DBGLOG(RPCD, DBG, "[RPCUT] LV[0]  value= 0x%08X", *((kal_uint32 *)ptr));
 	//- point to LV[1]

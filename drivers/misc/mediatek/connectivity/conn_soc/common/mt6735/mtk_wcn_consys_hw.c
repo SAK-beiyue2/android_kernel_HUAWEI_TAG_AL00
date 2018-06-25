@@ -968,22 +968,6 @@ reservedmem_of_init_fn reserve_memory_consys_fn(struct reserved_mem *rmem, unsig
 }
 RESERVEDMEM_OF_DECLARE(reserve_memory_test, "consys-reserve-memory", reserve_memory_consys_fn);
 
-#if 0
-
-VOID __init mtk_wcn_consys_memory_reserve(VOID)
-{
-	gConEmiPhyBase = arm_memblock_steal(SZ_2M,SZ_2M);
-
-	if(gConEmiPhyBase)
-	{
-		WMT_PLAT_INFO_FUNC("memblock done: 0x%zx\n",(SIZE_T)gConEmiPhyBase);
-	}else
-	{
-		WMT_PLAT_ERR_FUNC("memblock fail\n");
-	}
-}
-
-#endif
 
 INT32 mtk_wcn_consys_hw_init()
 {

@@ -328,7 +328,7 @@ static void _mt_ptp_aee_init(void)
 #if EN_ISR_LOG
 #define ptp_isr_info(fmt, args...)  ptp_notice(fmt, ##args)
 #else
-#define ptp_isr_info(fmt, args...)  ptp_debug(fmt, ##args)
+#define ptp_isr_info(fmt, args...)
 #endif
 
 #define FUNC_LV_MODULE          BIT(0)  /* module, platform driver interface */
@@ -1575,10 +1575,16 @@ static void ptp_init_ctrl(struct ptp_ctrl *ctrl)
 	FUNC_EXIT(FUNC_LV_HELP);
 }
 
+#define _BIT_(_bit_)                        (unsigned)(1 << (_bit_))
+#define _BITS_(_bits_, _val_)               ((((unsigned) -1 >> (31 - ((1) ? _bits_))) & ~((1U << ((0) ? _bits_)) - 1)) & ((_val_)<<((0) ? _bits_)))
+#define _BITMASK_(_bits_)                   (((unsigned) -1 >> (31 - ((1) ? _bits_))) & ~((1U << ((0) ? _bits_)) - 1))
+#define _GET_BITS_VAL_(_bits_, _val_)       (((_val_) & (_BITMASK_(_bits_))) >> ((0) ? _bits_))
+
 static void ptp_init_det(struct ptp_det *det, struct ptp_devinfo *devinfo)
 {
+	unsigned int segment_code = _GET_BITS_VAL_(31 : 25, get_devinfo_with_index(47));
 	ptp_det_id det_id = det_to_id(det);
-
+	
 	FUNC_ENTER(FUNC_LV_HELP);
 	printk("det name=%s,det_id=%d\n", det->name, det_id);
 
@@ -1616,8 +1622,20 @@ static void ptp_init_det(struct ptp_det *det, struct ptp_devinfo *devinfo)
 		det->DCMDET	= devinfo->CPU_DCMDET;
 		det->DCBDET	= devinfo->CPU_DCBDET;
 		// det->VBOOT	= PTP_VOLT_TO_PMIC_VAL(mt_cpufreq_cur_vproc(MT_CPU_DVFS_LITTLE));
+		switch (segment_code) {
+		case 0x4A:
+		case 0x4B:
+		case 0x52:
+		case 0x53:
+			det->DVTFIXED = 0x8;
+			break;
+		default:
+			det->DVTFIXED = 0x6;
+			break;
+		}
+		
 		break;
-
+	
 	case PTP_DET_SOC:
 		det->MDES	= devinfo->GPU_MDES;
 		det->BDES	= devinfo->GPU_BDES;

@@ -8,29 +8,7 @@
 
 
 
-/*
-** $Log: mib.c $
- *
- * 09 03 2010 kevin.huang
- * NULL
- * Refine #include sequence and solve recursive/nested #include issue
- *
- * 07 08 2010 cp.wu
- * 
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 07 2010 cp.wu
- * [WPD00003833][MT6620 and MT5931] Driver migration 
- * add mib.c.
- *
- * 02 04 2010 kevin.huang
- * [BORA00000603][WIFISYS] [New Feature] AAA Module Support 
- * Add AAA Module Support, Revise Net Type to Net Type Index for array lookup
- *
- * Nov 23 2009 mtk01461
- * [BORA00000018] Integrate WIFI part into BORA for the 1st time
- * 
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S

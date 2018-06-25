@@ -459,7 +459,7 @@ static MUTEX_SOF ddp_get_mutex_sof(DISP_MODULE_ENUM dest_module, DDP_MODE ddp_mo
         }		
         case DISP_MODULE_DPI:
         {
-            mode = SOF_DSI1;//SOF_DPI0;   has one DSI, so the DPI should use 1 for mutex_sof
+            mode = SOF_DPI0;
             break;
         }
         case DISP_MODULE_WDMA0:
@@ -478,6 +478,7 @@ static MUTEX_SOF ddp_get_mutex_sof(DISP_MODULE_ENUM dest_module, DDP_MODE ddp_mo
 // id: mutex ID, 0~5
 extern unsigned int gEnableMutexRisingEdge;
 extern unsigned int gEnableSWTrigger;
+extern unsigned int gMutexFreeRun;
 static int ddp_mutex_set_l(int mutex_id, int* module_list, DDP_MODE ddp_mode, void * handle)
 {
     int i=0;
@@ -563,6 +564,26 @@ static int ddp_mutex_enable_l(int mutex_idx,void * handle)
     return 0;
 }
 
+int ddp_mutex_hw_dcm_on(int mutex_idx,void * handle)
+{
+    if(gMutexFreeRun==1 && primary_display_is_video_mode()==0 && mutex_idx==0)
+    {
+        DISP_REG_SET(handle,DISP_REG_CONFIG_MUTEX_HW_DCM,1);
+    }
+    DDPDBG("mutex %d hw_dcm 0x%x \n", mutex_idx, DISP_REG_GET(DISP_REG_CONFIG_MUTEX_HW_DCM));
+    return 0;
+}
+
+int ddp_mutex_hw_dcm_off(int mutex_idx,void * handle)
+{
+    if(gMutexFreeRun==1 && primary_display_is_video_mode()==0 && mutex_idx==0)
+    {
+        DISP_REG_SET(handle,DISP_REG_CONFIG_MUTEX_HW_DCM,0);
+    }
+    DDPDBG("mutex %d hw_dcm 0x%x \n", mutex_idx, DISP_REG_GET(DISP_REG_CONFIG_MUTEX_HW_DCM));
+    return 0;
+}
+
 int ddp_get_module_num(DDP_SCENARIO_ENUM scenario)
 {
     return ddp_get_module_num_l(module_list_scenario[scenario]);
@@ -628,11 +649,19 @@ int ddp_set_dst_module(DDP_SCENARIO_ENUM scenario, DISP_MODULE_ENUM dst_module)
         }
     }
     module_list_scenario[scenario][i] = dst_module;
-    if (scenario == DDP_SCENARIO_PRIMARY_ALL) {
-        ddp_set_dst_module(DDP_SCENARIO_PRIMARY_DISP,dst_module);
-    }else if(scenario==DDP_SCENARIO_SUB_ALL) {
-        ddp_set_dst_module(DDP_SCENARIO_SUB_DISP,dst_module);
-    }
+	
+	if (scenario == DDP_SCENARIO_PRIMARY_ALL) {
+		ddp_set_dst_module(DDP_SCENARIO_PRIMARY_DISP,dst_module);
+		ddp_set_dst_module(DDP_SCENARIO_PRIMARY_RDMA0_COLOR0_DISP, dst_module);
+		ddp_set_dst_module(DDP_SCENARIO_PRIMARY_RDMA0_DISP, dst_module);
+	} else if (scenario == DDP_SCENARIO_PRIMARY_DISP) {
+		ddp_set_dst_module(DDP_SCENARIO_PRIMARY_ALL, dst_module);
+		ddp_set_dst_module(DDP_SCENARIO_PRIMARY_RDMA0_COLOR0_DISP, dst_module);
+		ddp_set_dst_module(DDP_SCENARIO_PRIMARY_RDMA0_DISP, dst_module);
+	} else if (scenario==DDP_SCENARIO_SUB_ALL) {
+		ddp_set_dst_module(DDP_SCENARIO_SUB_DISP,dst_module);
+	}
+
     ddp_print_scenario(scenario);
     return 0;
 }

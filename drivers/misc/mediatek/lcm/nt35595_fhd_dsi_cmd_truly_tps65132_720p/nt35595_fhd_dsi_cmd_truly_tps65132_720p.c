@@ -1127,4 +1127,3 @@ LCM_DRIVER nt35595_fhd_dsi_cmd_truly_tps65132_720p_lcm_drv=
 #endif
    
 };
-/* END PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/

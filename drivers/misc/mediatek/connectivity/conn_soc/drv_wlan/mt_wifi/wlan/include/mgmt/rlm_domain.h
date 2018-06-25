@@ -8,52 +8,7 @@
 
 
 
-/*
-** $Log: rlm_domain.h $
- *
- * 09 29 2011 cm.chang
- * NULL
- * Change the function prototype of rlmDomainGetChnlList()
- *
- * 09 08 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * Use new fields ucChannelListMap and ucChannelListIndex in NVRAM
- *
- * 08 31 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * .
- *
- * 06 01 2011 cm.chang
- * [WCXRP00000756] [MT6620 Wi-Fi][Driver] 1. AIS follow channel of BOW 2. Provide legal channel function
- * Provide legal channel function based on domain
- *
- * 12 07 2010 cm.chang
- * [WCXRP00000238] MT6620 Wi-Fi][Driver][FW] Support regulation domain setting from NVRAM and supplicant
- * 1. Country code is from NVRAM or supplicant
- * 2. Change band definition in CMD/EVENT.
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 28 2010 cm.chang
- * [WPD00003841][LITE Driver] Migrate RLM/CNM to host driver
- * 1st draft code for RLM module
- *
- * 02 23 2010 kevin.huang
- * [BORA00000603][WIFISYS] [New Feature] AAA Module Support
- * Add support scan channel 1~14 and update scan result's frequency infou1rwduu`wvpghlqg|n`slk+mpdkb
- *
- * 01 13 2010 cm.chang
- * [BORA00000018]Integrate WIFI part into BORA for the 1st time
- * Provide query function about full channle list.
- *
- * Dec 1 2009 mtk01104
- * [BORA00000018] Integrate WIFI part into BORA for the 1st time
- * Declare public rDomainInfo
- *
-**
-*/
+
 
 #ifndef _RLM_DOMAIN_H
 #define _RLM_DOMAIN_H
@@ -331,11 +286,56 @@
 #define MIB_REG_DOMAIN_JAPAN            0x40    /* MPHPT (Japan) */
 #define MIB_REG_DOMAIN_OTHER            0x00    /* other */
 
+#if CFG_SUPPORT_PWR_LIMIT_COUNTRY
+
+
+#define POWER_LIMIT_TABLE_NULL 			0xFFFF
+#define MAX_TX_POWER     				63
+#define MIN_TX_POWER     				-64
+#define MAX_CMD_SUPPORT_CHANNEL_NUM  	64
+
+/*2.4G*/
+#define BAND_2G4_LOWER_BOUND 1   
+#define BAND_2G4_UPPER_BOUND 14
+/*5G SubBand FCC spec*/
+#define UNII1_LOWER_BOUND    36  
+#define UNII1_UPPER_BOUND    48 
+#define UNII2A_LOWER_BOUND   52  
+#define UNII2A_UPPER_BOUND   64 
+#define UNII2C_LOWER_BOUND   100  
+#define UNII2C_UPPER_BOUND   144 
+#define UNII3_LOWER_BOUND    149  
+#define UNII3_UPPER_BOUND    173 
+
+#endif
 
 /*******************************************************************************
 *                             D A T A   T Y P E S
 ********************************************************************************
 */
+
+#if CFG_SUPPORT_PWR_LIMIT_COUNTRY 
+
+typedef enum _ENUM_POWER_LIMIT_T {
+	PWR_LIMIT_CCK  = 0,
+	PWR_LIMIT_20M  = 1,
+	PWR_LIMIT_40M  = 2,
+	PWR_LIMIT_80M  = 3,
+	PWR_LIMIT_160M = 4,
+	PWR_LIMIT_NUM
+} ENUM_POWER_LIMIT_T, *P_ENUM_POWER_LIMIT_T;
+
+typedef enum _ENUM_POWER_LIMIT_SUBBAND_T {
+	POWER_LIMIT_2G4         = 0,
+	POWER_LIMIT_UNII1       = 1,
+	POWER_LIMIT_UNII2A      = 2,
+	POWER_LIMIT_UNII2C      = 3,
+	POWER_LIMIT_UNII3       = 4,
+	POWER_LIMIT_SUBAND_NUM
+} ENUM_POWER_LIMIT_SUBBAND_T, *P_ENUM_POWER_LIMIT_SUBBAND_T;
+
+#endif
+
 
 /* Define channel offset in unit of 5MHz bandwidth */
 typedef enum _ENUM_CHNL_SPAN_T {
@@ -458,6 +458,60 @@ typedef struct _COUNTRY_CH_SET_T {
     ENUM_CH_SET_UNII_UPPER_T    eUniiUpper;
 } COUNTRY_CH_SET_T, *P_COUNTRY_CH_SET_T;
 
+#if CFG_SUPPORT_PWR_LIMIT_COUNTRY 
+
+typedef struct _CHANNEL_POWER_LIMIT {
+    UINT_8                 ucCentralCh;
+	INT_8                  cPwrLimitCCK;
+    INT_8                  cPwrLimit20;
+    INT_8                  cPwrLimit40;
+    INT_8                  cPwrLimit80;
+    INT_8                  cPwrLimit160;
+    UINT_8                 ucFlag;
+    UINT_8                 aucReserved[1];
+}CHANNEL_POWER_LIMIT, *P_CHANNEL_POWER_LIMIT;
+
+typedef struct _COUNTRY_CHANNEL_POWER_LIMIT {
+    UINT_8                 aucCountryCode[2];
+    UINT_8                 ucCountryFlag;
+	UINT_8                 ucChannelNum;
+    UINT_8                 aucReserved[4];	
+    CHANNEL_POWER_LIMIT    rChannelPowerLimit[80];	
+}COUNTRY_CHANNEL_POWER_LIMIT, *P_COUNTRY_CHANNEL_POWER_LIMIT;
+
+#define CHANNEL_PWR_LIMIT(_channel,_pwrLimit_cck,_pwrLimit_bw20,_pwrLimit_bw40,_pwrLimit_bw80,_pwrLimit_bw160,_ucFlag)          \
+    {                                                  \
+    .ucCentralCh           = (_channel),               \
+    .cPwrLimitCCK          = (_pwrLimit_cck),          \
+    .cPwrLimit20           = (_pwrLimit_bw20),         \
+    .cPwrLimit40           = (_pwrLimit_bw40),         \
+    .cPwrLimit80           = (_pwrLimit_bw80),         \
+    .cPwrLimit160          = (_pwrLimit_bw160),        \
+    .ucFlag                = (_ucFlag),                \
+    .aucReserved           = {0}                       \
+}
+
+typedef struct _COUNTRY_POWER_LIMIT_TABLE_DEFAULT {
+    UINT_8                 aucCountryCode[2];
+	INT_8                  aucPwrLimitSubBand[POWER_LIMIT_SUBAND_NUM]; //0: ch 1 ~14 , 1: ch 36 ~48, 2: ch 52 ~64, 3: ch 100 ~144, 4: ch 149 ~165
+	UINT_8				   ucPwrUnit;           //bit0: cPwrLimit2G4, bit1: cPwrLimitUnii1; bit2: cPwrLimitUnii2A; bit3: cPwrLimitUnii2C; bit4: cPwrLimitUnii3; mW: 0, mW\MHz : 1
+}COUNTRY_POWER_LIMIT_TABLE_DEFAULT, *P_COUNTRY_POWER_LIMIT_TABLE_DEFAULT;
+
+typedef struct _COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION {
+    UINT_8                 aucCountryCode[2];
+	UINT_8                 ucCentralCh;
+	INT_8				   aucPwrLimit[PWR_LIMIT_NUM];
+}COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION, *P_COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION;
+
+typedef struct _SUBBAND_CHANNEL_T {
+	UINT_8  ucStartCh;
+	UINT_8  ucEndCh;
+	UINT_8  ucInterval;
+	UINT_8  ucReserved;
+}SUBBAND_CHANNEL_T, *P_SUBBAND_CHANNEL_T;
+
+
+#endif
 
 /*******************************************************************************
 *                            P U B L I C   D A T A
@@ -514,7 +568,38 @@ rlmDomainIsLegalChannel (
     ENUM_BAND_T     eBand,
     UINT_8          ucChannel
     );
+#if CFG_SUPPORT_PWR_LIMIT_COUNTRY
 
+BOOLEAN
+rlmDomainCheckPowerLimitValid (
+	P_ADAPTER_T     								prAdapter,
+	COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION         rPowerLimitTableConfiguration,      
+	UINT_8          								ucPwrLimitNum
+    );
+BOOLEAN
+rlmDomainCheckChannelEntryValid(
+    P_ADAPTER_T     prAdapter,
+    UINT_8          ucCentralCh
+    );
+
+
+VOID
+rlmDomainCheckCountryPowerLimitTable (
+	P_ADAPTER_T     prAdapter
+	);
+
+UINT_16
+rlmDomainPwrLimitDefaultTableDecision(
+    P_ADAPTER_T     prAdapter,
+    UINT_16         u2CountryCode 
+    );
+
+
+VOID
+rlmDomainSendPwrLimitCmd (
+   P_ADAPTER_T     prAdapter
+    );
+#endif
 /*******************************************************************************
 *                              F U N C T I O N S
 ********************************************************************************

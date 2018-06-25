@@ -64,6 +64,8 @@ static ssize_t _mtk_cl_sd_rst_write(struct file *filp, const char __user *buf, s
 	int ret = 0;
 	char tmp[MAX_LEN] = { 0 };
 
+	len = (len < (MAX_LEN - 1)) ? len : (MAX_LEN - 1);
+
 	/* write data to the buffer */
 	if (copy_from_user(tmp, buf, len)) {
 		return -EFAULT;
@@ -117,7 +119,7 @@ static ssize_t _mtk_cl_sd_pid_write(struct file *filp, const char __user *buf, s
 {
 	int ret = 0;
 	char tmp[MAX_LEN] = { 0 };
-
+	len = (len < (MAX_LEN - 1)) ? len : (MAX_LEN - 1);
 	/* write data to the buffer */
 	if (copy_from_user(tmp, buf, len)) {
 		return -EFAULT;
@@ -162,6 +164,8 @@ static ssize_t _mtk_cl_sd_debouncet_write(struct file *filp, const char __user *
 {
 	char desc[MAX_LEN] = {0};
 	int tmp_dbt = -1;
+
+	len = (len < (MAX_LEN - 1)) ? len : (MAX_LEN - 1);
 
 	/* write data to the buffer */
 	if (copy_from_user(desc, buf, len)) {
@@ -253,7 +257,7 @@ static int mtk_cl_shutdown_get_cur_state(struct thermal_cooling_device *cdev, un
 {
     //*state = *((unsigned long *)cdev->devdata);
     sd_state *cl_state = (sd_state *) cdev->devdata;
-    if (state) 
+    if (state)
         *state = cl_state->state;
     /* mtk_cooler_shutdown_dprintk("mtk_cl_shutdown_get_cur_state() %s %d\n", cdev->type, *state); */
     return 0;
@@ -268,7 +272,7 @@ static int mtk_cl_shutdown_set_cur_state(struct thermal_cooling_device *cdev, un
 	/* mtk_cooler_shutdown_dprintk("mtk_cl_shutdown_set_cur_state() %s %d\n", cdev->type, state); */
 	if (!cl_state)
 	    return -1;
-	
+
 #if defined(MTK_COOLER_SHUTDOWN_SIGNAL)
 	original_state = cl_state->state;
 #endif
@@ -284,7 +288,7 @@ static int mtk_cl_shutdown_set_cur_state(struct thermal_cooling_device *cdev, un
     }
     else if (1 == state)
     {
-        cl_state->sd_cnt++;        
+        cl_state->sd_cnt++;
     }
 
 	if (sd_debouncet == cl_state->sd_cnt) {
@@ -387,7 +391,7 @@ static int __init mtk_cooler_shutdown_init(void)
 			entry->gid = 1000;
 #endif
 		}
-	
+
 		entry =
 		    proc_create("clsd_rst", S_IRUGO | S_IWUSR | S_IWGRP, dir_entry,
 				&_cl_sd_rst_fops);
@@ -402,8 +406,8 @@ static int __init mtk_cooler_shutdown_init(void)
 #endif
 		}
 
-        entry = 
-            proc_create("clsd_dbt", S_IRUGO | S_IWUSR | S_IWGRP, dir_entry, 
+        entry =
+            proc_create("clsd_dbt", S_IRUGO | S_IWUSR | S_IWGRP, dir_entry,
                 &_cl_sd_debouncet_fops);
         if (!entry) {
             mtk_cooler_shutdown_dprintk("%s clsd_dbt creation failed\n",

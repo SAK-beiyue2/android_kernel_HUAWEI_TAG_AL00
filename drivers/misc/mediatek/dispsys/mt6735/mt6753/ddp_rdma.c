@@ -394,17 +394,20 @@ void rdma_set_ultra(unsigned int idx, unsigned int width, unsigned int height, u
 		  if (mode == RDMA_MODE_DIRECT_LINK)
 		  {
 		     sodi_threshold = 168|(475<<10);//low:168	high:475 (direct link in FHD)	
+		     fifo_valid_size = 0x70+1;
           }
 		  else
           {
              if (isidle)
 			 {
 			 	sodi_threshold = 84|(236<<10);//low:84	high:236 (decouple in FHD in idle)
-				DISP_REG_SET(handle,idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_MEM_GMC_SETTING_0,0x1c01371c);
+				DISP_REG_SET(handle,idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_MEM_GMC_SETTING_0,0x1c01371c);				
+				fifo_valid_size = 0x20;
              }
 			 else
 			 {
 			 	sodi_threshold = 168|(236<<10);//low:168	high:236 (decouple in FHD)
+				fifo_valid_size = 0x70+1;			 	
 			 }
 		  }
       }
@@ -415,6 +418,7 @@ void rdma_set_ultra(unsigned int idx, unsigned int width, unsigned int height, u
 		  if (mode == RDMA_MODE_DIRECT_LINK)
 		  {
 		     sodi_threshold = 75|(328<<10);//low:75	high:328 (direct link in HD)
+		     fifo_valid_size = 0x32+1;
           }
           else
           {
@@ -422,10 +426,12 @@ void rdma_set_ultra(unsigned int idx, unsigned int width, unsigned int height, u
 			  {
 				 sodi_threshold = 38|(216<<10);//low:84  high:236 (decouple in FHD in idle)
 				 DISP_REG_SET(handle,idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_MEM_GMC_SETTING_0,0x0d01190c);
+				 fifo_valid_size = 0x20;				 
 			  }
 			  else
 			  {          
 		         sodi_threshold = 75|(216<<10);//low:75	high:216 (decouple in HD)
+				 fifo_valid_size = 0x32+1;		         
 			  }
 		  }
       }
@@ -441,7 +447,8 @@ void rdma_set_ultra(unsigned int idx, unsigned int width, unsigned int height, u
       {
 		  DISP_REG_SET(handle,idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_MEM_GMC_SETTING_1, 0x10);//87
           DISP_REG_SET(handle,idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_MEM_GMC_SETTING_0,0x1c013770);
-
+		  fifo_valid_size = 0x70+1;
+		  
 		  if (mode == RDMA_MODE_DIRECT_LINK)
 		  {
 		     sodi_threshold = 168|(219<<10);//low:168	high:219 (direct link in FHD)	
@@ -455,6 +462,7 @@ void rdma_set_ultra(unsigned int idx, unsigned int width, unsigned int height, u
       {
 		  DISP_REG_SET(handle,idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_MEM_GMC_SETTING_1, 0x10);//182
           DISP_REG_SET(handle,idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_MEM_GMC_SETTING_0,0x0c011832);
+		  fifo_valid_size = 0x32+1;		  
 		  
 		  if (mode == RDMA_MODE_DIRECT_LINK)
 		  {
@@ -572,7 +580,7 @@ static int rdma_config(DISP_MODULE_ENUM module,
     if(ufoe_enable==0)  //UFOE bypassed, enable RDMA underflow intr, else disable RDMA underflow intr
     {
 	    DISP_REG_SET_FIELD(handle,FIFO_CON_FLD_FIFO_UNDERFLOW_EN, idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_FIFO_CON, 1);	    
-        DISP_REG_SET_FIELD(handle,FIFO_CON_FLD_OUTPUT_VALID_FIFO_THRESHOLD, idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_FIFO_CON, gRDMAFIFOLen);
+//        DISP_REG_SET_FIELD(handle,FIFO_CON_FLD_OUTPUT_VALID_FIFO_THRESHOLD, idx*DISP_RDMA_INDEX_OFFSET+ DISP_REG_RDMA_FIFO_CON, gRDMAFIFOLen);
     }
     else
     {

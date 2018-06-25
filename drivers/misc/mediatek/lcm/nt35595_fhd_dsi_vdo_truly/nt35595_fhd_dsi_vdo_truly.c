@@ -1,4 +1,3 @@
-/* BEGIN PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/
 #ifndef BUILD_LK
 #include <linux/string.h>
 #endif
@@ -1094,4 +1093,3 @@ LCM_DRIVER nt35595_fhd_dsi_vdo_truly_lcm_drv=
 #endif
    
 };
-/* END PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/

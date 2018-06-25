@@ -1,4 +1,3 @@
-/* BEGIN PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/
 #ifndef BUILD_LK
 #include <linux/string.h>
 #endif
@@ -79,7 +78,6 @@ struct LCM_setting_table {
 //update initial param for IC nt35520 0.01
 static struct LCM_setting_table lcm_initialization_setting_tm[] = {
        {0xFF,  4,  {0xAA,0x55,0xA5,0x80}},
-	//f00208919 20130817 for boe flinker
     {0x6F,  1,  {0x13}},
     {0xF7,  1,  {0x00}},
 
@@ -369,10 +367,8 @@ static void lcm_get_params(LCM_PARAMS *params)
     params->dsi.horizontal_frontporch				= 40;
     params->dsi.horizontal_active_pixel				= FRAME_WIDTH;
 
-    /*BEGIN PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
     //improve clk quality
     params->dsi.PLL_CLOCK = 240; //this value must be in MTK suggested table
-    /*END PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 
 }
 /*to prevent electric leakage*/
@@ -408,11 +404,9 @@ static void lcm_init_tm(void)
 
 static void lcm_suspend(void)
 {
-    /*BEGIN PN:DTS2013061501413 ,  Modified by s00179437 , 2013-6-15*/
     //Back to MP.P7 baseline , solve LCD display abnormal On the right
     // when phone sleep , config output low, disable backlight drv chip  
     lcm_util.set_gpio_out(GPIO_LCD_DRV_EN_PIN, GPIO_OUT_ZERO);
-    /*END PN:DTS2013061501413 ,  Modified by s00179437 , 2013-6-15*/
     push_table(lcm_deep_sleep_mode_in_setting, sizeof(lcm_deep_sleep_mode_in_setting) / sizeof(struct LCM_setting_table), 1);
     //reset low
     lcm_util.set_gpio_out(GPIO_DISP_LRSTB_PIN, GPIO_OUT_ZERO);
@@ -442,11 +436,9 @@ static void lcm_resume_tm(void)
     msleep(10);	
 
     push_table(lcm_initialization_setting_tm, sizeof(lcm_initialization_setting_tm) / sizeof(struct LCM_setting_table), 1);
-    /*BEGIN PN:DTS2013061501413 ,  Modified by s00179437 , 2013-6-15*/
     //Back to MP.P7 baseline , solve LCD display abnormal On the right
     //when sleep out, config output high ,enable backlight drv chip  
     lcm_util.set_gpio_out(GPIO_LCD_DRV_EN_PIN, GPIO_OUT_ONE);
-    /*END PN:DTS2013061501413 ,  Modified by s00179437 , 2013-6-15*/
     LCD_DEBUG("kernel:tm_nt35520_lcm_resume\n");
 }
 static void lcm_update(unsigned int x, unsigned int y,
@@ -477,17 +469,14 @@ static void lcm_update(unsigned int x, unsigned int y,
 	data_array[1]= (y1_MSB<<24)|(y0_LSB<<16)|(y0_MSB<<8)|0x2b;
 	data_array[2]= (y1_LSB);
 	dsi_set_cmdq(data_array, 3, 1);
-         /*BEGIN PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
          //delete high speed packet
 	//data_array[0]=0x00290508;
 	//dsi_set_cmdq(data_array, 1, 1);
-         /*END PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 	
 	data_array[0]= 0x002c3909;
 	dsi_set_cmdq(data_array, 1, 0);
 
 }
-/*BEGIN PN:DTS2013011703806, Added by y00213338 , 2013-01-13*/
 /******************************************************************************
   Function:       lcm_set_pwm_level_XXX
   Description:    set different values for each LCD
@@ -514,7 +503,6 @@ static unsigned int lcm_set_pwm_level_tm(unsigned int level )
         //Reduce brightness for power consumption , MAX value > 350cd/cm2
         mapped_level = (unsigned int)((level-8) * 7 /10);
     }
-    /*BEGIN PN:DTS2013042409674, Added by s00179437 , 2013-04-24*/
     if((mapped_level >= MIN_VALUE_DUTY_ONE_EIGHT) && (mapped_level <= MAX_VALUE_DUTY_ONE_EIGHT )) //12.5% duty shanshuo
     {
         //avoid 12.5% duty brightness value for TI backlight driver chip bug
@@ -540,10 +528,8 @@ static unsigned int lcm_set_pwm_level_tm(unsigned int level )
 }
 static unsigned int lcm_compare_id_tm(void)
 {
-/* BEGIN PN:SPBB-1229 ,Modified by b00214920, 2013/01/07*/
     unsigned char module_id = which_lcd_module_triple();
     return ((LCD_MODULE_ID == module_id )? 1 : 0);
-/* END PN:SPBB-1229 ,Modified by b00214920, 2013/01/07*/
 }
 LCM_DRIVER nt35520_hd720_tm_lcm_drv =
 {
@@ -565,4 +551,3 @@ LCM_DRIVER nt35520_hd720_tm_lcm_drv =
 #endif
    
 };
-/* END PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/

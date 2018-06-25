@@ -51,9 +51,9 @@ extern void __iomem *pwrap_base;
 /******************************************************************************
 global variable and  sys interface
 ******************************************************************************/
-#define TIMEOUT_RESET	    0x7D0 //2000us
-#define TIMEOUT_READ	    0x7D0 //2000us 
-#define TIMEOUT_WAIT_IDLE	0x7D0 //2000us
+#define TIMEOUT_RESET	    0x4E20 //20000us
+#define TIMEOUT_READ	    0x4E20 //20000us
+#define TIMEOUT_WAIT_IDLE	0x4E20 //20000us
 
 //-------macro for spi clock config--------------------------------
 #define CLK_CFG_4_CLR                       (TOPCKGEN_BASE+0x088) //6582

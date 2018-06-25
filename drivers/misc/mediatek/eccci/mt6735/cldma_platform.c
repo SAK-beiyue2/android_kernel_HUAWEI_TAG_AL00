@@ -2,11 +2,11 @@
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <mach/mt_spm_sleep.h>
-#include <mach/mt_gpio.h>
 #include <mach/mt_clkbuf_ctl.h>
 
 #if defined(CONFIG_MTK_LEGACY)
 #include <mach/mt_clkmgr.h>
+#include <mach/mt_gpio.h>
 #else
 #include <linux/clk.h>
 #endif /*CONFIG_MTK_LEGACY*/
@@ -187,6 +187,16 @@ void md_cd_dump_debug_register(struct ccci_modem *md)
 
 void md_cd_check_emi_state(struct ccci_modem *md, int polling)
 {
+}
+/* callback for system power off*/
+void ccci_power_off(void)
+{
+	/*ALPS02057700 workaround:
+	* Power on VLTE for system power off backlight work normal
+	*/
+	CCCI_INF_MSG(-1, CORE, "ccci_power_off:set VLTE on,bit0,1\n");
+	pmic_config_interface(0x04D6, 0x1, 0x1, 0); /* bit[0] =>1'b1 */
+	udelay(200);
 }
 
 int md_cd_power_on(struct ccci_modem *md)

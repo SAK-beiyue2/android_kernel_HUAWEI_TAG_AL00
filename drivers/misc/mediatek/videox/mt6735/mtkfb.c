@@ -73,12 +73,12 @@ static u32 fb_xres_update = 0;
 static u32 fb_yres_update = 0;
 
 #define MTK_FB_XRESV (ALIGN_TO(MTK_FB_XRES, MTK_FB_ALIGNMENT))
-#define MTK_FB_YRESV (ALIGN_TO(MTK_FB_YRES, MTK_FB_ALIGNMENT) * MTK_FB_PAGES) /* For page flipping */
+#define MTK_FB_YRESV (MTK_FB_YRES * MTK_FB_PAGES)	/* For page flipping */
 #define MTK_FB_BYPP  ((MTK_FB_BPP + 7) >> 3)
 #define MTK_FB_LINE  (ALIGN_TO(MTK_FB_XRES, MTK_FB_ALIGNMENT) * MTK_FB_BYPP)
-#define MTK_FB_SIZE  (MTK_FB_LINE * ALIGN_TO(MTK_FB_YRES, MTK_FB_ALIGNMENT))
+#define MTK_FB_SIZE  (MTK_FB_LINE * MTK_FB_YRES)
 
-#define MTK_FB_SIZEV (MTK_FB_LINE * ALIGN_TO(MTK_FB_YRES, MTK_FB_ALIGNMENT) * MTK_FB_PAGES)
+#define MTK_FB_SIZEV (MTK_FB_LINE * MTK_FB_YRES * MTK_FB_PAGES)
 
 #define CHECK_RET(expr)    \
     do {                   \
@@ -1250,7 +1250,7 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg
 			return -EFAULT;
 		}
 
-		if (displayid > MTKFB_MAX_DISPLAY_COUNT) 
+		if ((displayid < 0) || (displayid >= MTKFB_MAX_DISPLAY_COUNT)) 
 		{
 			DISPERR("[FB]: invalid display id:%d \n", displayid);
 			return -EFAULT;
@@ -1833,96 +1833,6 @@ static int mtkfb_pan_display_proxy(struct fb_var_screeninfo *var, struct fb_info
     return mtkfb_pan_display_impl(var, info);
 }
 
-#ifdef CONFIG_DMA_SHARED_BUFFER
-static struct sg_table * mtkfb_dma_buf_map(struct dma_buf_attachment *attachment, enum dma_data_direction dir) {             
-        struct sg_table *table;                                                                                             
-        struct fb_info *info = attachment->dmabuf->priv;
-        struct page *page;
-        int err;
-        int i;
-        struct scatterlist *s;
-                                                                    
-        table = kmalloc(sizeof(struct sg_table), GFP_KERNEL);                                                               
-        if (!table) return ERR_PTR(-ENOMEM);                                                                                
-                                                                                                                            
-        err = sg_alloc_table(table, 1, GFP_KERNEL);                                                                         
-        if (err)                                                                                                            
-        {                                                                                                                   
-                kfree(table);                                                                                               
-                return ERR_PTR(err);                                                                                        
-        }                                                                                                                   
-                                                                                                                            
-        sg_set_page(table->sgl, NULL, info->fix.smem_len, 0);                                                               
-
-//        printk("mtkfb_dma_buf_map table length %d\n", info->fix.smem_len);
-
-        for_each_sg(table->sgl, s, table->nents, i)
-        {
-#ifdef CONFIG_NEED_SG_DMA_LENGTH
-            s->dma_length = s->length;
-#endif
-		    size_t pages = PFN_UP(sg_dma_len(s));
-//            printk("mtkfb_dma_buf_map entry length %zu\n", pages);
-        }
-                                                                                                                           
-        sg_dma_address(table->sgl) = info->fix.smem_start;                                                                  
-        debug_dma_map_sg(NULL, table->sgl, table->nents, table->nents, DMA_BIDIRECTIONAL);                                  
-                                                                                                                            
-        return table;                                                                                                       
-}                                                                                                                           
-                                                                                                                            
-static void mtkfb_dma_buf_unmap(struct dma_buf_attachment *attachment, struct sg_table *table, enum dma_data_direction dir) {
-        debug_dma_unmap_sg(NULL, table->sgl, table->nents, DMA_BIDIRECTIONAL);                                              
-        sg_free_table(table);                                                                                               
-        kfree(table);                                                                                                       
-}                                                                                                                           
-                                                                                                                            
-static void mtkfb_dma_buf_release(struct dma_buf *buf) {                                                                     
-        /* Nop */                                                                                                           
-}                                                                                                                           
-                                                                                                                            
-static void *mtkfb_dma_buf_kmap_atomic(struct dma_buf *buf, unsigned long off) {                                             
-        /* Not supported */                                                                                                 
-        return NULL;                                                                                                        
-}                                                                                                                           
-static void *mtkfb_dma_buf_kmap(struct dma_buf *buf, unsigned long off) {                                                    
-        /* Not supported */                                                                                                 
-        return NULL;                                                                                                        
-}                                                                                                                           
-                                                                                                                            
-static int mtkfb_dma_buf_mmap(struct dma_buf *buf, struct vm_area_struct *vma) {                                             
-        struct fb_info *info = (struct fb_info*)buf->priv;                                                                  
-                                                                                                                            
-        printk(KERN_INFO "mtkfb: mmap dma-buf: %p, start: %lu, offset: %lu, size: %lu\n",                                    
-               buf, vma->vm_start, vma->vm_pgoff, vma->vm_end - vma->vm_start);                                             
-                                                                                                                            
-        return io_remap_pfn_range(vma,                                                                                      
-                        vma->vm_start + vma->vm_pgoff, (info->fix.smem_start + vma->vm_pgoff) >> PAGE_SHIFT,                
-                        vma->vm_end - vma->vm_start,                                                                        
-                        pgprot_writecombine(vma->vm_page_prot));                                                            
-}                                                                                                                           
-                                                                                                                            
-static struct dma_buf_ops mtkfb_dma_buf_ops = {                                                                              
-        .map_dma_buf = mtkfb_dma_buf_map,                                                                                    
-        .unmap_dma_buf = mtkfb_dma_buf_unmap,                                                                                
-        .release = mtkfb_dma_buf_release,                                                                                    
-        .kmap_atomic = mtkfb_dma_buf_kmap_atomic,                                                                            
-        .kmap = mtkfb_dma_buf_kmap,                                                                                          
-        .mmap = mtkfb_dma_buf_mmap,                                                                                          
-};                                                                                                                          
-                                                                                                                            
-static struct dma_buf *mtkfb_dmabuf_export(struct fb_info *info) {                                                          
-        struct dma_buf *buf;                                                                                                
-                                                                                                                            
-        printk(KERN_INFO "mtkfb: Exporting dma-buf\n");                                                                      
-                                                                                                                            
-        buf = dma_buf_export(info, &mtkfb_dma_buf_ops, info->fix.smem_len, O_RDWR);                                          
-                                                                                                                            
-        return buf;                                                                                                         
-}   
-
-#endif
-
 /* Callback table for the frame buffer framework. Some of these pointers
  * will be changed according to the current setting of fb_info->accel_flags.
  */
@@ -1942,9 +1852,6 @@ static struct fb_ops mtkfb_ops = {
 #ifdef CONFIG_COMPAT
 	.fb_compat_ioctl = mtkfb_compat_ioctl,
 #endif    
-#ifdef CONFIG_DMA_SHARED_BUFFER
-    .fb_dmabuf_export = mtkfb_dmabuf_export,
-#endif
 };
 
 /*
@@ -2057,7 +1964,8 @@ static int init_framebuffer(struct fb_info *info)
                    info->var.yoffset * info->fix.line_length;
 
     // clean whole frame buffer as black
-    memset(buffer, 0, info->screen_size);
+    if (info->var.yres + info->var.yoffset <= info->var.yres_virtual)
+	memset(buffer, 0, info->screen_size);
 
     return 0;
 }
@@ -2839,7 +2747,7 @@ static void mtkfb_early_suspend(struct early_suspend *h)
 }
 #endif
 
-/* workaround (2015/04/24)
+/* workaround (2015/5/18)
  *
  *   Only happens in VDO mode.
  *
@@ -2847,16 +2755,55 @@ static void mtkfb_early_suspend(struct early_suspend *h)
  *   a case that during IPOH booting, unknown behavior that some one often 
  *   disable/enabled clock of I2C channel 2 and this makes DISP_RDMA0 underflow.
  *
- *   Therefore we force on I2C channel 2 clock before IPOH booting and clear
- *   it after boot.
+ *   However, we found that if DISPSYS enable one of MMSYS clock, and this
+ *   problem can be workarounded. Therefore we enable a clock while ipoh booting,
+ *   and disable it in late_resume.
  *
  *   Root cause not found.
  */
 #include <mach/mt_clkmgr.h>
+#define DISP_IPOH_WORKAROUND_CG     MT_CG_DISP0_SMI_LARB0
+const char *ipoh_wkarnd_caller = "MTKFB";
 
-/* If this_workaroundIpohBootingOfI2CChannel2 is 1, it means we have to clear
- * force on I2C channel 2 clock */
-static int this_workaroundIpohBootingOfI2CChannel2 = 0; // no race condition
+struct ipoh_wkarnd {
+    bool is_ipoh_booting;
+    void (*on_restore_noirq)(struct ipoh_wkarnd *t, struct device *dev);
+    void (*on_late_resume_done)(struct ipoh_wkarnd *t, struct early_suspend *h);
+};
+
+static void ipoh_wkarnd_on_restore_noirq(struct ipoh_wkarnd *w, struct device *dev)
+{
+    if (w && w->on_restore_noirq)
+        w->on_restore_noirq(w, dev);
+}
+
+static void ipoh_wkarnd_on_late_resume_done(struct ipoh_wkarnd *w, struct early_suspend *h)
+{
+    if (w && w->on_late_resume_done)
+        w->on_late_resume_done(w, h);
+}
+
+/* RDMA workaround handler */
+static void wkarnd_rdma_undflw_on_restore_noirq(struct ipoh_wkarnd *t, struct device *dev)
+{
+    t->is_ipoh_booting = 1;
+    enable_clock(DISP_IPOH_WORKAROUND_CG, ipoh_wkarnd_caller);
+}
+
+static void wkarnd_rdma_undflw_on_lateresume_done(struct ipoh_wkarnd *t, struct early_suspend *h)
+{
+    if (t->is_ipoh_booting){
+        t->is_ipoh_booting = 0;
+        disable_clock(DISP_IPOH_WORKAROUND_CG, ipoh_wkarnd_caller);
+    }
+}
+
+static struct ipoh_wkarnd ipoh_workaround_rdma_underflow = 
+{
+    .on_restore_noirq = wkarnd_rdma_undflw_on_restore_noirq,
+    .on_late_resume_done = wkarnd_rdma_undflw_on_lateresume_done,
+    .is_ipoh_booting = 0,
+};
 /*****************************************************************************/
 
 /* PM resume */
@@ -2882,13 +2829,6 @@ static void mtkfb_late_resume(struct early_suspend *h)
 	is_early_suspended = FALSE;
 #endif
 
-    /* workaround (2015/04/24) */
-    if( this_workaroundIpohBootingOfI2CChannel2 != 0)
-    {
-        this_workaroundIpohBootingOfI2CChannel2 = 0;
-        clk_clr_force_on(MT_CG_PERI_I2C2);
-    }
-
 	ret = primary_display_resume();
 
 	if(ret)
@@ -2896,6 +2836,10 @@ static void mtkfb_late_resume(struct early_suspend *h)
 		DISPERR("primary display resume failed\n");
 		return;
 	}
+
+    /* workaround (2015/5/18) */
+    ipoh_wkarnd_on_late_resume_done( &ipoh_workaround_rdma_underflow, h );
+
 	printk("[FB Driver] leave late_resume\n");
 	return;
 	#if 0
@@ -2972,9 +2916,8 @@ int mtkfb_pm_restore_noirq(struct device *device)
 
     is_ipoh_bootup = true;
 
-    /* workaround (2015/4/24) */
-    this_workaroundIpohBootingOfI2CChannel2 = 1; // marked as we need to clear
-    clk_set_force_on(MT_CG_PERI_I2C2); 
+    /* workaround (2015/5/18) */
+    ipoh_wkarnd_on_restore_noirq( &ipoh_workaround_rdma_underflow, device );
 
     return 0;
 

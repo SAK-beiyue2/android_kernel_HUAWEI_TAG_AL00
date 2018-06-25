@@ -9,32 +9,7 @@
 
 
 
-/*
-** $Log: spi.c $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 03 14 2011 terry.wu
- * [WCXRP00000521] [MT6620 Wi-Fi][Driver] Remove non-standard debug message
- * Revert windows debug message.
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
-**  \main\maintrunk.MT6620WiFiDriver_Prj\3 2009-05-15 10:12:46 GMT mtk01461
-**  Fix Port Read Error
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-04-27 12:17:20 GMT mtk01104
-**  Add spin-lock protection for SPI bus access
-**  \main\maintrunk.MT6620WiFiDriver_Prj\1 2009-04-24 21:13:43 GMT mtk01104
-**  Initial version
-*/
+
 
 /*******************************************************************************
 *                E X T E R N A L   R E F E R E N C E S

@@ -1,6 +1,7 @@
 #ifndef _H_DDP_HAL_
 #define _H_DDP_HAL_
 
+
 /* DISP Mutex */
 #define DISP_MUTEX_TOTAL      (10)
 #define DISP_MUTEX_DDP_FIRST  (0)
@@ -88,8 +89,8 @@ typedef enum
 typedef enum {
     SOF_SINGLE = 0,
     SOF_DSI0,
-    SOF_DSI1,
     SOF_DPI0,
+    SOF_DSI1,
 } MUTEX_SOF;  
 
 enum OVL_LAYER_SOURCE {
@@ -125,6 +126,13 @@ typedef enum
     CMDQ_START_VDO_MODE,
     CMDQ_DSI_RESET
 }CMDQ_STATE;
+
+typedef enum
+{
+	DDP_IRQ_LEVEL_ALL = 0,
+	DDP_IRQ_LEVEL_NONE,
+	DDP_IRQ_LEVEL_ERROR
+}DDP_IRQ_LEVEL;
 
 
 typedef struct module_map_s

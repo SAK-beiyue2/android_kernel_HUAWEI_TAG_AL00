@@ -1064,7 +1064,11 @@ static int _mtkthermal_check_cooler_conditions(struct mtk_thermal_cooler_data *c
 		int i = 0;
 		for (; i < MTK_THERMAL_MONITOR_COOLER_MAX_EXTRA_CONDITIONS; i++) {
 			if (NULL == cldata->condition_last_value[i]) {
-				ret++;
+				if (0x0 == cldata->conditions[i][0] ) {
+					ret++;
+				} else if (0 == strncmp(cldata->conditions[i], "EXIT", 4)) {
+					ret++;
+				}
 			} else {
 				if (*cldata->condition_last_value[i] > cldata->threshold[i]) {
 					ret++;

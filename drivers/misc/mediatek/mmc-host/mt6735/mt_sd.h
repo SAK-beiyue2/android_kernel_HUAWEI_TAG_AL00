@@ -1180,7 +1180,7 @@ struct msdc_host
     u32                         dma_left_size;  /* dma transfer left size */
     u32                         dma_xfer_size;  /* dma transfer size in bytes */
     int                         dma_xfer;       /* dma transfer mode */
-
+    u32                         write_timeout_ms;     /* data write busy timeout ms */  
     u32                         timeout_ns;     /* data timeout ns */
     u32                         timeout_clks;   /* data timeout clks */
 
@@ -1241,7 +1241,9 @@ struct msdc_host
     int                         sd_cd_insert_work; //to make sure insert mmc_rescan this work in start_host when boot up
                                                    //driver will get a EINT(Level sensitive) when boot up phone with card insert
     struct wake_lock            trans_lock;
-    bool                        block_bad_card;                                               
+    bool                        block_bad_card;
+    struct delayed_work         write_timeout;       /* check if write busy timeout */
+  
 #ifdef SDIO_ERROR_BYPASS      
     int                         sdio_error;     /* sdio error can't recovery */
 #endif									   

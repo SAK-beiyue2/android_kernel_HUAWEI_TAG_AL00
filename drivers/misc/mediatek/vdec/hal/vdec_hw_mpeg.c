@@ -306,7 +306,6 @@ void vVLDDoDec(UINT32 u4VDecID, VDEC_INFO_DEC_PRM_T *prDecPrm, BOOL fgBPic, BOOL
         //u4Proc |= VLD_PERRCON;
         //printk("MPV keep error concealment on when PP enable\n");
         //after mt8530, if  enable PP, must enable error concealment to decode an error bitstream
-        //fix CQ BDP00124291
     }
 #if !CONFIG_DRV_VERIFY_SUPPORT && !CONFIG_DRV_FPGA_BOARD
     {

@@ -1,4 +1,3 @@
-/* BEGIN PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/
 #ifndef BUILD_LK
 #include <linux/string.h>
 #endif
@@ -348,13 +347,11 @@ static void lcm_get_params(LCM_PARAMS *params)
 	params->dsi.horizontal_active_pixel				= FRAME_WIDTH;
 
 	//begin:haobing modified
-	/*BEGIN PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 	//improve clk quality
 	//params->dsi.PLL_CLOCK = 240; //this value must be in MTK suggested table
 	params->dsi.pll_div1=0;		// div1=0,1,2,3;div1_real=1,2,4,4 ----0: 546Mbps  1:273Mbps
 	params->dsi.pll_div2=1;		// div2=0,1,2,3;div1_real=1,2,4,4	
 	params->dsi.fbk_div =21;    	// fref=26MHz, fvco=fref*(fbk_div)*2/(div1_real*div2_real)	
-	/*END PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 	//end:haobing modified
 
 }
@@ -392,11 +389,9 @@ static void lcm_init_boe(void)
 
 static void lcm_suspend(void)
 {
-    /*BEGIN PN:DTS2013061501413 ,  Modified by s00179437 , 2013-6-15*/
     //Back to MP.P7 baseline , solve LCD display abnormal On the right
     // when phone sleep , config output low, disable backlight drv chip  
     lcm_util.set_gpio_out(GPIO_LCD_DRV_EN_PIN, GPIO_OUT_ZERO);
-    /*END PN:DTS2013061501413 ,  Modified by s00179437 , 2013-6-15*/
     push_table(lcm_deep_sleep_mode_in_setting, sizeof(lcm_deep_sleep_mode_in_setting) / sizeof(struct LCM_setting_table), 1);
     //reset low
     lcm_util.set_gpio_out(GPIO_DISP_LRSTB_PIN, GPIO_OUT_ZERO);
@@ -426,11 +421,9 @@ static void lcm_resume_boe(void)
     msleep(10);	
 
     push_table(lcm_initialization_setting_boe, sizeof(lcm_initialization_setting_boe) / sizeof(struct LCM_setting_table), 1);
-    /*BEGIN PN:DTS2013061501413 ,  Modified by s00179437 , 2013-6-15*/
     //Back to MP.P7 baseline , solve LCD display abnormal On the right
     //when sleep out, config output high ,enable backlight drv chip  
     lcm_util.set_gpio_out(GPIO_LCD_DRV_EN_PIN, GPIO_OUT_ONE);
-    /*END PN:DTS2013061501413 ,  Modified by s00179437 , 2013-6-15*/
 
     LCD_DEBUG("kernel:boe_nt35520_lcm_resume\n");
 
@@ -463,11 +456,9 @@ static void lcm_update(unsigned int x, unsigned int y,
 	data_array[1]= (y1_MSB<<24)|(y0_LSB<<16)|(y0_MSB<<8)|0x2b;
 	data_array[2]= (y1_LSB);
 	dsi_set_cmdq(data_array, 3, 1);
-         /*BEGIN PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
          //delete high speed packet
 	//data_array[0]=0x00290508;
 	//dsi_set_cmdq(data_array, 1, 1);
-         /*END PN:DTS2013013101431 modified by s00179437 , 2013-01-31*/
 	
 	data_array[0]= 0x002c3909;
 	dsi_set_cmdq(data_array, 1, 0);
@@ -476,7 +467,6 @@ static void lcm_update(unsigned int x, unsigned int y,
 
 static unsigned int lcm_compare_id_boe(void)
 {
-/* BEGIN PN:SPBB-1229 ,Modified by b00214920, 2013/01/07*/
     	unsigned char LCD_ID_value = 0;
 	LCD_ID_value = which_lcd_module_triple();
 
@@ -488,7 +478,6 @@ static unsigned int lcm_compare_id_boe(void)
     	{
         	return 0;
     	}
-/* END PN:SPBB-1229 ,Modified by b00214920, 2013/01/07*/
 }
 LCM_DRIVER nt35520_hd720_boe_lcm_drv =
 {
@@ -504,4 +493,3 @@ LCM_DRIVER nt35520_hd720_boe_lcm_drv =
 #endif
    
 };
-/* END PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/

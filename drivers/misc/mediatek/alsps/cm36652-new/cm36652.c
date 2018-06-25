@@ -2022,6 +2022,8 @@ static int als_get_data(int* value, int* status)
 	else
 	{
 		*value = cm36652_get_als_value(obj, obj->als);
+		if (*value < 0)
+			err = -1;
 		*status = SENSOR_STATUS_ACCURACY_MEDIUM;
 	}
 #endif //#ifdef CUSTOM_KERNEL_SENSORHUB
@@ -2149,11 +2151,13 @@ static int ps_get_data(int* value, int* status)
     else
     {
         *value = cm36652_get_ps_value(cm36652_obj, cm36652_obj->ps);
+		if (*value < 0)
+			err = -1;
         *status = SENSOR_STATUS_ACCURACY_MEDIUM;
     }
 #endif //#ifdef CUSTOM_KERNEL_SENSORHUB
     
-	return 0;
+	return err;
 }
 
 

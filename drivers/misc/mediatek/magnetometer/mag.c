@@ -699,6 +699,7 @@ static int mag_real_driver_init(void)
 		if(0 == err)
 		{
 		   MAG_LOG(" mag real driver %s probe ok\n", msensor_init_list[i]->name);
+		   hardware_info.msensor_name = msensor_init_list[i]->name;
 		   break;
 		}
 	  }

@@ -8,18 +8,7 @@
 
 
 
-/*
-** $Log: gl_cfg80211.h $
-**
-** 09 12 2012 wcpadmin
-** [ALPS00276400] Remove MTK copyright and legal header on GPL/LGPL related packages
-** .
-**
-** 08 30 2012 chinglan.wang
-** [ALPS00349664] [6577JB][WIFI] Phone can not connect to AP secured with AES via WPS in 802.11n Only
-** .
- *
-*/
+
 
 #ifndef _GL_CFG80211_H
 #define _GL_CFG80211_H

@@ -35,6 +35,9 @@
 
 #include <asm/fb.h>
 
+#ifdef CONFIG_LOG_JANK
+#include <linux/log_jank.h>
+#endif
 
     /*
      *  Frame buffer device initialization and setup routines
@@ -1069,6 +1072,13 @@ fb_blank(struct fb_info *info, int blank)
  	if (blank > FB_BLANK_POWERDOWN)
  		blank = FB_BLANK_POWERDOWN;
 
+#ifdef CONFIG_LOG_JANK
+    if (blank > 0)
+        LOG_JANK_V(JLID_HWC_LCD_BLANK_START, "%s", "JL_HWC_LCD_BLANK_START");
+    else
+        LOG_JANK_V(JLID_HWC_LCD_UNBLANK_START, "%s", "JL_HWC_LCD_UNBLANK_START");
+#endif
+
 	event.info = info;
 	event.data = &blank;
 
@@ -1087,6 +1097,13 @@ fb_blank(struct fb_info *info, int blank)
 		if (!early_ret)
 			fb_notifier_call_chain(FB_R_EARLY_EVENT_BLANK, &event);
 	}
+
+#ifdef CONFIG_LOG_JANK
+    if(blank > 0)
+        LOG_JANK_V(JLID_HWC_LCD_BLANK_END, "%s", "JL_HWC_LCD_BLANK_END");
+    else
+        LOG_JANK_V(JLID_HWC_LCD_UNBLANK_END, "%s", "JL_HWC_LCD_UNBLANK_END");
+#endif
 
  	return ret;
 }

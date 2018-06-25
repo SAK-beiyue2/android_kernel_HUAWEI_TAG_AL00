@@ -588,7 +588,6 @@ static fm_s32 rds_g0_ps_cmp(fm_u8 addr, fm_u16 cbc, fm_u8 *fresh,
 			}
 		}
 		/* if((corrBitCnt_BlkB == 0) && (corrBitCnt_BlkD == 0)) */
-		/* ALPS00523685:6627 CBC sometime is unreliable */
 #ifdef RDS_CBC_DEPENDENCY
 		if (cbc == 0) {
 			*bm |= 1 << PS_Num;

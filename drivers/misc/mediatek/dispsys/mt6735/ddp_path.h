@@ -53,6 +53,8 @@ int ddp_mutex_Interrupt_enable(int mutex_id,void * handle);
 
 int ddp_mutex_Interrupt_disable(int mutex_id,void * handle);
 
+int ddp_mutex_hw_dcm_on(int mutex_idx,void * handle);
+int ddp_mutex_hw_dcm_off(int mutex_idx,void * handle);
 
 DISP_MODULE_ENUM   ddp_get_dst_module(DDP_SCENARIO_ENUM scenario);
 int   ddp_set_dst_module(DDP_SCENARIO_ENUM scenario, DISP_MODULE_ENUM dst_module);

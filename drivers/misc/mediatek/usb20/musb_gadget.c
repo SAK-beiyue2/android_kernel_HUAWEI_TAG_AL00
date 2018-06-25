@@ -2030,15 +2030,17 @@ struct free_record {
  */
 void musb_ep_restart(struct musb *musb, struct musb_request *req)
 {
-	DBG(2, "<== %s request %p len %u on hw_ep%d\n",
+	DBG(0, "<== %s request %p len %u on hw_ep%d\n",
 		req->tx ? "TX/IN" : "RX/OUT",
 		&req->request, req->request.length, req->epnum);
 
+#ifndef MUSB_QMU_SUPPORT
 	musb_ep_select(musb->mregs, req->epnum);
 	if (req->tx)
 		txstate(musb, req);
 	else
 		rxstate(musb, req);
+#endif
 }
 
 static int musb_gadget_queue(struct usb_ep *ep, struct usb_request *req,

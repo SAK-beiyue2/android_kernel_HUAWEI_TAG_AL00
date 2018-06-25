@@ -18,6 +18,7 @@ extern BOOTMODE g_boot_mode;
 #define MD_TOPSM_RM_PLL_MASK0(base)    	    ((base)+0x0830)
 #define MD_TOPSM_RM_PLL_MASK1(base)    	    ((base)+0x0834)
 #define MD_TOPSM_SM_REQ_MASK(base)     	    ((base)+0x08B0)
+#define MD_TOPSM_TOPSM_DBG_FLAG_SEL(base)	((base)+0x0A1C)
 
 #define MODEM_LITE_TOPSM_BASE 		    	(0x23010000)
 
@@ -55,10 +56,12 @@ extern BOOTMODE g_boot_mode;
 #define PLL_MDPLL_CON0(base)			((base) +0x0100)
 #define PLL_ARM7PLL_CON0(base)			((base) +0x0150)
 #define PLL_ARM7PLL_CON1(base)			((base) +0x0154)
+#define PLL_DPM_PLL_OFF_SYSCLK_MODE(base)	((base) + 0x0C0)
+#define PLL_RG_SW_SRCLKENA0(base)		((base) + 0x054)
 
-#if !defined(CONFIG_MTK_ECCCI_DRIVER) || defined(MTK_KERNEL_POWER_OFF_CHARGING)
-
-static void internal_md_power_down(void){
+#if !defined(CONFIG_MTK_ECCCI_DRIVER) || defined(CONFIG_MTK_KERNEL_POWER_OFF_CHARGING)
+static void internal_md_power_down(void)
+{
 	int ret = 0;
 	unsigned short status, i;
 	void __iomem *md_topsm_base, *modem_lite_topsm_base, *modem_topsm_base, 
@@ -290,8 +293,12 @@ static void internal_md_power_down(void){
 	sync_write32(ioread32(MODEM_TOPSM_RM_PLL_MASK1(modem_topsm_base))| 0x0000000F, MODEM_TOPSM_RM_PLL_MASK1(modem_topsm_base));
 	sync_write32(ioread32(MODEM_LITE_TOPSM_RM_PLL_MASK0(modem_lite_topsm_base))| 0xFFFFFFFF, MODEM_LITE_TOPSM_RM_PLL_MASK0(modem_lite_topsm_base));
 	sync_write32(ioread32(MODEM_LITE_TOPSM_RM_PLL_MASK1(modem_lite_topsm_base))| 0x0000000F, MODEM_LITE_TOPSM_RM_PLL_MASK1(modem_lite_topsm_base));
-		
-	printk("[ccci-off]7.power off CR4\n");
+
+	printk("[ccci-off]7.1 power off CR4 SRAM\n");
+	sync_write32(ioread32(MD_TOPSM_RM_PWR_CON0(md_topsm_base)) | 0x0008000,
+		     MD_TOPSM_RM_PWR_CON0(md_topsm_base));
+	sync_write32(0xFFFFFFFF, MD_TOPSM_TOPSM_DBG_FLAG_SEL(md_topsm_base));
+	printk("[ccci-off]7.2 power off CR4\n");
 	sync_write32(0xFFFFFFFF, MD_TOPSM_SM_REQ_MASK(md_topsm_base));
 	sync_write32(0x00000000, MD_TOPSM_RM_TMR_PWR0(md_topsm_base));
 	sync_write32(0x0005229A, MD_TOPSM_RM_PWR_CON0(md_topsm_base));
@@ -305,8 +312,20 @@ static void internal_md_power_down(void){
 	sync_write32(0xFFFFFFFF, MODEM_TOPSM_SM_REQ_MASK(modem_topsm_base));
 	sync_write32(0xFFFFFFFF, MODEM_TOPSM_RM_PLL_MASK0(modem_topsm_base));
 	sync_write32(0xFFFFFFFF, MODEM_TOPSM_RM_PLL_MASK1(modem_topsm_base));
-	
-	printk("[ccci-off]8.power off MD_INFRA/MODEM_TOP\n");
+
+	printk("[ccci-off]8.power off PLL_DPM_PLL_OFF_SYSCLK_MODE/PLL_RG_SW_SRCLKENA0\n");
+	/* pull low md srccldena */
+	sync_write32(ioread32(PLL_DPM_PLL_OFF_SYSCLK_MODE(md_pll_mixedsys_base))&~(0x1 << 1),
+			PLL_DPM_PLL_OFF_SYSCLK_MODE(md_pll_mixedsys_base));
+	sync_write32(ioread32(PLL_RG_SW_SRCLKENA0(md_pll_mixedsys_base))&~(0x1 << 7),
+			PLL_RG_SW_SRCLKENA0(md_pll_mixedsys_base));
+	sync_write32(0x0, PLL_DFS_CON7(md_pll_mixedsys_base));
+	printk("[ccci-off]8.PLL_DPM_PLL_OFF_SYSCLK_MODE=0x%x,PLL_RG_SW_SRCLKENA0=0x%x,PLL_DFS_CON7=0x%x\n",
+			ioread32(PLL_DPM_PLL_OFF_SYSCLK_MODE(md_pll_mixedsys_base)),
+			ioread32(PLL_RG_SW_SRCLKENA0(md_pll_mixedsys_base)),
+			ioread32(PLL_DFS_CON7(md_pll_mixedsys_base)));
+
+	printk("[ccci-off]9.power off MD_INFRA/MODEM_TOP\n");
 	md_power_off(0, 0); // no need to poll, as MD SW didn't run and enter sleep mode, polling will not get result
 
 	iounmap(md_topsm_base);
@@ -332,7 +351,7 @@ static int __init modem_off_init(void)
 		printk("[ccci-off]md1 effused,no need power off\n");
 	}
 #else
-#ifdef MTK_KERNEL_POWER_OFF_CHARGING
+#ifdef CONFIG_MTK_KERNEL_POWER_OFF_CHARGING
 	if ((g_boot_mode == KERNEL_POWER_OFF_CHARGING_BOOT) || (g_boot_mode == LOW_POWER_OFF_CHARGING_BOOT)) {
 		if((val&(0x1<<1))==0){
 			printk("[ccci-off]power off MD in charging mode %d\n", g_boot_mode);

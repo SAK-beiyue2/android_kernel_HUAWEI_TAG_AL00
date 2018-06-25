@@ -24,6 +24,7 @@ static u8 _bIsrc1Data[16] = { 0 };
 static u32 _u4NValue;
 extern u8 _bflagvideomute;
 extern u8 _bflagaudiomute;
+unsigned char is_user_mute_hdmi_audio = 0;
 
 static const char *szHdmiResStr[HDMI_VIDEO_RESOLUTION_NUM] = {
 	"RES_480P",
@@ -664,8 +665,20 @@ void vHDMIAVUnMute(void)
 	MT8193_AUDIO_FUNC();
 	if (_bflagvideomute == FALSE)
 		vUnBlackHDMIOnly();
-	if (_bflagaudiomute == FALSE)
+	if ((_bflagaudiomute == FALSE) && (is_user_mute_hdmi_audio==0))
 		UnMuteHDMIAudio();
+}
+
+void hdmi_user_mute_audio(unsigned char mute)
+{
+	HDMI_DEF_LOG("is_user_mute_hdmi_audio=%d\n",is_user_mute_hdmi_audio);
+	if(mute == 0) {
+		is_user_mute_hdmi_audio = 0;
+		UnMuteHDMIAudio();
+	} else {
+		is_user_mute_hdmi_audio = 1;
+		MuteHDMIAudio();
+	}
 }
 
 void vHDMIVideoOutput(u8 ui1Res, u8 ui1ColorSpace)
@@ -1421,6 +1434,8 @@ void vChgHDMIAudioOutput(u8 ui1hdmifs, u8 ui1resindex, u8 bdeepmode)
 
 	vAudioPacketOff(FALSE);
 
+	if(is_user_mute_hdmi_audio==0)
+		UnMuteHDMIAudio();	
         
         HDMI_DEF_LOG("[hdmi]set aud,e_hdmi_fs:%d,u1HdmiI2sMclk:%d\,ui1_aud_out_ch_number=%d\n",_stAvdAVInfo.e_hdmi_fs,_stAvdAVInfo.u1HdmiI2sMclk,_stAvdAVInfo.ui1_aud_out_ch_number);
 }

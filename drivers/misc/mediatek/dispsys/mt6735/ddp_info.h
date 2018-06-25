@@ -102,6 +102,7 @@ typedef struct
     bool wdma_dirty;
     bool dst_dirty;
     bool roi_dirty;
+    bool is_memory;
     OVL_CONFIG_STRUCT ovl_config[OVL_LAYER_NUM];
     RDMA_CONFIG_STRUCT rdma_config;
     WDMA_CONFIG_STRUCT wdma_config;
@@ -147,6 +148,7 @@ typedef struct
 	int (*set_listener)(DISP_MODULE_ENUM module,ddp_module_notify notify);
 	int (*cmd)(DISP_MODULE_ENUM module,int msg, unsigned long arg, void * handle);
 	int (*ioctl)(DISP_MODULE_ENUM module, void *handle, unsigned int ioctl_cmd, unsigned long *params);
+	int (*enable_irq)(DISP_MODULE_ENUM module, void *handle, DDP_IRQ_LEVEL irq_level);
 } DDP_MODULE_DRIVER;
 
 char* ddp_get_module_name(DISP_MODULE_ENUM module);

@@ -851,6 +851,13 @@ static int ee_log_avail(void)
 	return (aed_dev.eerec != NULL);
 }
 
+static char* ee_msg_avail(void)
+{
+    if (aed_dev.eerec)
+        return aed_dev.eerec->msg;
+	return NULL;
+}
+
 static void ee_gen_ind_msg(struct aed_eerec *eerec)
 {
 	unsigned long flags = 0;
@@ -941,7 +948,7 @@ static int aed_ee_release(struct inode *inode, struct file *filp)
 static unsigned int aed_ee_poll(struct file *file, struct poll_table_struct *ptable)
 {
 	/* LOGD("%s\n", __func__); */
-	if (ee_log_avail()) {
+	if (ee_log_avail() && ee_msg_avail()) {
 		return POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM;
 	} else {
 		poll_wait(file, &aed_dev.eewait, ptable);

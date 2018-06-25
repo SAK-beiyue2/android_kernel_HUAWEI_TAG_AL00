@@ -385,7 +385,7 @@ static struct attribute_group spm_attr_group = {
 static int clk_buf_fs_init(void)
 {
 	int r;
-	//FIXME: K2 early porting
+	/* FIXME: early porting */
 #if defined(CONFIG_PM)
 	/* create /sys/power/clk_buf/xxx */
 	r = sysfs_create_group(power_kobj, &spm_attr_group);

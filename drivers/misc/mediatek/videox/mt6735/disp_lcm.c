@@ -13,6 +13,13 @@ static disp_lcm_handle _disp_lcm_driver[MAX_LCM_NUMBER] = {0};
 // these 2 variables are defined in mt65xx_lcm_list.c
 extern LCM_DRIVER* lcm_driver_list[];
 extern unsigned int lcm_count;
+#include <mach/hardwareinfo.h>
+
+extern hardware_info_struct hardware_info;
+
+#ifdef CONFIG_LOG_JANK
+#include <linux/log_jank.h>
+#endif
 
 int _lcm_count(void)
 {
@@ -265,6 +272,7 @@ disp_lcm_handle* disp_lcm_probe(char* plcm_name, LCM_INTERFACE_ID lcm_id)
 			plcm->lcm_original_width = plcm->params->width;
 			plcm->lcm_original_height = plcm->params->height;
 			_dump_lcm_info(plcm);
+			hardware_info.hq_lcm_name= lcm_drv->name;
 			return plcm;
 		}
 		else
@@ -458,6 +466,9 @@ int disp_lcm_suspend(disp_lcm_handle *plcm)
 		if(lcm_drv->suspend_power)
 		{
 			lcm_drv->suspend_power();
+#ifdef CONFIG_LOG_JANK
+    		LOG_JANK_D(JLID_KERNEL_LCD_POWER_OFF, "%s", "JL_KERNEL_LCD_POWER_OFF");
+#endif
 		}
 		
 		return 0;
@@ -479,6 +490,10 @@ int disp_lcm_resume(disp_lcm_handle *plcm)
 	
 	if(_is_lcm_inited(plcm))
 	{
+#ifdef CONFIG_LOG_JANK
+		LOG_JANK_D(JLID_KERNEL_LCD_POWER_ON, "%s", "JL_KERNEL_LCD_POWER_ON");
+#endif
+	
 		lcm_drv = plcm->drv;
 
 		if(lcm_drv->resume_power)

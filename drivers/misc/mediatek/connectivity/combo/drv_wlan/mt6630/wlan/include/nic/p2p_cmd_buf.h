@@ -11,31 +11,7 @@
 
 
 
-/*
-** $Log: p2p_cmd_buf.h $
-**
-** 07 25 2014 eason.tsai
-** AOSP
-**
-** 03 07 2013 yuche.tsai
-** [BORA00002398] [MT6630][Volunteer Patch] P2P Driver Re-Design for Multiple BSS support
-** Add wlan_p2p.c, but still need to FIX many place.
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
-*
-* 07 17 2012 yuche.tsai
-* NULL
-* Compile no error before trial run.
-*
-* 12 22 2010 cp.wu
-* [WCXRP00000283] [MT6620 Wi-Fi][Driver][Wi-Fi Direct] Implementation of interface for supporting Wi-Fi Direct Service
-*Discovery
-* 1. header file restructure for more clear module isolation
-* 2. add function interface definition for implementing Service Discovery callbacks
-*/
+
 
 #ifndef _P2P_CMD_BUF_H
 #define _P2P_CMD_BUF_H

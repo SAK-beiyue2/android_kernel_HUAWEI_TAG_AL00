@@ -588,7 +588,7 @@ static int compat_get_ion_custom_data(
 			struct ion_custom_data __user *data)
 {
 	compat_uint_t cmd;
-	//compat_ulong_t arg;
+	compat_ulong_t arg;
 	int err;
 
 	err = get_user(cmd, &data32->cmd);
@@ -603,7 +603,8 @@ static int compat_get_ion_custom_data(
 		struct compat_ion_sys_data* sys_data32;
 		struct ion_sys_data* sys_data;
 
-		sys_data32 = (struct compat_ion_sys_data*)compat_ptr(data32->arg);
+		err = get_user(arg, &data32->arg);
+		sys_data32 = (struct compat_ion_sys_data *)compat_ptr(arg);
 		sys_data = compat_alloc_user_space(sizeof(*data) + sizeof(*sys_data));
 		if (sys_data == NULL)
 		    return -EFAULT;
@@ -617,7 +618,8 @@ static int compat_get_ion_custom_data(
 		struct compat_ion_mm_data* mm_data32;
 		struct ion_mm_data* mm_data;
 
-		mm_data32 = (struct compat_ion_mm_data*)compat_ptr(data32->arg);
+		err = get_user(arg, &data32->arg);
+		mm_data32 = (struct compat_ion_mm_data *)compat_ptr(arg);
 		mm_data = compat_alloc_user_space(sizeof(*data) + sizeof(*mm_data));
 		if (mm_data == NULL)
 		    return -EFAULT;
@@ -650,8 +652,10 @@ static int compat_put_ion_custom_data(
 		struct compat_ion_sys_data* sys_data32;
 		struct ion_sys_data* sys_data;
 
-		sys_data32 = (struct compat_ion_sys_data*)compat_ptr(data32->arg);
-		sys_data = (struct ion_sys_data*)compat_ptr(data->arg);
+		err = get_user(arg, &data32->arg);
+		sys_data32 = (struct compat_ion_sys_data *)compat_ptr(arg);
+		err = get_user(arg, &data->arg);
+		sys_data = (struct ion_sys_data *)compat_ptr(arg);
 
 		err = compat_put_ion_sys_data(sys_data32, sys_data);
 		//err |= put_user((unsigned long)sys_data32, &data32->arg);
@@ -662,8 +666,10 @@ static int compat_put_ion_custom_data(
 		struct compat_ion_mm_data* mm_data32;
 		struct ion_mm_data* mm_data;
 
-		mm_data32 = (struct compat_ion_mm_data*)compat_ptr(data32->arg);
-		mm_data = (struct ion_mm_data*)compat_ptr(data->arg);
+		err = get_user(arg, &data32->arg);
+		mm_data32 = (struct compat_ion_mm_data *)compat_ptr(arg);
+		err = get_user(arg, &data->arg);
+		mm_data = (struct ion_mm_data *)compat_ptr(arg);
 
 		err = compat_put_ion_mm_data(mm_data32, mm_data);
 		//err |= put_user((unsigned long)mm_data32, &data32->arg);

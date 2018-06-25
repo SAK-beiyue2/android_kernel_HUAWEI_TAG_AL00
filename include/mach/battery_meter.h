@@ -4,7 +4,7 @@
 #include <mach/mt_typedefs.h>
 #include "cust_battery_meter.h"
 /* ============================================================ */
-/* define */
+/* define */  
 /* ============================================================ */
 #define FG_CURRENT_AVERAGE_SIZE 30
 
@@ -140,4 +140,5 @@ extern kal_int32 battery_meter_get_tempR(kal_int32 dwVolt);
 extern kal_int32 battery_meter_get_tempV(void);
 extern kal_int32 battery_meter_get_VSense(void);	/* isense voltage */
 extern int wakeup_fg_algo(int flow_state);
+extern char* saved_command_line;//adb by wangyang  2015 1222
 #endif				/* #ifndef _BATTERY_METER_H */

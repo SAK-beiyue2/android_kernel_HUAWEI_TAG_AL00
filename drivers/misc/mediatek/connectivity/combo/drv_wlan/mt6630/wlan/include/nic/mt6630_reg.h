@@ -9,24 +9,7 @@
 */
 
 
-/*
-** $Log: mt6630_reg.h $
-**
-** 07 23 2013 cp.wu
-** [BORA00002227] [MT6630 Wi-Fi][Driver] Update for Makefile and HIFSYS modifications
-** 1. build success for win32 port
-** 2. add SDIO test read/write pattern for HQA tests (default off)
-**
-** 03 18 2013 cp.wu
-** [BORA00002227] [MT6630 Wi-Fi][Driver] Update for Makefile and HIFSYS modifications
-** use RX default maximum length to 16 (max. 64)
-**
-** 10 25 2012 cp.wu
-** [BORA00002227] [MT6630 Wi-Fi][Driver] Update for Makefile and HIFSYS modifications
-** sync with MT6630 HIFSYS update.
-**
- *
-*/
+
 
 #ifndef _MT6630_REG_H
 #define _MT6630_REG_H

@@ -36,15 +36,20 @@ typedef enum {
 	KERNEL_POWER_OFF_CHARGING_BOOT = 8,
 	LOW_POWER_OFF_CHARGING_BOOT = 9,
 #endif
+    HQ_FACTORY_BOOT = 11,  //add by lupingzhong for factory mode
 	UNKNOWN_BOOT
 } BOOTMODE;
 
 #define BOOT_DEV_NAME           "BOOT"
 #define BOOT_SYSFS              "boot"
 #define BOOT_SYSFS_ATTR         "boot_mode"
+#define HQ_BOOT_SYSFS_ATTR         "hq_boot_mode"
 
 extern BOOTMODE g_boot_mode;
 extern BOOTMODE get_boot_mode(void);
+//lupingzhong_add factory mode start
+extern BOOTMODE g_boot_mode_ex;
+//lupingzhong_add factory mode end
 extern bool is_meta_mode(void);
 extern bool is_advanced_meta_mode(void);
 extern void set_boot_mode(BOOTMODE bm);

@@ -9,6 +9,9 @@
 #include "ddp_reg.h"
 #include "ddp_pwm.h"
 #include "ddp_path.h"
+#ifdef CONFIG_LOG_JANK
+#include <linux/log_jank.h>
+#endif
 
 
 #define PWM_DEFAULT_DIV_VALUE 0x0
@@ -211,10 +214,6 @@ int disp_pwm_set_backlight(disp_pwm_id_t id, int level_1024)
 {
     int ret;
 
-#ifdef MTK_DISP_IDLE_LP
-    disp_exit_idle_ex("disp_pwm_set_backlight");
-#endif
-
     /* Always write registers by CPU */
     ret = disp_pwm_set_backlight_cmdq(id, level_1024, NULL);
 
@@ -260,7 +259,20 @@ int disp_pwm_set_backlight_cmdq(disp_pwm_id_t id, int level_1024, void *cmdq)
         }
 
         level_1024 = disp_pwm_level_remap(id, level_1024);
-		
+
+#ifdef CONFIG_LOG_JANK
+		if (0 == level_1024) {
+			// backlight off
+			PWM_NOTICE("Backlight off");
+			LOG_JANK_V(JLID_HWC_LCD_BACKLIGHT_OFF, "%s", "JL_HWC_LCD_BACKLIGHT_OFF");
+		} else {
+			// backlight on
+			if (-1 == old_pwm)
+				PWM_NOTICE("Backlight start on");
+			LOG_JANK_D(JLID_KERNEL_LCD_BACKLIGHT_ON, "%s,%d", "JL_KERNEL_LCD_BACKLIGHT_ON", level_1024);
+		}
+#endif
+
 #ifdef CONFIG_SINGLE_PANEL_OUTPUT
 		if(g_suspend_flag==1 && level_1024 !=0) {
 			PWM_MSG("single panel:primary will suspend, skip set backlight(>0) !\n");

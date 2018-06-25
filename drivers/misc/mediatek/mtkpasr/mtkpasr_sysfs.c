@@ -226,7 +226,7 @@ static ssize_t execstate_show(struct device *dev, struct device_attribute *attr,
 }
 
 #ifdef CONFIG_MTKPASR
-extern void try_to_shrink_slab(void);
+/*extern void try_to_shrink_slab(void);*/
 extern void mtkpasr_reset_state(void);
 
 /* Hook to Linux PM */
@@ -252,8 +252,8 @@ void mtkpasr_phaseone_ops(void)
 	/* It will go to MTKPASR stage */
 	current->flags |= PF_MTKPASR;
 
-	/* Inform all other memory pools to release their memory */
-	try_to_shrink_slab();
+	/* Inform all other memory pools to release their memory
+	try_to_shrink_slab(); */
 
 	/* It will leave MTKPASR stage */
 	current->flags &= ~PF_MTKPASR;

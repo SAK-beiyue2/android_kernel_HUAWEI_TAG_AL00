@@ -155,9 +155,7 @@
 #define MUSB_RXCSR_FIFOFULL		0x0002
 #define MUSB_RXCSR_RXPKTRDY		0x0001
 
-//ALPS00798316, Enable DMA RxMode1
 #define MUSB_EP_RXPKTCOUNT		0x0300
-//ALPS00798316, Enable DMA RxMode1
 
 /* RXCSR in Peripheral mode */
 #define MUSB_RXCSR_P_ISO		0x4000

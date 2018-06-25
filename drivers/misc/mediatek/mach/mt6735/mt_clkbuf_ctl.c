@@ -423,6 +423,7 @@ static int clk_buf_fs_init(void)
 {
 	int r;
 	//FIXME: K2 early porting
+#if defined(CONFIG_MT_ENG_BUILD)
 #if defined(CONFIG_PM)
 	/* create /sys/power/clk_buf/xxx */
 	r = sysfs_create_group(power_kobj, &spm_attr_group);
@@ -430,6 +431,7 @@ static int clk_buf_fs_init(void)
 		clk_buf_err("FAILED TO CREATE /sys/power/clk_buf (%d)\n", r);
 	return r;
 #endif	
+#endif
 }
 
 bool clk_buf_init(void)

@@ -31,6 +31,7 @@
 #include <asm/uaccess.h>
 #include <linux/module.h>
 #include <linux/proc_fs.h>
+#include <linux/time.h>
 
 #if KBASE_PM_EN
 
@@ -40,6 +41,9 @@
 /* Otherwise aim for 10-40% */
 #define KBASE_PM_NO_VSYNC_MIN_UTILISATION       10
 #define KBASE_PM_NO_VSYNC_MAX_UTILISATION       40
+
+/* for SODI stopping DVFS timer case, threshold for ignoring the remain time, do dvfs right away*/
+#define KBASE_TIMER_THRESHOLD 3000
 
 #ifdef CONFIG_MALI_MIDGARD_DVFS
 
@@ -62,6 +66,8 @@ int g_touch_boost_flag = 0;
 int g_touch_boost_id = 0;
 
 int g_early_suspend = 0;
+
+struct timeval g_tv_timer_start;
 
 extern unsigned int g_power_status;
 extern unsigned int g_type_T;
@@ -124,7 +130,8 @@ static void mali_late_resume(struct early_suspend *h)
   		 	 spin_unlock_irqrestore(&kbdev->pm.metrics.lock, flags);
   		 	 
   		 	 hrtimer_init(&kbdev->pm.metrics.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-  		 	 kbdev->pm.metrics.timer.function = dvfs_callback;			 
+  		 	 kbdev->pm.metrics.timer.function = dvfs_callback;
+			 do_gettimeofday( &g_tv_timer_start);
   		 	 hrtimer_start(&kbdev->pm.metrics.timer, HR_TIMER_DELAY_MSEC(kbdev->pm.platform_dvfs_frequency), HRTIMER_MODE_REL);
 
 			 spin_lock_irqsave(&kbdev->pm.metrics.lock, flags);
@@ -177,7 +184,9 @@ void mali_SODI_exit(void)
 {	  
 		struct list_head *entry;
 	  const struct list_head *kbdev_list;	  	    
-	  kbdev_list = kbase_dev_list_get();	
+	  kbdev_list = kbase_dev_list_get();
+	  struct timeval tv_timer_end;
+      long timer_time_elapse;	
 	    
 	  list_for_each(entry, kbdev_list) 
 	  {
@@ -191,10 +200,35 @@ void mali_SODI_exit(void)
 			 	 spin_lock_irqsave(&kbdev->pm.metrics.lock, flags);
   		 	 kbdev->pm.metrics.timer_active = MALI_TRUE;
   		 	 spin_unlock_irqrestore(&kbdev->pm.metrics.lock, flags);
-  		 	 
-  		 	 hrtimer_init(&kbdev->pm.metrics.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-  		 	 kbdev->pm.metrics.timer.function = dvfs_callback;
-  		 	 hrtimer_start(&kbdev->pm.metrics.timer, HR_TIMER_DELAY_MSEC(kbdev->pm.platform_dvfs_frequency), HRTIMER_MODE_REL);
+
+             // exit SODI, calculate the length of timer before SODI cancelled the timer.
+             do_gettimeofday(&tv_timer_end);
+             timer_time_elapse = (tv_timer_end.tv_sec - g_tv_timer_start.tv_sec)*1000000 + (tv_timer_end.tv_usec - g_tv_timer_start.tv_usec);
+
+
+             if( timer_time_elapse > (mtk_get_dvfs_freq()*1000 - KBASE_TIMER_THRESHOLD) )
+             {
+                 // remain time is too short, calcute loading immediately
+                 dvfs_callback(&kbdev->pm.metrics.timer);
+             }
+             else if( (timer_time_elapse <= (mtk_get_dvfs_freq()*1000 - KBASE_TIMER_THRESHOLD)) && (timer_time_elapse > 0))
+             {
+                 hrtimer_init(&kbdev->pm.metrics.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+                 kbdev->pm.platform_dvfs_frequency = mtk_get_dvfs_freq() - timer_time_elapse/1000;   /* set timer length to: original - elasped time */
+                 kbdev->pm.metrics.timer.function = dvfs_callback;
+                 do_gettimeofday( &g_tv_timer_start);
+                 hrtimer_start(&kbdev->pm.metrics.timer, HR_TIMER_DELAY_MSEC(kbdev->pm.platform_dvfs_frequency), HRTIMER_MODE_REL);
+             }
+             else
+             {
+                 // unknown case
+                 hrtimer_init(&kbdev->pm.metrics.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+                 kbdev->pm.platform_dvfs_frequency = mtk_get_dvfs_freq();
+      		 	 kbdev->pm.metrics.timer.function = dvfs_callback;
+    			 do_gettimeofday( &g_tv_timer_start);
+      		 	 hrtimer_start(&kbdev->pm.metrics.timer, HR_TIMER_DELAY_MSEC(kbdev->pm.platform_dvfs_frequency), HRTIMER_MODE_REL);
+             }
+
   		 }
   	}
   	kbase_dev_list_put(kbdev_list);  	
@@ -312,9 +346,12 @@ static enum hrtimer_restart dvfs_callback(struct hrtimer *timer)
     metrics->kbdev->pm.platform_dvfs_frequency = mtk_get_dvfs_freq();
 
 	if (metrics->timer_active)
+	{
+		do_gettimeofday( &g_tv_timer_start);
 		hrtimer_start(timer,
 					  HR_TIMER_DELAY_MSEC(metrics->kbdev->pm.platform_dvfs_frequency),
 					  HRTIMER_MODE_REL);
+	}
 
 	spin_unlock_irqrestore(&metrics->lock, flags);
 
@@ -351,6 +388,7 @@ mali_error kbasep_pm_metrics_init(struct kbase_device *kbdev)
 	hrtimer_init(&kbdev->pm.metrics.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	kbdev->pm.metrics.timer.function = dvfs_callback;
 
+	do_gettimeofday( &g_tv_timer_start);
 	hrtimer_start(&kbdev->pm.metrics.timer, HR_TIMER_DELAY_MSEC(kbdev->pm.platform_dvfs_frequency), HRTIMER_MODE_REL);
 
 	/// Add early suspend callback to disable dvfs timer during deepidle state

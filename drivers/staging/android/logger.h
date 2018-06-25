@@ -78,7 +78,7 @@ struct logger_entry {
 #ifdef CONFIG_SMP
 /* mingjian, 20101208: define buffer size based on different products {*/
 #ifndef __MAIN_BUF_SIZE
-#define __MAIN_BUF_SIZE 256*1024
+#define __MAIN_BUF_SIZE 1024*1024
 #endif
 
 #ifndef __EVENTS_BUF_SIZE
@@ -94,7 +94,7 @@ struct logger_entry {
 #endif
 #else
 #ifndef __MAIN_BUF_SIZE
-#define __MAIN_BUF_SIZE 256*1024
+#define __MAIN_BUF_SIZE 1024*1024
 #endif
 
 #ifndef __EVENTS_BUF_SIZE
@@ -114,7 +114,11 @@ struct logger_entry {
 #define LOGGER_LOG_EVENTS	"log_events"	/* system/hardware events */
 #define LOGGER_LOG_SYSTEM	"log_system"	/* system/framework messages */
 #define LOGGER_LOG_MAIN		"log_main"	/* everything else */
+#define LOGGER_LOG_EXCEPTION    "log_exception" /* exception */
 
+#ifdef CONFIG_LOG_JANK
+#define LOGGER_LOG_JANK "log_jank"  /* dev/log/jank */
+#endif
 #define LOGGER_ENTRY_MAX_PAYLOAD	4076
 
 #define __LOGGERIO	0xAE

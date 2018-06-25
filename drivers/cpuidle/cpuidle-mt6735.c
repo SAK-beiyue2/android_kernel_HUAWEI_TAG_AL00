@@ -18,28 +18,28 @@
 #define IDLE_TAG     "[Power/swap]"
 #define idle_ver(fmt, args...)		pr_info(IDLE_TAG fmt, ##args)	/* pr_debug show nothing */
 
-//FIXME: Denali early porting
+/* FIXME: early porting */
 #if 1
 void __attribute__((weak))
 bus_dcm_enable(void)
 {
-	//FIXME: Denali early porting
+	/* FIXME: early porting */
 }
 void __attribute__((weak))
 bus_dcm_disable(void)
 {
-	//FIXME: Denali early porting
+	/* FIXME: early porting */
 }
 void __attribute__((weak))
 tscpu_cancel_thermal_timer(void)
 {
-	//FIXME: Denali early porting
+	/* FIXME: early porting */
 }
 
 void __attribute__((weak))
 tscpu_start_thermal_timer(void)
 {
-	//FIXME: Denali early porting
+	/* FIXME: early porting */
 }
 #endif
 
@@ -62,7 +62,7 @@ static inline void dpidle_pre_handler(void)
 	mtkts_allts_cancel_thermal_timer();
 #endif
 #endif
-#if 0//FIXME: K2 early porting
+#if 0 /* FIXME: early porting */
     // disable gpu dvfs timer
     mtk_enable_gpu_dvfs_timer(false);
 
@@ -74,7 +74,7 @@ static inline void dpidle_pre_handler(void)
 
 static inline void dpidle_post_handler(void)
 {
-#if 0//FIXME: K2 early porting
+#if 0 /* FIXME: early porting */
     // disable cpu dvfs timer
     hp_enable_timer(1);
 
@@ -95,11 +95,11 @@ static inline void dpidle_post_handler(void)
 #endif
 }
 
-static int mt6735_dpidle_enter(struct cpuidle_device *dev,
+static int mt_dpidle_enter(struct cpuidle_device *dev,
 			      struct cpuidle_driver *drv, int index)
 {
     if (printk_ratelimit())
-        printk(KERN_WARNING "MT6735 cpuidle DPIDLE\n");
+        printk(KERN_WARNING "MT cpuidle DPIDLE\n");
 
 #if 1
     dpidle_pre_handler();
@@ -114,11 +114,11 @@ static int mt6735_dpidle_enter(struct cpuidle_device *dev,
 	return index;
 }
 
-static int mt6735_soidle_enter(struct cpuidle_device *dev,
+static int mt_soidle_enter(struct cpuidle_device *dev,
 			      struct cpuidle_driver *drv, int index)
 {
     if (printk_ratelimit())
-        printk(KERN_WARNING "MT6735 cpuidle SODI\n");
+        printk(KERN_WARNING "MT cpuidle SODI\n");
 
 	cpu_do_idle();
 
@@ -126,11 +126,11 @@ static int mt6735_soidle_enter(struct cpuidle_device *dev,
 
 	return index;
 }
-static int mt6735_dcm_enter(struct cpuidle_device *dev,
+static int mt_slidle_enter(struct cpuidle_device *dev,
 			      struct cpuidle_driver *drv, int index)
 {
     if (printk_ratelimit())
-        printk(KERN_WARNING "MT6735 cpuidle DCM\n");
+        printk(KERN_WARNING "MT cpuidle slidle\n");
 
 	cpu_do_idle();
 
@@ -139,11 +139,11 @@ static int mt6735_dcm_enter(struct cpuidle_device *dev,
 	return index;
 }
 
-static int mt6735_rgidle_enter(struct cpuidle_device *dev,
+static int mt_rgidle_enter(struct cpuidle_device *dev,
 			      struct cpuidle_driver *drv, int index)
 {
     if (printk_ratelimit())
-        printk(KERN_WARNING "MT6735 cpuidle rgidle\n");
+        printk(KERN_WARNING "MT cpuidle rgidle\n");
 
 	cpu_do_idle();
 
@@ -156,35 +156,35 @@ static struct cpuidle_driver mt6735_cpuidle_driver = {
 	.name             = "mt6735_cpuidle",
 	.owner            = THIS_MODULE,
 	.states[0] = {
-		.enter            = mt6735_dpidle_enter,
+		.enter            = mt_dpidle_enter,
 		.exit_latency     = 2000,            /* 2,000 us = 2 ms */
 		.target_residency = 1,
 		.flags            = CPUIDLE_FLAG_TIME_VALID,
-		.name             = "MT6735 dpidle",
+		.name             = "dpidle",
 		.desc             = "deepidle",
 	},
 	.states[1] = {
-		.enter            = mt6735_soidle_enter,
+		.enter            = mt_soidle_enter,
 		.exit_latency     = 2000,            /* 2,000 us = 2 ms */
 		.target_residency = 1,
 		.flags            = CPUIDLE_FLAG_TIME_VALID,
-		.name             = "MT6735 SODI",
+		.name             = "SODI",
 		.desc             = "SODI",
 	},
 	.states[2] = {
-		.enter            = mt6735_dcm_enter,
+		.enter            = mt_slidle_enter,
 		.exit_latency     = 2000,            /* 2,000 us = 2 ms */
 		.target_residency = 1,
 		.flags            = CPUIDLE_FLAG_TIME_VALID,
-		.name             = "MT6735 DCM",
-		.desc             = "DCM",
+		.name             = "slidle",
+		.desc             = "slidle",
 	},
 	.states[3] = {
-		.enter            = mt6735_rgidle_enter,
+		.enter            = mt_rgidle_enter,
 		.exit_latency     = 2000,            /* 2,000 us = 2 ms */
 		.target_residency = 1,
 		.flags            = CPUIDLE_FLAG_TIME_VALID,
-		.name             = "MT6735 rgidle",
+		.name             = "rgidle",
 		.desc             = "WFI",
 	},
 	.state_count = 4,

@@ -931,14 +931,12 @@ static int gs_write(struct tty_struct *tty, const unsigned char *buf, int count)
 	struct gs_port	*port = tty->driver_data;
 	unsigned long	flags;
 	int		status;
-	//ALPS00423739
 	if(!port)
 	{
 		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
 		/*abort immediately after disconnect */
 		return -EINVAL;
 	}
-	//ALPS00423739
 
 	pr_vdebug("gs_write: ttyGS%d (%p) writing %d bytes\n",
 			port->port_num, tty, count);
@@ -960,14 +958,12 @@ static int gs_put_char(struct tty_struct *tty, unsigned char ch)
 	unsigned long	flags;
 	int		status;
 
-	//ALPS00423739
 	if(!port)
 	{
 		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
 		/*abort immediately after disconnect */
 		return -EINVAL;
 	}
-	//ALPS00423739
 
 	pr_vdebug("gs_put_char: (%d,%p) char=0x%x, called from %pf\n",
 		port->port_num, tty, ch, __builtin_return_address(0));
@@ -984,14 +980,12 @@ static void gs_flush_chars(struct tty_struct *tty)
 	struct gs_port	*port = tty->driver_data;
 	unsigned long	flags;
 
-	//ALPS00423739
 	if(!port)
 	{
 		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
 		/*abort immediately after disconnect */
 		return;
 	}
-	//ALPS00423739
 
 	pr_vdebug("gs_flush_chars: (%d,%p)\n", port->port_num, tty);
 
@@ -1007,14 +1001,12 @@ static int gs_write_room(struct tty_struct *tty)
 	unsigned long	flags;
 	int		room = 0;
 
-	//ALPS00423739
 	if(!port)
 	{
 		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
 		/*abort immediately after disconnect */
 		return -EINVAL;
 	}
-	//ALPS00423739
 
 	spin_lock_irqsave(&port->port_lock, flags);
 	if (port->port_usb)
@@ -1033,14 +1025,12 @@ static int gs_chars_in_buffer(struct tty_struct *tty)
 	unsigned long	flags;
 	int		chars = 0;
 
-	//ALPS00423739
 	if(!port)
 	{
 		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
 		/*abort immediately after disconnect */
 		return -EINVAL;
 	}
-	//ALPS00423739
 
 	spin_lock_irqsave(&port->port_lock, flags);
 	chars = gs_buf_data_avail(&port->port_write_buf);
@@ -1058,14 +1048,12 @@ static void gs_unthrottle(struct tty_struct *tty)
 	struct gs_port		*port = tty->driver_data;
 	unsigned long		flags;
 
-	//ALPS00423739
 	if(!port)
 	{
 		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
 		/*abort immediately after disconnect */
 		return;
 	}
-	//ALPS00423739
 
 	spin_lock_irqsave(&port->port_lock, flags);
 	if (port->port_usb) {
@@ -1085,14 +1073,12 @@ static int gs_break_ctl(struct tty_struct *tty, int duration)
 	int		status = 0;
 	struct gserial	*gser;
 
-	//ALPS00423739
 	if(!port)
 	{
 		printk("ERROR!!! port is closed!! %s, line %d: port = %p\n", __func__, __LINE__, port);
 		/*abort immediately after disconnect */
 		return -EINVAL;
 	}
-	//ALPS00423739
 
 	pr_vdebug("gs_break_ctl: ttyGS%d, send break (%d) \n",
 			port->port_num, duration);

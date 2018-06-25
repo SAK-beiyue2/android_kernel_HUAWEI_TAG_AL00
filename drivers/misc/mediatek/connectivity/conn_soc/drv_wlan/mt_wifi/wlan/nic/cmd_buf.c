@@ -19,34 +19,7 @@
 
 
 
-/*
-** $Log: cmd_buf.c $
- *
- * 07 08 2010 cp.wu
- * 
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 18 2010 cm.chang
- * [WPD00003841][LITE Driver] Migrate RLM/CNM to host driver 
- * Provide cnmMgtPktAlloc() and alloc/free function of msg/buf
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
- *
- * 02 03 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * 1. clear prPendingCmdInfo properly
- *  * 2. while allocating memory for cmdinfo, no need to add extra 4 bytes.
-**  \main\maintrunk.MT6620WiFiDriver_Prj\4 2009-10-13 21:59:08 GMT mtk01084
-**  remove un-neceasary spaces
-**  \main\maintrunk.MT6620WiFiDriver_Prj\3 2009-05-20 12:24:26 GMT mtk01461
-**  Increase CMD Buffer - HIF_RX_HW_APPENDED_LEN when doing CMD_INFO_T allocation
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-04-21 09:41:08 GMT mtk01461
-**  Add init of Driver Domain MCR flag and fix lint MTK WARN
-**  \main\maintrunk.MT6620WiFiDriver_Prj\1 2009-04-17 19:51:45 GMT mtk01461
-**  allocation function of CMD_INFO_T
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S
@@ -78,6 +51,7 @@
 *                           P R I V A T E   D A T A
 ********************************************************************************
 */
+BOOLEAN fgCmdDumpIsDone = FALSE;
 
 /*******************************************************************************
 *                                 M A C R O S
@@ -121,6 +95,44 @@ cmdBufInitialize (
 
 } /* end of cmdBufInitialize() */
 
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief dump CMD queue and print to trace, for debug use only
+* @param[in] prQueue	Pointer to the command Queue to be dumped
+* @param[in] quename	Name of the queue
+*/
+/*----------------------------------------------------------------------------*/
+static VOID cmdBufDumpCmdQueue(P_QUE_T prQueue, CHAR *queName)
+{
+	P_CMD_INFO_T prCmdInfo = (P_CMD_INFO_T)QUEUE_GET_HEAD(prQueue);
+	printk("Dump CMD info for %s, Elem number:%u\n", queName, prQueue->u4NumElem);
+	while (prCmdInfo) {
+		P_CMD_INFO_T prCmdInfo1, prCmdInfo2, prCmdInfo3;
+		prCmdInfo1 = (P_CMD_INFO_T)QUEUE_GET_NEXT_ENTRY((P_QUE_ENTRY_T)prCmdInfo);
+		if (!prCmdInfo1) {
+			printk("CID:%d SEQ:%d\n", prCmdInfo->ucCID, prCmdInfo->ucCmdSeqNum);
+			break;
+		}
+		prCmdInfo2 = (P_CMD_INFO_T)QUEUE_GET_NEXT_ENTRY((P_QUE_ENTRY_T)prCmdInfo1);
+		if (!prCmdInfo2) {
+			printk("CID:%d, SEQ:%d; CID:%d, SEQ:%d\n", prCmdInfo->ucCID,
+				prCmdInfo->ucCmdSeqNum, prCmdInfo1->ucCID, prCmdInfo1->ucCmdSeqNum);
+			break;
+		}
+		prCmdInfo3 = (P_CMD_INFO_T)QUEUE_GET_NEXT_ENTRY((P_QUE_ENTRY_T)prCmdInfo2);
+		if (!prCmdInfo3) {
+			printk("CID:%d, SEQ:%d; CID:%d, SEQ:%d; CID:%d, SEQ:%d\n", prCmdInfo->ucCID,
+							prCmdInfo->ucCmdSeqNum, prCmdInfo1->ucCID, prCmdInfo1->ucCmdSeqNum,
+							prCmdInfo2->ucCID, prCmdInfo2->ucCmdSeqNum);
+			break;
+		}
+		printk("CID:%d, SEQ:%d; CID:%d, SEQ:%d; CID:%d, SEQ:%d; CID:%d, SEQ:%d\n",
+						prCmdInfo->ucCID, prCmdInfo->ucCmdSeqNum, prCmdInfo1->ucCID,
+						prCmdInfo1->ucCmdSeqNum, prCmdInfo2->ucCID, prCmdInfo2->ucCmdSeqNum,
+						prCmdInfo3->ucCID, prCmdInfo3->ucCmdSeqNum);
+		prCmdInfo = (P_CMD_INFO_T)QUEUE_GET_NEXT_ENTRY((P_QUE_ENTRY_T)prCmdInfo3);
+	}
+}
 
 /*----------------------------------------------------------------------------*/
 /*!
@@ -171,6 +183,19 @@ cmdBufAllocateCmdInfo (
             prCmdInfo->fgIsOid = FALSE;
             prCmdInfo->fgDriverDomainMCR = FALSE;
         }
+		fgCmdDumpIsDone = FALSE;
+    } else if (!fgCmdDumpIsDone) {
+    	P_GLUE_INFO_T prGlueInfo = prAdapter->prGlueInfo;
+		P_QUE_T prCmdQue = &prGlueInfo->rCmdQueue;
+		P_QUE_T prPendingCmdQue = &prAdapter->rPendingCmdQueue;
+		P_TX_TCQ_STATUS_T prTc = &prAdapter->rTxCtrl.rTc;
+		extern MTK_WCN_BOOL mtk_wcn_wmt_assert(ENUM_WMTDRV_TYPE_T type, UINT32 reason);
+		fgCmdDumpIsDone = TRUE;
+		cmdBufDumpCmdQueue(prCmdQue, "waiting Tx CMD queue");
+		cmdBufDumpCmdQueue(prPendingCmdQue, "waiting response CMD queue");
+		printk("Tc4 number:%d\n", prTc->aucFreeBufferCount[TC4_INDEX]);
+		mtk_wcn_wmt_assert(WMTDRV_TYPE_WIFI, 40);
+    	glDumpConnSysCpuInfo(prGlueInfo);
     }
 
     return prCmdInfo;

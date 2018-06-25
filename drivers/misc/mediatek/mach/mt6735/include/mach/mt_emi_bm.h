@@ -52,6 +52,11 @@
 #define EMI_TTYPE15  (EMI_BASE_ADDR + 0x570)
 #define EMI_TTYPE16  (EMI_BASE_ADDR + 0x578)
 
+#define EMI_BMRW0    (EMI_BASE_ADDR + 0x4F8)
+#define EMI_CONI     (EMI_BASE_ADDR + 0x040)
+#define EMI_TEST0    (EMI_BASE_ADDR + 0x0D0)
+#define EMI_TEST1    (EMI_BASE_ADDR + 0x0D8)
+#define EMI_ARBG_2ND (EMI_BASE_ADDR + 0x134)
 #define DRAMC_R2R_PAGE_HIT      (DRAMCNAO_BASE_ADDR + 0x280)
 #define DRAMC_R2R_PAGE_MISS     (DRAMCNAO_BASE_ADDR + 0x284)
 #define DRAMC_R2R_INTERBANK     (DRAMCNAO_BASE_ADDR + 0x288)
@@ -129,6 +134,11 @@ enum
 #define BM_ERR_WRONG_REQ    (-1)
 #define BM_ERR_OVERRUN      (-2)
 
+#define DUMP_DEBUG_REGISTER 1
+#if DUMP_DEBUG_REGISTER 
+static unsigned int emidumpstatus;
+extern void dump_emi_registers(void);
+#endif
 extern void BM_Init(void);
 extern void BM_DeInit(void);
 extern void BM_Enable(const unsigned int enable);

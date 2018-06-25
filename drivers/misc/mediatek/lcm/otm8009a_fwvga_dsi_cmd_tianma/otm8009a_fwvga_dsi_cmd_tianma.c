@@ -72,7 +72,6 @@ unsigned char count;
 unsigned char para_list[64];
 };
 
-/*END PN:DTS2012122408318,modified by b00214920 , 2012.12-24*/
 
 static struct LCM_setting_table lcm_initialization_setting[] = {
 

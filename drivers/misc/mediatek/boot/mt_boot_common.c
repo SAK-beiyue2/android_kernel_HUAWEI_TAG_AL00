@@ -31,6 +31,7 @@ typedef enum {
 	BM_INITIALIZED = 2,
 } BM_INIT_STATE;
 
+BOOTMODE g_boot_mode_ex __nosavedata = UNKNOWN_BOOT;//lupingzhong_add factory mode
 BOOTMODE g_boot_mode __nosavedata = UNKNOWN_BOOT;
 static atomic_t g_boot_init = ATOMIC_INIT(BM_UNINIT);
 static atomic_t g_boot_errcnt = ATOMIC_INIT(0);
@@ -53,11 +54,11 @@ static int __init dt_get_boot_common(unsigned long node, const char *uname, int 
 
 	if (tags) {
 		g_boot_mode = tags->bootmode;
+		
         atomic_set(&g_boot_status, 1);
     } else {
 		pr_warn("'atag,boot' is not found\n");
     }
-
 	/* break now */
 	return 1;
 }
@@ -69,6 +70,11 @@ void init_boot_common(unsigned int line)
 #ifdef CONFIG_OF
 	int rc;
 
+	if (HQ_FACTORY_BOOT == g_boot_mode) 
+	{
+			g_boot_mode = NORMAL_BOOT;
+			g_boot_mode_ex = HQ_FACTORY_BOOT;
+	}
 	if (BM_INITIALIZING == atomic_read(&g_boot_init)) {
 		pr_warn("%s (%d) state(%d,%d)\n", __func__, line, atomic_read(&g_boot_init), g_boot_mode);
         atomic_inc(&g_boot_errcnt);
@@ -105,6 +111,12 @@ BOOTMODE get_boot_mode(void)
 	return g_boot_mode;
 }
 
+//lupingzhong_add factory mode start
+BOOTMODE get_boot_mode_ex(void)
+{
+    return g_boot_mode_ex;
+}
+//lupingzhong_add factory mode end
 /* for convenience, simply check is meta mode or not */
 bool is_meta_mode(void)
 {
@@ -130,6 +142,11 @@ bool is_advanced_meta_mode(void)
 
 static ssize_t boot_show(struct kobject *kobj, struct attribute *a, char *buf)
 {
+
+    if(strcmp(a->name,HQ_BOOT_SYSFS_ATTR)==0)
+    {
+        return sprintf(buf, "%d\n", get_boot_mode_ex());
+    }
     return sprintf(buf, "%d\n", get_boot_mode());
 }
 
@@ -147,8 +164,10 @@ static struct sysfs_ops boot_sysfs_ops = {
 
 /* boot attribute */
 struct attribute boot_attr = {BOOT_SYSFS_ATTR, 0644};
+struct attribute hq_boot_attr = {HQ_BOOT_SYSFS_ATTR, 0644};
 static struct attribute *boot_attrs[] = {
     &boot_attr,
+    &hq_boot_attr,
     NULL
 };
 
@@ -211,15 +230,13 @@ static int __init create_sysfs(void)
         pr_warn("fail to add kobject\n");
         return ret;
     }
-
-    return 0;
+	return 0;
 }
 
 static void __exit destroy_sysfs(void)
 {
     cdev_del(&boot_cdev);
 }
-
 static int boot_mode_proc_show(struct seq_file *p, void *v)
 {
 	seq_puts(p, "\n\rMTK BOOT MODE : ");
@@ -267,7 +284,6 @@ static int __init boot_common_core(void)
 	/* create proc entry at /proc/boot_mode */
 	if (NULL == proc_create_data("boot_mode", S_IRUGO, &proc_root, &boot_mode_proc_fops, NULL))
         pr_warn("create procfs fail");
-
     /* create sysfs entry at /sys/class/BOOT/BOOT/boot*/
     create_sysfs();
 	return 0;

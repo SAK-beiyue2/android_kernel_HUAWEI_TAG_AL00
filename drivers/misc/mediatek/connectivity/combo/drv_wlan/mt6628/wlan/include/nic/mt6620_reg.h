@@ -10,54 +10,7 @@
 
 
 
-/*
-** $Log: mt6620_reg.h $
- *
- * 01 31 2011 terry.wu
- * [WCXRP00000412] [MT6620 Wi-Fi][FW/Driver] Dump firmware assert info at android kernel log
- * Print firmware ASSERT info at Android kernel log, driver side
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
- *
- * 03 19 2010 cp.wu
- * [WPD00001943]Create WiFi test driver framework on WinXP
- * 1) add ACPI D0/D3 state switching support
- *  *  *  * 2) use more formal way to handle interrupt when the status is retrieved from enhanced RX response
-**  \main\maintrunk.MT6620WiFiDriver_Prj\15 2009-12-10 16:44:18 GMT mtk02752
-**  remove 5921 definitions
-**  \main\maintrunk.MT6620WiFiDriver_Prj\14 2009-11-09 22:56:32 GMT mtk01084
-**  modify HW register definitions
-**  \main\maintrunk.MT6620WiFiDriver_Prj\13 2009-11-04 14:11:04 GMT mtk01084
-**  modify default IER bits
-**  \main\maintrunk.MT6620WiFiDriver_Prj\12 2009-10-29 19:52:32 GMT mtk01084
-**  modify data struture
-**  \main\maintrunk.MT6620WiFiDriver_Prj\11 2009-10-23 16:08:20 GMT mtk01084
-**  \main\maintrunk.MT6620WiFiDriver_Prj\10 2009-10-13 21:58:53 GMT mtk01084
-**  update for new HW architecture design
-**  \main\maintrunk.MT6620WiFiDriver_Prj\9 2009-09-09 17:26:11 GMT mtk01084
-**  add CFG_TEST_WITH_MT5921
-**  \main\maintrunk.MT6620WiFiDriver_Prj\8 2009-05-18 20:59:57 GMT mtk01426
-**  Update WHIER_DEFAULT value
-**  \main\maintrunk.MT6620WiFiDriver_Prj\7 2009-05-07 16:57:36 GMT mtk01426
-**  Update CHIP ID to 0x6620, and WHLPCR bit definition
-**  \main\maintrunk.MT6620WiFiDriver_Prj\6 2009-04-28 10:34:57 GMT mtk01461
-**  Add read WTSR and fix RX STATUS is DW align for SDIO_STATUS_ENHANCE mode
-**  \main\maintrunk.MT6620WiFiDriver_Prj\5 2009-03-24 09:46:52 GMT mtk01084
-**  fix LINT error
-**  \main\maintrunk.MT6620WiFiDriver_Prj\4 2009-03-23 00:32:24 GMT mtk01461
-**  Define constants for TX PATH
-**  \main\maintrunk.MT6620WiFiDriver_Prj\3 2009-03-18 20:54:10 GMT mtk01426
-**  Add WHCR_MAX_HIF_RX_AGG_LEN_OFFSET definition
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-03-10 20:16:29 GMT mtk01426
-**  Init for develop
-**
-*/
+
 
 #ifndef _MT6620_REG_H
 #define _MT6620_REG_H

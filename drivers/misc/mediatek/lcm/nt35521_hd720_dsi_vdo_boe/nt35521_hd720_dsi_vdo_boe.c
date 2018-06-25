@@ -1,4 +1,3 @@
-/* BEGIN PN: , Added by h84013687, 2013.08.13*/
 #ifndef BUILD_LK
 #include <linux/string.h>
 #endif
@@ -410,4 +409,3 @@ LCM_DRIVER nt35521_hd720_dsi_vdo_boe_lcm_drv =
     .resume         	= lcm_resume,
     .compare_id     	= lcm_compare_id,
 };
-/* END PN: , Added by h84013687, 2013.08.13*/

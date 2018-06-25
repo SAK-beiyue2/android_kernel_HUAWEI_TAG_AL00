@@ -10,37 +10,7 @@
 
 
 
-/*
-** $Log: gl_typedef.h $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 10 03 2011 cp.wu
- * [WCXRP00001022] [MT6628 Driver][Firmware Download] Add multi section independent download functionality
- * add firmware download path in divided scatters.
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 06 06 2010 kevin.huang
- * [WPD00003832][MT6620 5931] Create driver base
- * [MT6620 5931] Create driver base
- *
- * 03 22 2010 cp.wu
- * [WPD00003824][MT6620 Wi-Fi][New Feature] Add support of large scan list
- * Implement feature needed by CR: WPD00003824: refining association command by pasting scanning result
-**  \main\maintrunk.MT6620WiFiDriver_Prj\4 2009-04-21 09:21:48 GMT mtk01461
-**  Add typedef - NDIS_EVENT for lint check
-**  \main\maintrunk.MT6620WiFiDriver_Prj\3 2009-03-18 20:28:03 GMT mtk01461
-**  Fix LINT warning introduced by NDIS_SPIN_LOCK
-**  \main\maintrunk.MT6620WiFiDriver_Prj\2 2009-03-10 20:40:51 GMT mtk01426
-**  Init for develop
-**
-*/
+
 
 
 #ifndef _GL_TYPEDEF_H

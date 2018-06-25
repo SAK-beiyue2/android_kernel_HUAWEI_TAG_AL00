@@ -11,29 +11,7 @@
 
 
 
-/*
-** $Log: gl_rst.c $
- *
- * 11 10 2011 cp.wu
- * [WCXRP00001098] [MT6620 Wi-Fi][Driver] Replace printk by DBG LOG macros in linux porting layer
- * 1. eliminaite direct calls to printk in porting layer.
- * 2. replaced by DBGLOG, which would be XLOG on ALPS platforms.
- *
- * 04 22 2011 cp.wu
- * [WCXRP00000598] [MT6620 Wi-Fi][Driver] Implementation of interface for communicating with user space process for RESET_START and RESET_END events
- * skip power-off handshaking when RESET indication is received.
- *
- * 04 14 2011 cp.wu
- * [WCXRP00000598] [MT6620 Wi-Fi][Driver] Implementation of interface for communicating with user space process for RESET_START and RESET_END events
- * 1. add code to put whole-chip resetting trigger when abnormal firmware assertion is detected
- * 2. add dummy function for both Win32 and Linux part.
- *
- * 03 30 2011 cp.wu
- * [WCXRP00000598] [MT6620 Wi-Fi][Driver] Implementation of interface for communicating with user space process for RESET_START and RESET_END events
- * use netlink unicast instead of broadcast
- *
-**
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S

@@ -371,7 +371,7 @@ static ssize_t sb_state_store(struct kobject *kobj, struct kobj_attribute *attr,
     char cmd[32];
     int param;
 
-    if (sscanf(buf, "%s %d", cmd, &param) == 2)
+    if (sscanf(buf, "%31s %d", cmd, &param) == 2)
     {
         if (!strcmp(cmd, "bypass"))
             sb_bypass = param;

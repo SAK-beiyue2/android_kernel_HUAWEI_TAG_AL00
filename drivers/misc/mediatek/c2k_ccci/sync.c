@@ -1754,6 +1754,7 @@ int asc_tx_auto_ready(const char *name, int sync)
     int ret = 0;
     int try = 1;
     long timeout = 1;
+	long cur_timeout = 0;
     struct asc_user *user;
     struct asc_tx_handle *tx;
     unsigned long flags = 0;
@@ -1820,7 +1821,11 @@ int asc_tx_auto_ready(const char *name, int sync)
     if(sync){
         if((AP_TX_ST_READY != atomic_read(&tx->state)) || atomic_read(&tx->sleeping)){
              do{
-                timeout +=interruptible_sleep_on_timeout(&tx->wait_tx_state,msecs_to_jiffies(20));
+                cur_timeout = interruptible_sleep_on_timeout(&tx->wait_tx_state,msecs_to_jiffies(20));
+				if(cur_timeout == 0)
+					cur_timeout = msecs_to_jiffies(20);
+				timeout += cur_timeout;
+
 //                interruptible_sleep_on(&tx->wait_tx_state);
                 if(AP_TX_ST_READY == atomic_read(&tx->state)){
                     if(timeout > msecs_to_jiffies(ASC_TX_WAIT_READY_TIME)){

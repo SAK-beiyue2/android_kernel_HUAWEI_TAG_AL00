@@ -1386,7 +1386,7 @@ StatsTxPktDoneInfoDisplay(
     
     DBGLOG(INIT, TRACE,("EVENT_ID_TX_DONE_STATUS PacketSeq:%u ucStatus: %u SN: %u\n",
                     prTxDone->ucPacketSeq, prTxDone->ucStatus, prTxDone->u2SequenceNumber));
-
+	#if 0
     printk("[wlan] tx done packet= 0x");
     for(u4PktId=0; u4PktId<200; u4PktId++)
     {
@@ -1395,6 +1395,7 @@ StatsTxPktDoneInfoDisplay(
         printk("%02x ", prTxDone->aucPktBuf[u4PktId]);
     }
     printk("\n");
+    #endif
 }
 
 #endif /* CFG_SUPPORT_STATISTICS */

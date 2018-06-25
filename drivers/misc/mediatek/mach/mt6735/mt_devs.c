@@ -2899,10 +2899,6 @@ static void display_early_memory_info(void)
 }
 #endif /* end of CONFIG_OF */
 
-void __weak mtk_wcn_consys_memory_reserve(void)
-{
-    printk(KERN_ERR"weak reserve function: %s", __FUNCTION__);
-}
 
 void mt_reserve(void)
 {
@@ -2915,8 +2911,6 @@ void mt_reserve(void)
 	memblock_remove(0x4e200000, 0x1e00000);
 #endif
 
-	mtk_wcn_consys_memory_reserve();
-	
 	mrdump_reserve_memory();
 
 #if defined(CONFIG_MTK_RAM_CONSOLE_USING_DRAM)

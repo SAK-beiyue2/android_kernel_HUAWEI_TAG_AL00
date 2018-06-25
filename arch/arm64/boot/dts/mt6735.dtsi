@@ -155,7 +155,7 @@
 		reserve-memory-ccci_md1 {
 			compatible = "reserve-memory-ccci_md1";
 			no-map;
-			size = <0 0x3810000>; // md_size+smem_size
+			size = <0 0x3010000>; // md_size+smem_size
 			alignment = <0 0x2000000>;
 			alloc-ranges = <0 0x40000000 0 0xC0000000>;
 		};
@@ -1222,9 +1222,9 @@
 			      <0x10211A70 0x000C>,  /*DISP_DPI_IO_DRIVING1 */
 			      <0x10211974 0x000C>,  /*DISP_DPI_IO_DRIVING2 */
 			      <0x10211B70 0x000C>,  /*DISP_DPI_IO_DRIVING3 */
-			      <0x10206044 0x000C>,  /*DISP_DPI_TIMING1 */
-			      <0x10206514 0x000C>,  /*DISP_DPI_TIMING2 */
-			      <0x10206558 0x000C>,  /*DISP_DPI_TIMING3 */
+			      <0 0>,  /*DISP_DPI_TIMING1 */
+			      <0 0>,  /*DISP_DPI_TIMING2 */
+			      <0 0>,  /*DISP_DPI_TIMING3 */
 			      <0x102100A0 0x1000>,  /*DISP_TVDPLL_CFG6 */
 			      <0x10209270 0x1000>,  /*DISP_TVDPLL_CON0 */
 			      <0x10209274 0x1000>,  /*DISP_TVDPLL_CON1 */
@@ -1509,6 +1509,14 @@
 			compatible = "mediatek,audio_switch";
 		};
 /* sensor end */
+
+	mt8193ckgen@0 {
+		compatible = "mediatek,mt8193-ckgen";
+	};
+
+	multibridge@0 {
+		compatible = "mediatek,multibridge";
+	};
 };
 
 /include/ "cust_eint.dtsi"

@@ -19,8 +19,8 @@
 #endif
 
 
-#define LENS_I2C_BUSNUM 3
-static struct i2c_board_info kd_lens_dev __initdata = { I2C_BOARD_INFO("BU6424AF", 0x18) };
+#define LENS_I2C_BUSNUM 0
+static struct i2c_board_info kd_lens_dev __initdata = { I2C_BOARD_INFO("BU6424AF", 0x21) };
 
 
 #define BU6424AF_DRVNAME "BU6424AF"
@@ -75,7 +75,7 @@ static int s4BU6424AF_ReadReg(unsigned short *a_pu2Result)
 static int s4BU6424AF_WriteReg(u16 a_u2Data)
 {
 	int i4RetValue = 0;
-	char puSendCmd[2] = { (char)(((a_u2Data >> 8) & 0x03) | 0xc0), (char)(a_u2Data & 0xff) };
+	char puSendCmd[2] = { (char)(((a_u2Data >> 8) & 0x03) | 0xc4), (char)(a_u2Data & 0xff) };
 
 	g_pstBU6424AF_I2Cclient->ext_flag |= I2C_A_FILTER_MSG;
 	i4RetValue = i2c_master_send(g_pstBU6424AF_I2Cclient, puSendCmd, 2);
@@ -85,7 +85,55 @@ static int s4BU6424AF_WriteReg(u16 a_u2Data)
 	}
 	return 0;
 }
+static int init_setting(void)
+{
+	int  i4RetValue = 0;
+	//LOG_INF("init_setting start 151201!!\n");
+char puSendCmd1[2]={(char)(0xd4),(char)(0x32)};//A point=50d 
+char puSendCmd2[2]={(char)(0xdc),(char)(0x64)};//B point=100d 
+char puSendCmd3[2]={(char)(0xe4),(char)(0x84)};//A-B point step mode:200us/4Lsd 
+char puSendCmd4[2]={(char)(0xcc),(char)(0x53)};//95Hz,Fast mode
 
+ i4RetValue = i2c_master_send(g_pstBU6424AF_I2Cclient, puSendCmd1, 2);	
+    if (i4RetValue < 0) 
+    {
+       // LOG_INF("[BU6424AF]I2C send failed!!\n");
+		return -1;
+    }
+    else{
+	BU6424AFDB("huangjialiang>>>>>[BU6424AF]I2C send pusedcmd  1 successfull!!\n");
+    }
+ i4RetValue = i2c_master_send(g_pstBU6424AF_I2Cclient, puSendCmd2, 2);
+    if (i4RetValue < 0) 
+    {
+      //  LOG_INF("[BU6424AF]I2C send failed!!\n");
+        return -1;
+    }
+    else{
+	BU6424AFDB("huangjialiang>>>>>[BU6424AF]I2C send pusedcmd   2 successfull!!\n");
+    }	
+ i4RetValue = i2c_master_send(g_pstBU6424AF_I2Cclient, puSendCmd3, 2);
+    if (i4RetValue < 0) 
+    {
+       BU6424AFDB("huangjialiang>>>>>[BU6424AF]I2C send failed!!\n");
+        return -1;
+    }
+    else{
+		BU6424AFDB("huangjialiang>>>>>[BU6424AF]I2C send pusedcmd3 successfull!!\n");
+    }
+ i4RetValue = i2c_master_send(g_pstBU6424AF_I2Cclient, puSendCmd4, 2);
+    if (i4RetValue < 0) 
+    {
+     //   LOG_INF("[BU6424AF]I2C send failed!!\n");
+        return -1;
+    }
+    else{
+	 BU6424AFDB("huangjialiang>>>>>[BU6424AF]I2C send pusedcmd4 successfull!!\n");
+    }
+	
+    BU6424AFDB("huangjialiang>>>>>[BU6424AF]I2C send failed!!\n");
+	return 0;
+}
 inline static int getBU6424AFInfo(__user stBU6424AF_MotorInfo * pstMotorInfo)
 {
 	stBU6424AF_MotorInfo stMotorInfo;
@@ -125,6 +173,7 @@ inline static int moveBU6424AF(unsigned long a_u4Position)
 	if (g_s4BU6424AF_Opened == 1) {
 		unsigned short InitPos;
 		ret = s4BU6424AF_ReadReg(&InitPos);
+        init_setting();
 
 		spin_lock(&g_BU6424AF_SpinLock);
 		if (ret == 0) {
@@ -230,7 +279,7 @@ static long BU6424AF_Ioctl(struct file *a_pstFile,
 /* CAM_RESET */
 static int BU6424AF_Open(struct inode *a_pstInode, struct file *a_pstFile)
 {
-	BU6424AFDB("[BU6424AF] BU6424AF_Open - Start\n");
+	BU6424AFDB("[liyongjian] BU6424AF_Open - Start\n");
 
 	spin_lock(&g_BU6424AF_SpinLock);
 
@@ -244,7 +293,7 @@ static int BU6424AF_Open(struct inode *a_pstInode, struct file *a_pstFile)
 
 	spin_unlock(&g_BU6424AF_SpinLock);
 
-	BU6424AFDB("[BU6424AF] BU6424AF_Open - End\n");
+	BU6424AFDB("[liyongjian] BU6424AF_Open - End\n");
 
 	return 0;
 }
@@ -256,12 +305,16 @@ static int BU6424AF_Open(struct inode *a_pstInode, struct file *a_pstFile)
 /* Q1 : Try release multiple times. */
 static int BU6424AF_Release(struct inode *a_pstInode, struct file *a_pstFile)
 {
-	BU6424AFDB("[BU6424AF] BU6424AF_Release - Start\n");
+	BU6424AFDB("[liyongjian] BU6424AF_Release - Start\n");
 
     if (g_s4BU6424AF_Opened == 2) 
     {
 		g_sr = 5;
-		s4BU6424AF_WriteReg(200);
+		s4BU6424AF_WriteReg(300);
+		msleep(10);
+		s4BU6424AF_WriteReg(250);
+		msleep(10);    
+		s4BU6424AF_WriteReg(180);
 		msleep(10);
 		s4BU6424AF_WriteReg(100);
 		msleep(10);    
@@ -393,7 +446,7 @@ static int BU6424AF_i2c_probe(struct i2c_client *client, const struct i2c_device
 
 	/* Kirby: add new-style driver { */
 	g_pstBU6424AF_I2Cclient = client;
-
+    g_pstBU6424AF_I2Cclient->addr = 0x18;
 	g_pstBU6424AF_I2Cclient->addr = g_pstBU6424AF_I2Cclient->addr >> 1;
 
 	/* Register char driver */

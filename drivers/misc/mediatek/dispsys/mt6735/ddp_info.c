@@ -4,6 +4,7 @@
 #include "ddp_debug.h"
 #include "ddp_log.h"
 
+
 char* ddp_get_module_name(DISP_MODULE_ENUM module)
 {
     switch(module)

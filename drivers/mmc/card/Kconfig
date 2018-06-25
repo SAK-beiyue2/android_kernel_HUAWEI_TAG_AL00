@@ -85,3 +85,9 @@ config MMC_FFU
 	  This is an option to run firmware update on eMMC 5.0.
 	  Field firmware updates (FFU) enables features enhancment
 	  in the field.
+
+config HW_SD_HEALTH_DETECT
+	bool "SD HEALTHDETECT"
+	default y
+	help
+	  This is an option to diag sd health status.

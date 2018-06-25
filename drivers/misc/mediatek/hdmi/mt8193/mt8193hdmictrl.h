@@ -692,6 +692,7 @@ extern void vUnBlackHDMIOnly(void);
 extern void UnMuteHDMIAudio(void);
 extern void MuteHDMIAudio(void);
 extern u8 vIsDviMode(void);
-
+extern unsigned char is_user_mute_hdmi_audio;
+extern void hdmi_user_mute_audio(unsigned char mute);
 #endif
 #endif

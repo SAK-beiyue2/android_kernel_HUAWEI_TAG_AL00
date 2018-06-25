@@ -232,7 +232,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		}
 	}
 #ifdef CONFIG_MTK_GMO_RAM_OPTIMIZE //Need removal ???
-	// For GB3 CR ALPS00602722: walkaround CTS issue
 	if (min_score_adj < 9 && other_anon > 70 * 256) {
 		// if other_anon > 70MB, don't kill adj <= 8
 		min_score_adj = 9;
@@ -502,7 +501,7 @@ static int __init lowmem_init(void)
 #endif
 
 #ifdef CONFIG_ZRAM
-	vm_swappiness = 100;
+	vm_swappiness = 150;
 #endif
 
 

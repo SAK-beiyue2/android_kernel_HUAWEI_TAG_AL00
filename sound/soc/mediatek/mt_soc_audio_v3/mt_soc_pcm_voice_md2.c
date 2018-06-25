@@ -154,12 +154,6 @@ static int mtk_voice_md2_pcm_open(struct snd_pcm_substream *substream)
 
     printk("mtk_voice_md2_pcm_open\n");
 
-    if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
-    {
-        printk("%s  with SNDRV_PCM_STREAM_CAPTURE \n", __func__);
-        runtime->rate = 16000;
-        return 0;
-    }
     runtime->hw = mtk_pcm_hardware;
     memcpy((void *)(&(runtime->hw)), (void *)&mtk_pcm_hardware , sizeof(struct snd_pcm_hardware));
 
@@ -185,7 +179,8 @@ static int mtk_voice_md2_pcm_open(struct snd_pcm_substream *substream)
     }
     else
     {
-
+        printk("SNDRV_PCM_STREAM_CAPTURE mtkalsa_voice_md2_constraints\n");
+        runtime->rate = 16000;
     }
 
     if (err < 0)

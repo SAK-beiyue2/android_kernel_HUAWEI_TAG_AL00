@@ -223,8 +223,7 @@ static void android_work(struct work_struct *data)
 	/* Add for HW/SW connect */
 	bool is_hwconnected = true;
 
-	/* patch for ALPS00345130, if the disconnect followed by hw_disconnect, then the hw_disconnect
-	will not notify the UsbDeviceManager due to that musb->g.speed == USB_SPEED_UNKNOWN*/
+	
 	if (!cdev){
 		return ;
 	}

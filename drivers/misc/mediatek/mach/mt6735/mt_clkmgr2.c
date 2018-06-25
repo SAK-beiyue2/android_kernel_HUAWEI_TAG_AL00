@@ -74,34 +74,20 @@ void __iomem  *clk_vdec_gcon_base;
 
 #define TAG     "[Power/clkmgr] "
 
-#define clk_err(fmt, args...)       \
-    pr_err(TAG fmt, ##args)
-#define clk_warn(fmt, args...)      \
-    pr_warn(TAG fmt, ##args)
-#define clk_info(fmt, args...)      \
-    pr_info(TAG fmt, ##args)
-#define clk_dbg(fmt, args...)       \
-    pr_info(TAG fmt, ##args)
+#define clk_err(fmt, args...)
+#define clk_warn(fmt, args...)
+#define clk_info(fmt, args...)
+#define clk_dbg(fmt, args...)
 
 #else
 
 #define TAG     "[Power/clkmgr] "
 
-#define clk_err(fmt, args...)       \
-    printk(KERN_ERR TAG);           \
-    printk(KERN_CONT fmt, ##args)
-#define clk_warn(fmt, args...)      \
-    printk(KERN_WARNING TAG);       \
-    printk(KERN_CONT fmt, ##args)
-#define clk_info(fmt, args...)      \
-    printk(KERN_NOTICE TAG);        \
-    printk(KERN_CONT fmt, ##args)
-#define clk_dbg(fmt, args...)       \
-    printk(KERN_INFO TAG);          \
-    printk(KERN_CONT fmt, ##args)
-#define clk_ver(fmt, args...)       \
-    printk(KERN_DEBUG TAG);         \
-    printk(KERN_CONT fmt, ##args)
+#define clk_err(fmt, args...)
+#define clk_warn(fmt, args...)
+#define clk_info(fmt, args...)
+#define clk_dbg(fmt, args...)
+#define clk_ver(fmt, args...)
 
 #endif
 
@@ -2418,21 +2404,31 @@ static struct clkmux_ops hd_audio_clkmux_ops = {
     .disable = clkmux_disable_op,
 };*/
 
-/*
+
 static void audio_clkmux_enable_op(struct clkmux *mux)
 {
 #ifdef MUX_LOG
     //clk_info("[%s]: mux->name=%s\n", __func__, mux->name);
     clk_dbg("[%s]: mux->name=%s\n", __func__, mux->name);
 #endif
-    clk_clrl(mux->base_addr, mux->pdn_mask);
+//    clk_writel(mux->base_addr+8, mux->pdn_mask);//write clr reg
 };
-*/
+
+static void audio_clkmux_disable_op(struct clkmux *mux)
+{
+#ifdef MUX_LOG
+    //clk_info("[%s]: mux->name=%s\n", __func__, mux->name);
+    clk_dbg("[%s]: mux->name=%s\n", __func__, mux->name);
+#endif
+//    clk_writel(mux->base_addr+4, mux->pdn_mask); //write set reg
+};
+
 static struct clkmux_ops audio_clkmux_ops = {
     .sel = clkmux_sel_op,
-    //.enable = audio_clkmux_enable_op,
-    .enable = clkmux_enable_op,
-    .disable = clkmux_disable_op,
+    .enable = audio_clkmux_enable_op,
+    .disable = audio_clkmux_disable_op,
+/*    .enable = clkmux_enable_op, */
+/*    .disable = clkmux_disable_op,*/
 };
 
 static void clkmux_sel_locked(struct clkmux *mux, unsigned int clksrc)
@@ -2510,6 +2506,16 @@ static void mux_disable_locked(struct clkmux *mux)
     clk_info("[%s]: End. mux->name=%s, mux->cnt=%d\n", __func__, mux->name, mux->cnt);
 #endif
 }
+
+void mt_set_vencpll_con1(int val)
+{
+    unsigned long flags;
+
+    clkmgr_lock(flags);
+    clk_writel(VENCPLL_CON1, val);
+    clkmgr_unlock(flags);
+}
+EXPORT_SYMBOL(mt_set_vencpll_con1);
 
 int clkmux_sel(int id, unsigned int clksrc, char *name)
 {
@@ -3215,7 +3221,7 @@ static int clk_enable_locked(struct cg_clk *clk)
     return 0;
 }
 
-static void clk_stat_bug(void);
+void clk_stat_bug(void);
 static int clk_disable_locked(struct cg_clk *clk)
 {
     struct cg_grp *grp = clk->grp;
@@ -3933,8 +3939,9 @@ void msdc_clk_status(int * status) { *status = 0; }
 #define VDE_PWR_STA_MASK    (0x1 << 7)
 #define ISP_PWR_STA_MASK    (0x1 << 5)
 #define MFG_PWR_STA_MASK    (0x1 << 4)
+#define DIS_PWR_STA_MASK    (0x1 << 3)
 
-bool clkmgr_idle_can_enter(unsigned int *condition_mask, unsigned int *block_mask)
+bool clkmgr_idle_can_enter(unsigned int *condition_mask, unsigned int *block_mask, enum idle_mode mode)
 {
     int i,j;
     unsigned int sd_mask = 0;
@@ -3965,8 +3972,14 @@ bool clkmgr_idle_can_enter(unsigned int *condition_mask, unsigned int *block_mas
 
 #ifdef PLL_CLK_LINK
     sta = clk_readl(SPM_PWR_STATUS);
-    if (sta & (MFG_PWR_STA_MASK | ISP_PWR_STA_MASK | VDE_PWR_STA_MASK))
-        return false;
+
+    if (mode == dpidle) {
+        if (sta & (MFG_PWR_STA_MASK | ISP_PWR_STA_MASK | VDE_PWR_STA_MASK | DIS_PWR_STA_MASK))
+            return false;
+    } else if (mode == soidle) {
+    	if (sta & (MFG_PWR_STA_MASK | ISP_PWR_STA_MASK | VDE_PWR_STA_MASK))
+            return false;
+    }
 #endif
     return true;
 }
@@ -4405,7 +4418,7 @@ void clk_stat_check(int id)
 }
 EXPORT_SYMBOL(clk_stat_check);
 
-static void clk_stat_bug(void)
+void clk_stat_bug(void)
 {
     struct cg_clk *clk;	
     struct list_head *pos;

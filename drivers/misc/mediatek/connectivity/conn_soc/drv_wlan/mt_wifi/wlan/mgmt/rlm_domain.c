@@ -9,84 +9,7 @@
 
 
 
-/*
-** $Log: rlm_domain.c $
- *
- * 11 10 2011 cm.chang
- * NULL
- * Modify debug message for XLOG
- *
- * 09 29 2011 cm.chang
- * NULL
- * Change the function prototype of rlmDomainGetChnlList()
- *
- * 09 23 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * Let channel number to zero if band is illegal
- *
- * 09 22 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * Exclude channel list with illegal band
- *
- * 09 15 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * Use defined country group to have a change to add new group
- *
- * 09 08 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * Use new fields ucChannelListMap and ucChannelListIndex in NVRAM
- *
- * 08 31 2011 cm.chang
- * [WCXRP00000969] [MT6620 Wi-Fi][Driver][FW] Channel list for 5G band based on country code
- * .
- *
- * 06 01 2011 cm.chang
- * [WCXRP00000756] [MT6620 Wi-Fi][Driver] 1. AIS follow channel of BOW 2. Provide legal channel function
- * Provide legal channel function based on domain
- *
- * 03 19 2011 yuche.tsai
- * [WCXRP00000584] [Volunteer Patch][MT6620][Driver] Add beacon timeout support for WiFi Direct.
- * Add beacon timeout support for WiFi Direct Network.
- *
- * 03 02 2011 terry.wu
- * [WCXRP00000505] [MT6620 Wi-Fi][Driver/FW] WiFi Direct Integration
- * Export rlmDomainGetDomainInfo for p2p driver.
- *
- * 01 12 2011 cm.chang
- * [WCXRP00000354] [MT6620 Wi-Fi][Driver][FW] Follow NVRAM bandwidth setting
- * User-defined bandwidth is for 2.4G and 5G individually
- *
- * 12 07 2010 cm.chang
- * [WCXRP00000238] MT6620 Wi-Fi][Driver][FW] Support regulation domain setting from NVRAM and supplicant
- * 1. Country code is from NVRAM or supplicant
- * 2. Change band definition in CMD/EVENT.
- *
- * 07 08 2010 cp.wu
- *
- * [WPD00003833] [MT6620 and MT5931] Driver migration - move to new repository.
- *
- * 07 08 2010 cm.chang
- * [WPD00003841][LITE Driver] Migrate RLM/CNM to host driver
- * Check draft RLM code for HT cap
- *
- * 03 25 2010 cm.chang
- * [BORA00000018]Integrate WIFI part into BORA for the 1st time
- * Filter out not supported RF freq when reporting available chnl list
- *
- * 01 22 2010 cm.chang
- * [BORA00000018]Integrate WIFI part into BORA for the 1st time
- * Support protection and bandwidth switch
- *
- * 01 13 2010 cm.chang
- * [BORA00000018]Integrate WIFI part into BORA for the 1st time
- * Provide query function about full channle list.
- *
- * Dec 1 2009 mtk01104
- * [BORA00000018] Integrate WIFI part into BORA for the 1st time
- *
- *
-**
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S
@@ -604,6 +527,24 @@ COUNTRY_CH_SET_T arCountryChSets[] = {
 #endif
 
 
+
+#include "rlm_txpwr_init.h"
+
+
+#if CFG_SUPPORT_PWR_LIMIT_COUNTRY 
+
+SUBBAND_CHANNEL_T g_rRlmSubBand[] = {
+
+	{BAND_2G4_LOWER_BOUND, 	BAND_2G4_UPPER_BOUND, 	1,	0},   //2.4G
+	{UNII1_LOWER_BOUND, 	UNII1_UPPER_BOUND, 		2,	0},   //ch36,38,40,..,48 
+	{UNII2A_LOWER_BOUND, 	UNII2A_UPPER_BOUND, 	2,	0},   //ch52,54,56,..,64
+	{UNII2C_LOWER_BOUND, 	UNII2C_UPPER_BOUND, 	2,	0},   //ch100,102,104,...,144
+	{UNII3_LOWER_BOUND, 	UNII3_UPPER_BOUND,		2, 	0} 	  //ch149,151,153,....,173
+	
+};
+
+#endif
+
 /*******************************************************************************
 *                           P R I V A T E   D A T A
 ********************************************************************************
@@ -891,6 +832,10 @@ rlmDomainSendCmd (
     ASSERT(rStatus == WLAN_STATUS_PENDING);
 
     cnmMemFree(prAdapter, prCmd);
+#if CFG_SUPPORT_PWR_LIMIT_COUNTRY
+
+	rlmDomainSendPwrLimitCmd(prAdapter);
+#endif
 
 	rlmDomainPassiveScanSendCmd(prAdapter, fgIsOid);
 }
@@ -1010,4 +955,490 @@ rlmDomainIsLegalChannel (
 
     return FALSE;
 }
+
+
+
+#if CFG_SUPPORT_PWR_LIMIT_COUNTRY
+
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief 
+*
+* @param[in]
+*
+* @return (fgValid) : 0 -> inValid, 1 -> Valid
+*/
+/*----------------------------------------------------------------------------*/
+BOOLEAN
+rlmDomainCheckPowerLimitValid (
+	P_ADAPTER_T     								prAdapter,
+	COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION         rPowerLimitTableConfiguration,      
+	UINT_8          								ucPwrLimitNum
+    )
+{
+    UINT_8          i;
+	BOOLEAN         fgValid = TRUE;
+	PINT_8          prPwrLimit; 
+
+	prPwrLimit = &rPowerLimitTableConfiguration.aucPwrLimit[0];
+	
+	for (i = 0; i < ucPwrLimitNum; i++, prPwrLimit++) {
+       	if (*prPwrLimit > MAX_TX_POWER || *prPwrLimit < MIN_TX_POWER) {
+			fgValid = FALSE;
+			break; /*Find out Wrong Power limit*/
+       	}
+	}
+	return fgValid;
+
+}
+
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief 
+*
+* @param[in]
+*
+* @return (none) 
+*/
+/*----------------------------------------------------------------------------*/
+VOID
+rlmDomainCheckCountryPowerLimitTable (
+	P_ADAPTER_T     prAdapter
+    )
+{
+    UINT_8   								i, j;
+	UINT_16  								u2CountryCodeTable, u2CountryCodeCheck;
+	BOOLEAN                                 fgChannelValid = FALSE;
+	BOOLEAN                                 fgPowerLimitValid = FALSE;
+	BOOLEAN                                 fgEntryRepetetion = FALSE;
+	BOOLEAN                                 fgTableValid = TRUE;
+	
+
+	/*Configuration Table Check*/
+	for (i = 0; i < sizeof(g_rRlmPowerLimitConfiguration)/sizeof(COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION); i++) {
+            /*Table Country Code*/
+			WLAN_GET_FIELD_BE16( &g_rRlmPowerLimitConfiguration[i].aucCountryCode[0], &u2CountryCodeTable); 
+
+			/*Repetition Entry Check*/
+			for (j = i + 1; j <= sizeof(g_rRlmPowerLimitConfiguration)/sizeof(COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION); j++) {
+				
+			     WLAN_GET_FIELD_BE16( &g_rRlmPowerLimitConfiguration[j].aucCountryCode[0], &u2CountryCodeCheck);
+				 if (((g_rRlmPowerLimitConfiguration[i].ucCentralCh) == g_rRlmPowerLimitConfiguration[j].ucCentralCh) &&
+				 	(u2CountryCodeTable == u2CountryCodeCheck)) {
+				 	fgEntryRepetetion = TRUE;
+                 	DBGLOG(RLM, INFO, ("Domain: Configuration Repetition CC=%c%c, Ch=%d\n",
+				 	g_rRlmPowerLimitConfiguration[i].aucCountryCode[0],g_rRlmPowerLimitConfiguration[i].aucCountryCode[1],
+				 	g_rRlmPowerLimitConfiguration[i].ucCentralCh));
+				 }
+			}
+			
+			/*Channel Number Check*/
+			fgChannelValid = rlmDomainCheckChannelEntryValid(prAdapter, g_rRlmPowerLimitConfiguration[i].ucCentralCh);
+
+			/*Power Limit Check*/
+			fgPowerLimitValid = rlmDomainCheckPowerLimitValid(prAdapter, g_rRlmPowerLimitConfiguration[i], PWR_LIMIT_NUM);
+
+			if (fgChannelValid == FALSE || fgPowerLimitValid == FALSE) {
+				fgTableValid = FALSE;
+				DBGLOG(RLM, INFO, ("Domain: CC=%c%c, Ch=%d, Limit: %d,%d,%d,%d,%d\n",
+				g_rRlmPowerLimitConfiguration[i].aucCountryCode[0],g_rRlmPowerLimitConfiguration[i].aucCountryCode[1],
+				g_rRlmPowerLimitConfiguration[i].ucCentralCh,g_rRlmPowerLimitConfiguration[i].aucPwrLimit[PWR_LIMIT_CCK], 
+				g_rRlmPowerLimitConfiguration[i].aucPwrLimit[PWR_LIMIT_20M], g_rRlmPowerLimitConfiguration[i].aucPwrLimit[PWR_LIMIT_40M],
+				g_rRlmPowerLimitConfiguration[i].aucPwrLimit[PWR_LIMIT_80M], g_rRlmPowerLimitConfiguration[i].aucPwrLimit[PWR_LIMIT_160M]));
+			}
+			
+			if(u2CountryCodeTable == COUNTRY_CODE_NULL) {
+				DBGLOG(RLM, INFO, ("Domain: Full search down\n"));
+				break; /*End of country table entry*/
+			}
+			
+	}
+
+	if (fgEntryRepetetion == FALSE) {
+		DBGLOG(RLM, INFO, ("Domain: Configuration Table no Repetiton.\n"));
+	}
+
+	/*Configuration Table no error*/
+	if (fgTableValid == TRUE ) {
+		prAdapter->fgIsPowerLimitTableValid = TRUE;
+    }
+	else {
+		prAdapter->fgIsPowerLimitTableValid = FALSE;
+	}
+
+	/*Default Table Check*/
+	fgEntryRepetetion = FALSE;
+	for (i = 0; i < sizeof(g_rRlmPowerLimitDefault)/sizeof(COUNTRY_POWER_LIMIT_TABLE_DEFAULT); i++) {
+
+		WLAN_GET_FIELD_BE16(&g_rRlmPowerLimitDefault[i].aucCountryCode[0], &u2CountryCodeTable); 
+
+		for (j = i + 1; j <sizeof(g_rRlmPowerLimitDefault)/sizeof(COUNTRY_POWER_LIMIT_TABLE_DEFAULT); j++) {
+            WLAN_GET_FIELD_BE16(&g_rRlmPowerLimitDefault[j].aucCountryCode[0], &u2CountryCodeCheck);
+			if (u2CountryCodeTable == u2CountryCodeCheck) {
+				fgEntryRepetetion = TRUE;
+            	DBGLOG(RLM, INFO, ("Domain: Default Repetition CC=%c%c\n",g_rRlmPowerLimitDefault[j].aucCountryCode[0],g_rRlmPowerLimitDefault[j].aucCountryCode[1]));
+			}
+		}
+	}
+	if (fgEntryRepetetion == FALSE) {
+		DBGLOG(RLM, INFO, ("Domain: Default Table no Repetiton.\n"));
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief 
+*
+* @param[in]
+*
+* @return (u2TableIndex) : if  0xFFFF -> No Table Match
+*/
+/*----------------------------------------------------------------------------*/
+UINT_16
+rlmDomainPwrLimitDefaultTableDecision(
+    P_ADAPTER_T     prAdapter,
+    UINT_16         u2CountryCode 
+    )
+{
+
+    UINT_16                                 i;
+    UINT_16                                 u2CountryCodeTable = COUNTRY_CODE_NULL;                         
+    UINT_16                                 u2TableIndex = POWER_LIMIT_TABLE_NULL; //No Table Match 
+
+    /*Default Table Index*/
+    for (i = 0; i < sizeof(g_rRlmPowerLimitDefault)/sizeof(COUNTRY_POWER_LIMIT_TABLE_DEFAULT); i++) {
+
+		WLAN_GET_FIELD_BE16(&g_rRlmPowerLimitDefault[i].aucCountryCode[0], &u2CountryCodeTable); 
+			
+        if(u2CountryCodeTable == u2CountryCode) {
+           	u2TableIndex = i;
+           	break; /*match country code*/
+       	}
+		else if(u2CountryCodeTable == COUNTRY_CODE_NULL) {
+            u2TableIndex = i;
+			break; /*find last one country- Default*/
+		}	
+    }
+
+    DBGLOG(RLM, INFO, ("Domain: Default Table Index = %d\n",u2TableIndex));
+	
+    return u2TableIndex;
+}
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief
+*
+* @param[in]
+*
+* @return (fgValid) : 0 -> inValid, 1 -> Valid
+*/
+/*----------------------------------------------------------------------------*/
+BOOLEAN
+rlmDomainCheckChannelEntryValid(
+    P_ADAPTER_T     prAdapter,
+    UINT_8          ucCentralCh
+    )
+{
+    BOOLEAN         fgValid = FALSE;
+	UINT_8          ucTemp = 0;
+    UINT_8          i;
+	/*Check Power limit table channel efficient or not*/
+
+	for (i = POWER_LIMIT_2G4; i < POWER_LIMIT_SUBAND_NUM; i++) {
+		if ((ucCentralCh >= g_rRlmSubBand[i].ucStartCh) && (ucCentralCh <= g_rRlmSubBand[i].ucEndCh)) {
+        	ucTemp = (ucCentralCh - g_rRlmSubBand[i].ucStartCh) % g_rRlmSubBand[i].ucInterval ;
+		}
+	}
+
+
+#if 0
+    /*2.4G, ex 1, 2, 3*/
+	if (ucCentralCh >= BAND_2G4_LOWER_BOUND && ucCentralCh <= BAND_2G4_UPPER_BOUND) {
+		ucTemp = 0; 
+	}
+	/*FCC- Spec : Band UNII-1, ex 36, 38, 40....*/
+	else if (ucCentralCh >= UNII1_LOWER_BOUND && ucCentralCh <= UNII1_UPPER_BOUND) {
+		ucTemp = (ucCentralCh - UNII1_LOWER_BOUND) % 2;
+	}
+	/*FCC- Spec : Band UNII-2A, ex 52, 54, 56....*/
+	else if (ucCentralCh >= UNII2A_LOWER_BOUND && ucCentralCh <= UNII2A_UPPER_BOUND) {
+		ucTemp = (ucCentralCh - UNII2A_LOWER_BOUND) % 2;
+	}
+	/*FCC- Spec : Band UNII-2C, ex 100, 102, 104....*/
+	else if (ucCentralCh >= UNII2C_LOWER_BOUND && ucCentralCh <= UNII2C_UPPER_BOUND) {
+		ucTemp = (ucCentralCh - UNII2C_LOWER_BOUND) % 2;
+	}
+	/*FCC- Spec : Band UNII-3, ex 149, 151, 153...*/
+	else if (ucCentralCh >= UNII3_LOWER_BOUND && ucCentralCh <= UNII3_UPPER_BOUND) {
+		ucTemp = (ucCentralCh - UNII3_LOWER_BOUND) % 2; 
+	}
+
+#endif
+	if (ucTemp == 0) {
+		fgValid = TRUE;
+	}
+
+	return fgValid;
+ 
+}
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief
+*
+* @param[in]
+*
+* @return (none) 
+*/
+/*----------------------------------------------------------------------------*/
+VOID
+rlmDomainBuildCmdByDefaultTable(
+    P_CMD_SET_COUNTRY_CHANNEL_POWER_LIMIT_T prCmd,
+    UINT_16                   u2DefaultTableIndex
+    )
+{
+    UINT_8   i, k;
+	P_COUNTRY_POWER_LIMIT_TABLE_DEFAULT  prPwrLimitSubBand;
+    P_CMD_CHANNEL_POWER_LIMIT 			 prCmdPwrLimit;
+
+	prCmdPwrLimit = &prCmd->rChannelPowerLimit[0];
+	prPwrLimitSubBand = &g_rRlmPowerLimitDefault[u2DefaultTableIndex];
+	
+	/*Build power limit cmd by default table information*/
+	
+
+   for (i = POWER_LIMIT_2G4; i < POWER_LIMIT_SUBAND_NUM; i++) {
+		if (prPwrLimitSubBand->aucPwrLimitSubBand[i] < MAX_TX_POWER) {
+			for (k = g_rRlmSubBand[i].ucStartCh; k <= g_rRlmSubBand[i].ucEndCh; k += g_rRlmSubBand[i].ucInterval) {
+				if ((prPwrLimitSubBand->ucPwrUnit & BIT(i)) == 0) {
+					prCmdPwrLimit->ucCentralCh = k;
+					kalMemSet(&prCmdPwrLimit->cPwrLimitCCK, prPwrLimitSubBand->aucPwrLimitSubBand[i], PWR_LIMIT_NUM);
+					prCmdPwrLimit++;
+					prCmd->ucNum++;
+
+				}
+				else {
+					// ex:    40MHz power limit(mW\MHz) = 20MHz power limit(mW\MHz) * 2 ---> 40MHz power limit(dBm) = 20MHz power limit(dBm) + 6;
+					prCmdPwrLimit->ucCentralCh = k;
+					prCmdPwrLimit->cPwrLimitCCK = prPwrLimitSubBand->aucPwrLimitSubBand[i];
+					prCmdPwrLimit->cPwrLimit20  = prPwrLimitSubBand->aucPwrLimitSubBand[i];
+					prCmdPwrLimit->cPwrLimit40  = prPwrLimitSubBand->aucPwrLimitSubBand[i] + 6;
+					if (prCmdPwrLimit->cPwrLimit40 > MAX_TX_POWER) {
+						prCmdPwrLimit->cPwrLimit40 = MAX_TX_POWER;
+					}
+					prCmdPwrLimit->cPwrLimit80  = prPwrLimitSubBand->aucPwrLimitSubBand[i] + 12;
+					if (prCmdPwrLimit->cPwrLimit80 > MAX_TX_POWER) {
+						prCmdPwrLimit->cPwrLimit80 = MAX_TX_POWER;
+					}
+					prCmdPwrLimit->cPwrLimit160 = prPwrLimitSubBand->aucPwrLimitSubBand[i] + 18;
+					if (prCmdPwrLimit->cPwrLimit160 > MAX_TX_POWER) {
+						prCmdPwrLimit->cPwrLimit160 = MAX_TX_POWER;
+					}
+            		prCmdPwrLimit++;
+					prCmd->ucNum++;
+				}
+			}
+		}
+   }
+}
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief
+*
+* @param[in]
+*
+* @return (none)
+*/
+/*----------------------------------------------------------------------------*/
+VOID
+rlmDomainBuildCmdByConfigTable(
+	P_ADAPTER_T     prAdapter,
+    P_CMD_SET_COUNTRY_CHANNEL_POWER_LIMIT_T prCmd
+    )
+{
+    UINT_8   i, k;
+	UINT_16                                 u2CountryCodeTable = COUNTRY_CODE_NULL;
+    P_CMD_CHANNEL_POWER_LIMIT 				prCmdPwrLimit;
+	BOOLEAN                                 fgChannelValid;
+    
+	
+	
+	/*Build power limit cmd by configuration table information*/
+
+    
+	
+    for (i = 0; i < sizeof(g_rRlmPowerLimitConfiguration)/sizeof(COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION); i++) {
+		
+		WLAN_GET_FIELD_BE16( &g_rRlmPowerLimitConfiguration[i].aucCountryCode[0], &u2CountryCodeTable); 
+		
+		fgChannelValid = rlmDomainCheckChannelEntryValid(prAdapter, g_rRlmPowerLimitConfiguration[i].ucCentralCh);
+
+        if (u2CountryCodeTable == COUNTRY_CODE_NULL) {
+		   DBGLOG(RLM, INFO, ("Domain: full search configuration table done.\n"));
+           break;/*end of configuration table*/
+        }
+		else if(((u2CountryCodeTable == prCmd->u2CountryCode) 
+#if CFG_SUPPORT_CE_FCC_TXPWR_LIMIT            
+            ||(u2CountryCodeTable == 0x4555) /* country code = EU */
+#endif            
+            ) && (fgChannelValid == TRUE)) {
+
+			prCmdPwrLimit = &prCmd->rChannelPowerLimit[0];
+			
+		   	if (prCmd->ucNum != 0) {
+            	for (k = 0; k < prCmd->ucNum; k++){
+                  	if (prCmdPwrLimit->ucCentralCh == g_rRlmPowerLimitConfiguration[i].ucCentralCh) {
+						
+                        /*Cmd setting (Default table infromation) and Configuration table has repetition channel entry,
+                                          ex : Default table (ex: 2.4G, limit = 20dBm) --> ch1~14 limit =20dBm,
+                                          Configuration table (ex: ch1, limit = 22dBm) --> ch 1 = 22 dBm
+                                          Cmd final setting -->  ch1 = 22dBm, ch12~14 = 20dBm 
+                                          */
+						kalMemCopy(&prCmdPwrLimit->cPwrLimitCCK, &g_rRlmPowerLimitConfiguration[i].aucPwrLimit, PWR_LIMIT_NUM);
+						
+						DBGLOG(RLM, INFO, ("Domain: CC=%c%c,ConfigCh=%d,Limit=%d,%d,%d,%d,%d,Fg=%d\n",
+						((prCmd->u2CountryCode & 0xff00)>>8),(prCmd->u2CountryCode & 0x00ff), prCmdPwrLimit->ucCentralCh,
+						prCmdPwrLimit->cPwrLimitCCK,prCmdPwrLimit->cPwrLimit20,prCmdPwrLimit->cPwrLimit40,
+						prCmdPwrLimit->cPwrLimit80,prCmdPwrLimit->cPwrLimit160,prCmdPwrLimit->ucFlag));
+						
+						break;
+					}
+					prCmdPwrLimit++;
+			   	}
+				if (k == prCmd->ucNum) {
+					
+					/*Full search cmd (Default table setting) no match channey,
+                                   ex : Default table (ex: 2.4G, limit = 20dBm) --> ch1~14 limit =20dBm,
+                                   Configuration table (ex: ch36, limit = 22dBm) --> ch 36 = 22 dBm
+                                   Cmd final setting -->  ch1~14 = 20dBm, ch36= 22dBm
+                                   */
+                    kalMemCopy(&prCmdPwrLimit->cPwrLimitCCK, &g_rRlmPowerLimitConfiguration[i].aucPwrLimit, PWR_LIMIT_NUM);
+					prCmd->ucNum++;
+					
+					DBGLOG(RLM, INFO, ("Domain: Full CC=%c%c,ConfigCh=%d,Limit=%d,%d,%d,%d,%d,Fg=%d\n",
+					((prCmd->u2CountryCode & 0xff00)>>8),(prCmd->u2CountryCode & 0x00ff), prCmdPwrLimit->ucCentralCh,
+					prCmdPwrLimit->cPwrLimitCCK,prCmdPwrLimit->cPwrLimit20,prCmdPwrLimit->cPwrLimit40,
+					prCmdPwrLimit->cPwrLimit80,prCmdPwrLimit->cPwrLimit160,prCmdPwrLimit->ucFlag));
+
+				}
+		   	}
+		 	else {
+				
+				/*Default table power limit value are 63--> cmd table no channel entry
+                            ex : Default table (ex: 2.4G, limit = 63Bm) --> no channel entry in cmd,
+                            Configuration table (ex: ch36, limit = 22dBm) --> ch 36 = 22 dBm
+                            Cmd final setting -->   ch36= 22dBm
+                             */
+                prCmdPwrLimit->ucCentralCh = g_rRlmPowerLimitConfiguration[i].ucCentralCh;
+				kalMemCopy(&prCmdPwrLimit->cPwrLimitCCK, &g_rRlmPowerLimitConfiguration[i].aucPwrLimit, PWR_LIMIT_NUM);
+				prCmd->ucNum++;
+				
+				DBGLOG(RLM, INFO, ("Domain: Default table power limit value are 63.\n"));
+				DBGLOG(RLM, INFO, ("Domain: CC=%c%c,ConfigCh=%d,Limit=%d,%d,%d,%d,%d,Fg=%d\n",
+				((prCmd->u2CountryCode & 0xff00)>>8),(prCmd->u2CountryCode & 0x00ff), prCmdPwrLimit->ucCentralCh,
+				prCmdPwrLimit->cPwrLimitCCK,prCmdPwrLimit->cPwrLimit20,prCmdPwrLimit->cPwrLimit40,
+				prCmdPwrLimit->cPwrLimit80,prCmdPwrLimit->cPwrLimit160,prCmdPwrLimit->ucFlag));
+				
+		    }		
+		}
+	}
+}
+
+/*----------------------------------------------------------------------------*/
+/*!
+* @brief
+*
+* @param[in]
+*
+* @return (none)
+*/
+/*----------------------------------------------------------------------------*/
+VOID
+rlmDomainSendPwrLimitCmd (
+   P_ADAPTER_T     prAdapter
+    )
+{
+    P_CMD_SET_COUNTRY_CHANNEL_POWER_LIMIT_T prCmd;
+    WLAN_STATUS                             rStatus;
+	UINT_8                                  i;
+	UINT_16                                 u2DefaultTableIndex;
+	UINT_32                                 u4SetCmdTableMaxSize;
+	UINT_32                                 u4SetQueryInfoLen;
+	P_CMD_CHANNEL_POWER_LIMIT 				prCmdPwrLimit; // for print usage
+
+	u4SetCmdTableMaxSize = sizeof(CMD_SET_COUNTRY_CHANNEL_POWER_LIMIT_T) + MAX_CMD_SUPPORT_CHANNEL_NUM * sizeof(CMD_CHANNEL_POWER_LIMIT);
+
+    prCmd = cnmMemAlloc(prAdapter, RAM_TYPE_BUF, u4SetCmdTableMaxSize);
+
+    if (!prCmd) {
+        DBGLOG(RLM, ERROR, ("Domain: no buf to send cmd\n"));
+        return;
+    }
+    kalMemZero(prCmd, u4SetCmdTableMaxSize);
+	
+    u2DefaultTableIndex = rlmDomainPwrLimitDefaultTableDecision(prAdapter, prAdapter->rWifiVar.rConnSettings.u2CountryCode);
+
+    if (u2DefaultTableIndex != POWER_LIMIT_TABLE_NULL ) {
+
+		WLAN_GET_FIELD_BE16( &g_rRlmPowerLimitDefault[u2DefaultTableIndex].aucCountryCode[0], &prCmd->u2CountryCode); 
+
+		prCmd->ucNum = 0;
+		
+		if (prCmd->u2CountryCode != COUNTRY_CODE_NULL) {
+			/*Command - default table information */
+			rlmDomainBuildCmdByDefaultTable(prCmd, u2DefaultTableIndex);
+
+        	/*Command - configuration table information*/
+			rlmDomainBuildCmdByConfigTable(prAdapter, prCmd);
+		}
+	}
+
+
+    if(prCmd->u2CountryCode != 0) {
+    	DBGLOG(RLM, INFO, ("Domain: ValidCC =%c%c, ChNum=%d\n",((prCmd->u2CountryCode & 0xff00)>>8), (prCmd->u2CountryCode & 0x00ff), prCmd->ucNum));
+    }
+	else {
+		DBGLOG(RLM, INFO, ("Domain: ValidCC =0x%04x, ChNum=%d\n", prCmd->u2CountryCode, prCmd->ucNum));
+	}
+    prCmdPwrLimit = &prCmd->rChannelPowerLimit[0];
+
+    for (i = 0; i < prCmd->ucNum; i++) {
+		DBGLOG(RLM, INFO, ("Domain: Ch=%d,Limit=%d,%d,%d,%d,%d,Fg=%d\n",prCmdPwrLimit->ucCentralCh,
+		prCmdPwrLimit->cPwrLimitCCK,prCmdPwrLimit->cPwrLimit20,prCmdPwrLimit->cPwrLimit40,
+		prCmdPwrLimit->cPwrLimit80,prCmdPwrLimit->cPwrLimit160,prCmdPwrLimit->ucFlag));
+		prCmdPwrLimit++;
+    }
+
+	u4SetQueryInfoLen = (sizeof(CMD_SET_COUNTRY_CHANNEL_POWER_LIMIT_T)+ (prCmd->ucNum)*sizeof(CMD_CHANNEL_POWER_LIMIT)); 
+
+    /* Update domain info to chip */
+	if (prCmd->ucNum <= MAX_CMD_SUPPORT_CHANNEL_NUM) {
+    	DBGLOG(RLM, INFO, ("Domain: send power limit table\n"));        
+    	rStatus = wlanSendSetQueryCmd (
+                prAdapter,                                            /* prAdapter */
+                CMD_ID_SET_COUNTRY_POWER_LIMIT,                       /* ucCID */
+                TRUE,                                                 /* fgSetQuery */
+                FALSE,                                                /* fgNeedResp */
+                FALSE,                                                /* fgIsOid */
+                NULL,                                                 /* pfCmdDoneHandler*/
+                NULL,                                                 /* pfCmdTimeoutHandler */
+                u4SetQueryInfoLen,                                    /* u4SetQueryInfoLen */
+                (PUINT_8) prCmd,                                      /* pucInfoBuffer */
+                NULL,                                                 /* pvSetQueryBuffer */
+                0                                                     /* u4SetQueryBufferLen */
+                );
+	}
+	else {
+    	DBGLOG(RLM, INFO, ("Domain: illegal power limit table"));
+	}
+
+    //ASSERT(rStatus == WLAN_STATUS_PENDING);
+
+    cnmMemFree(prAdapter, prCmd);
+
+
+}
+#endif
+
+
+
 

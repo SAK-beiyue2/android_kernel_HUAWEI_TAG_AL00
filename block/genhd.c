@@ -831,6 +831,7 @@ static void disk_seqf_stop(struct seq_file *seqf, void *v)
 	if (iter) {
 		class_dev_iter_exit(iter);
 		kfree(iter);
+		seqf->private = NULL;
 	}
 }
 
@@ -1404,6 +1405,30 @@ int invalidate_partition(struct gendisk *disk, int partno)
 
 EXPORT_SYMBOL(invalidate_partition);
 
+#ifdef CONFIG_HW_SD_HEALTH_DETECT
+/*===========================================================================
+ * FUNCTION: set_sd_disk_health_status
+   PARAMETER:
+ *    @disk:the disk which has been monitor
+      @status:the err code which will translate to real code
+ *
+ * Description: send uevent to vold
+ *
+ * Returns: NULL
+
+===========================================================================*/
+void set_sd_disk_health_status(struct gendisk *disk, char *status)
+{
+    char *event = status;
+    char *envp[] = { event, NULL };
+
+    event[11] = '\0';
+    kobject_uevent_env(&disk_to_dev(disk)->kobj, KOBJ_CHANGE, envp);
+    printk(KERN_ERR "mmc1:report sd abnormal to userspace,status = %s\n",status);
+}
+EXPORT_SYMBOL(set_sd_disk_health_status);
+#endif
+
 dev_t blk_lookup_fs_info(struct fs_info *seek)
 {
 	dev_t devt = MKDEV(0, 0);
@@ -1523,10 +1548,8 @@ static DEFINE_MUTEX(disk_events_mutex);
 static LIST_HEAD(disk_events);
 
 /* disable in-kernel polling by default */
-//ALPS00319570, CL955952 merged back, begin
 //static unsigned long disk_events_dfl_poll_msecs	= 0;    //original
 static unsigned long disk_events_dfl_poll_msecs	= 2000;
-//ALPS00319570, CL955952 merged back, end
 
 static unsigned long disk_events_poll_jiffies(struct gendisk *disk)
 {

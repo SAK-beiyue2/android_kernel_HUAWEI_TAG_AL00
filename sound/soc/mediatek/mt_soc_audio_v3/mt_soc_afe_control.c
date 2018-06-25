@@ -668,11 +668,12 @@ static int APLLCounter = 0;
 void EnableALLbySampleRate(uint32 SampleRate)
 {
     printk("%s APLLUsage = %d APLLCounter = %d SampleRate = %d\n",__func__,APLLUsage,APLLCounter,SampleRate);
+    APLLCounter ++;
+    
     if((GetApllbySampleRate(SampleRate) == Soc_Aud_APLL1) && (APLLUsage == Soc_Aud_APLL_NOUSE))
     {
         // enable APLL1
         APLLUsage = Soc_Aud_APLL1;
-        APLLCounter ++;
         if(APLLCounter == true)
         {
             AudDrv_Clk_On();
@@ -687,7 +688,6 @@ void EnableALLbySampleRate(uint32 SampleRate)
     {
         //enable APLL2
         APLLUsage = Soc_Aud_APLL2;
-        APLLCounter ++;
         if(APLLCounter == true)
         {
             AudDrv_Clk_On();
@@ -704,7 +704,7 @@ void EnableALLbySampleRate(uint32 SampleRate)
 void DisableALLbySampleRate(uint32 SampleRate)
 {
     printk("%s APLLUsage = %d APLLCounter = %d SampleRate = %d\n",__func__,APLLUsage,APLLCounter,SampleRate);
-    if((GetApllbySampleRate(SampleRate) == Soc_Aud_APLL1) && (APLLUsage == Soc_Aud_APLL1))
+    if(APLLUsage == Soc_Aud_APLL1)
     {
         // disable APLL1
         APLLCounter--;
@@ -720,7 +720,7 @@ void DisableALLbySampleRate(uint32 SampleRate)
             AudDrv_Clk_Off();
         }
     }
-    else if((GetApllbySampleRate(SampleRate) == Soc_Aud_APLL2)&& (APLLUsage == Soc_Aud_APLL2) )
+    else if(APLLUsage == Soc_Aud_APLL2)
     {
         APLLCounter--;
         if(APLLCounter ==0)
@@ -1927,7 +1927,6 @@ bool EnableSideToneFilter(bool stf_on)
         Afe_Set_Reg(AFE_SIDETONE_CON1, write_reg_value, MASK_ALL);
         printk("%s(), AFE_SIDETONE_CON1[0x%lx] = 0x%x\n", __FUNCTION__, AFE_SIDETONE_CON1, write_reg_value);
 
-#if 0 // no need to set sidetone coeffecient. spend too much time during incall
         for (coef_addr = 0; coef_addr < kSideToneHalfTapNum; coef_addr++)
         {
             bool old_write_ready = (read_reg_value >> 29) & 0x1;
@@ -1939,26 +1938,27 @@ bool EnableSideToneFilter(bool stf_on)
                               coef_addr         << 16 |
                               kSideToneCoefficientTable16k[coef_addr];
             Afe_Set_Reg(AFE_SIDETONE_CON0, write_reg_value, 0x39FFFFF);
-            printk("%s(), AFE_SIDETONE_CON0[0x%lx] = 0x%x\n", __FUNCTION__, AFE_SIDETONE_CON0, write_reg_value);
-
-            // wait until flag write_ready changed (means write done)
-            for (try_cnt = 0; try_cnt < 10; try_cnt++)  // max try 10 times
+            printk("%s(), AFE_SIDETONE_CON0[0x%lx] = 0x%x\n", __FUNCTION__, AFE_SIDETONE_CON0,
+			write_reg_value);
+            /* wait until flag write_ready changed (means write done) */
+            for (try_cnt = 0; try_cnt < 10; try_cnt++)  /* max try 10 times */
             {
-                msleep(3);
+                /* msleep(3); */
+                /* usleep_range(3 * 1000, 20 * 1000); */
                 read_reg_value = Afe_Get_Reg(AFE_SIDETONE_CON0);
                 new_write_ready = (read_reg_value >> 29) & 0x1;
-                if (new_write_ready != old_write_ready) // flip => ok
-                {
+                if (new_write_ready != old_write_ready) /* flip => ok */
                     break;
-                }
                 else
                 {
-                    BUG_ON(new_write_ready != old_write_ready);
-                    return false;
+                    if (try_cnt == 10) {
+                   	 BUG_ON(new_write_ready != old_write_ready);
+                    	return false;
+                    }
                 }
             }
-        }
-#endif
+	}
+
     }
     AudDrv_Clk_Off();
     printk("-%s(), stf_on = %d\n", __FUNCTION__, stf_on);

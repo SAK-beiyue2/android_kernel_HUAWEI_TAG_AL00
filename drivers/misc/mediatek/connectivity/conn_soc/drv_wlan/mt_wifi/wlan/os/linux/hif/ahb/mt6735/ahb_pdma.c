@@ -512,6 +512,8 @@ HifPdmaRegDump(
     GL_HIF_INFO_T *HifInfo = (GL_HIF_INFO_T *)HifInfoSrc;
     UINT_32 RegId, RegVal;
     UINT_32 RegNum = 0;
+	INT_8 *pucIoAddr;
+	UINT_32 regVal1, regVal2, regVal3;
 
 
     printk("PDMA> Register content 0x%x=\n\t", AP_DMA_HIF_BASE);
@@ -528,7 +530,31 @@ HifPdmaRegDump(
         }
     }
 
-    printk("\nPDMA> clock status = 0x%x\n\n", *(volatile unsigned int *)0xF0003018);
+	pucIoAddr = ioremap(0x11000008, 0x4);
+	if (pucIoAddr)
+	{/* DMA global register status, to observe the channel status of all channels */
+		UINT_32 chnlStatus = 0;
+		UINT_8 i = 1;
+		UINT_8 *pucChnlStatus = NULL;
+		chnlStatus = *(volatile UINT_32*)pucIoAddr;
+		iounmap(pucIoAddr);
+		
+		printk("global channel status: %x\n", chnlStatus);
+		for (; i<19; i++) {
+			if ((chnlStatus & 1<<i) == 0)
+				continue;
+			pucChnlStatus = (UINT_8*)ioremap(AP_DMA_HIF_BASE+i*0x80, 0x54);
+			printk("channel %d dir,0x18: %u\n", i, *(volatile UINT_32*)(pucChnlStatus+0x18));
+			printk("channel %d debug 0x50: %u\n", i, *(volatile UINT_32*)(pucChnlStatus+0x50));
+			iounmap(pucChnlStatus);
+		}
+	}
+	regVal1 = HIF_DMAR_READL(HifInfo, 0x18);
+	regVal2 = HIF_DMAR_READL(HifInfo, 0x50);
+	regVal3 = HIF_DMAR_READL(HifInfo, 0x54);
+	printk("HIF dir=%u, debug 0x50=%u, debug 0x54=%u\n", regVal1, regVal2, regVal3);
+
+    //printk("\nPDMA> clock status = 0x%x\n\n", *(volatile unsigned int *)0xF0003018);
 }
 
 

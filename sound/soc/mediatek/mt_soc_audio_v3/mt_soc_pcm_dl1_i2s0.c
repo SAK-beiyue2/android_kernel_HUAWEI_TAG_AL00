@@ -142,9 +142,30 @@ static int Audio_i2s0_SideGen_Set(struct snd_kcontrol *kcontrol, struct snd_ctl_
         AudDrv_Clk_On();
 
 	EnableALLbySampleRate(samplerate);
+        if (GetMemoryPathEnable(Soc_Aud_Digital_Block_I2S_OUT_2) == false)
+        {
+            SetMemoryPathEnable(Soc_Aud_Digital_Block_I2S_OUT_2, true);
+        }
+        else
+        {
+            printk("%s(), mi2s0_sidegen_control=%d, write AFE_I2S_CON (0x%x), AFE_I2S_CON3(0x%x)\n", __func__, mi2s0_sidegen_control, Audio_I2S_Dac, u32AudioI2S);
+            SetMemoryPathEnable(Soc_Aud_Digital_Block_I2S_OUT_2, true);
+            if (mi2s0_extcodec_echoref_control == true)
+            {
+                Afe_Set_Reg(AFE_I2S_CON, 0x0, 0x1);
+            }
+            Afe_Set_Reg(AFE_I2S_CON3, 0x0, 0x1);
+	    udelay(20);
+        }
 
-        Afe_Set_Reg(AUDIO_TOP_CON1, 0x2,  0x2);  // I2S_SOFT_Reset
-        Afe_Set_Reg(AUDIO_TOP_CON1, 0x1 << 4,  0x1 << 4); // I2S_SOFT_Reset
+	if (mi2s0_extcodec_echoref_control == true)			
+	        Afe_Set_Reg(AUDIO_TOP_CON1, 0x2,  0x2);  /* I2S_SOFT_Reset  4 wire i2s mode*/
+	
+	if (mi2s0_extcodec_echoref_control == true)	
+		Afe_Set_Reg(AUDIO_TOP_CON1, 0x1 << 4,  0x1 << 4);  /* I2S0 clock-gated */
+	Afe_Set_Reg(AUDIO_TOP_CON1, 0x1 << 7,  0x1 << 7); /* I2S3 clock-gated */
+	/*Afe_Set_Reg(AUDIO_TOP_CON1, (0x1 << 4) | (0x1 << 7),  (0x1 << 4)|  (0x1 << 7)); I2S0 I2S3 clock-gated */
+	
         if (mi2s0_extcodec_echoref_control == true)
         {
             SetConnection(Soc_Aud_InterCon_Connection, Soc_Aud_InterConnectionInput_I01, Soc_Aud_InterConnectionOutput_O24);
@@ -165,7 +186,7 @@ static int Audio_i2s0_SideGen_Set(struct snd_kcontrol *kcontrol, struct snd_ctl_
             SetHwDigitalGainEnable(Soc_Aud_Hw_Digital_Gain_HW_DIGITAL_GAIN1, true);
             SetHwDigitalGain(0x80000, Soc_Aud_Hw_Digital_Gain_HW_DIGITAL_GAIN1);
 #endif
-            Afe_Set_Reg(AFE_DAC_CON1, 0x400, 0xF00);
+            /*Afe_Set_Reg(AFE_DAC_CON1, 0x400, 0xF00);*/
 
             //I2S0 Input Control
             Audio_I2S_Dac = 0;
@@ -200,32 +221,26 @@ static int Audio_i2s0_SideGen_Set(struct snd_kcontrol *kcontrol, struct snd_ctl_
         }
 
         // start I2S DAC out
-        if (GetMemoryPathEnable(Soc_Aud_Digital_Block_I2S_OUT_2) == false)
-        {
-            SetMemoryPathEnable(Soc_Aud_Digital_Block_I2S_OUT_2, true);
-            if (mi2s0_extcodec_echoref_control == true)
-            {
-                Afe_Set_Reg(AFE_I2S_CON, Audio_I2S_Dac | 0x1, MASK_ALL);
-            }
-            Afe_Set_Reg(AFE_I2S_CON3, u32AudioI2S | 1, AFE_MASK_ALL);
-            Afe_Set_Reg(AUDIO_TOP_CON1, 0x0 << 4,  0x1 << 4);
-            Afe_Set_Reg(AUDIO_TOP_CON1, 0x0,  0x2);  // I2S_SOFT_Reset
-            EnableAfe(true);
-        }
-        else
-        {
-            printk("%s(), mi2s0_sidegen_control=%d, write AFE_I2S_CON (0x%x), AFE_I2S_CON3(0x%x)\n", __func__, mi2s0_sidegen_control, Audio_I2S_Dac, u32AudioI2S);
-            SetMemoryPathEnable(Soc_Aud_Digital_Block_I2S_OUT_2, true);
-            if (mi2s0_extcodec_echoref_control == true)
-            {
-                Afe_Set_Reg(AFE_I2S_CON, 0x0, 0x1);
-                Afe_Set_Reg(AFE_I2S_CON, Audio_I2S_Dac | 0x1, MASK_ALL);
-            }
-            Afe_Set_Reg(AFE_I2S_CON3, u32AudioI2S | 1, AFE_MASK_ALL);
-            Afe_Set_Reg(AUDIO_TOP_CON1, 0x0 << 4, 0x1 << 4);
-            Afe_Set_Reg(AUDIO_TOP_CON1, 0x0, 0x2); // I2S_SOFT_Reset
-            EnableAfe(true);
-        }
+
+	if (mi2s0_extcodec_echoref_control == true)	
+		Afe_Set_Reg(AFE_I2S_CON, Audio_I2S_Dac, MASK_ALL); //set I2S0 configuration
+	
+	Afe_Set_Reg(AFE_I2S_CON3, u32AudioI2S, AFE_MASK_ALL); //set I2S3 configuration
+
+	if (mi2s0_extcodec_echoref_control == true)	
+		Afe_Set_Reg(AUDIO_TOP_CON1, 0 << 4,  0x1 << 4); /* Clear I2S0 clock-gated */
+	
+	Afe_Set_Reg(AUDIO_TOP_CON1, 0 << 7,  0x1 << 7); /* Clear I2S3 clock-gated */
+	//Afe_Set_Reg(AUDIO_TOP_CON1, (0x0 << 4) | (0x0 << 7),  (0x1 << 4)|  (0x1 << 7));/* Clear I2S0 I2S3 clock-gated */
+
+	udelay(200);
+	if (mi2s0_extcodec_echoref_control == true)
+		Afe_Set_Reg(AUDIO_TOP_CON1, 0,  0x2);  /* Clear I2S_SOFT_Reset  4 wire i2s mode*/
+
+	if (mi2s0_extcodec_echoref_control == true)
+		Afe_Set_Reg(AFE_I2S_CON, 0x1, 0x1); /* Enable I2S0 */
+	Afe_Set_Reg(AFE_I2S_CON3, 0x1, 0x1); /* Enable I2S3 */
+        EnableAfe(true);	
 
     }
     else
@@ -253,11 +268,18 @@ static int Audio_i2s0_SideGen_Set(struct snd_kcontrol *kcontrol, struct snd_ctl_
         SetMemoryPathEnable(Soc_Aud_Digital_Block_I2S_OUT_2, false);
         if (GetMemoryPathEnable(Soc_Aud_Digital_Block_I2S_OUT_2) == false)
         {
-            Afe_Set_Reg(AFE_I2S_CON3, 0x0, 0x1);
-            if (mi2s0_extcodec_echoref_control == true)
-            {
-                Afe_Set_Reg(AFE_I2S_CON, 0x0, 0x1);
-            }
+            Afe_Set_Reg(AFE_I2S_CON3, 0x0, 0x1);  /* Disable I2S3 */
+            if (mi2s0_extcodec_echoref_control == true)           
+                Afe_Set_Reg(AFE_I2S_CON, 0x0, 0x1);  /* Disable I2S0 */
+
+	    udelay(20);
+
+#if 0 /* avoiding clock gating in FM */	    
+	    if (mi2s0_extcodec_echoref_control == true)    
+                Afe_Set_Reg(AUDIO_TOP_CON1, 0x1 << 4,  0x1 << 4); /* I2S0 clock-gated */
+
+	    Afe_Set_Reg(AUDIO_TOP_CON1, 0x1 << 7,  0x1 << 7); /* I2S3 clock-gated */
+#endif	    
             SetConnection(Soc_Aud_InterCon_DisConnect, Soc_Aud_InterConnectionInput_I14, Soc_Aud_InterConnectionOutput_O00);
             SetConnection(Soc_Aud_InterCon_DisConnect, Soc_Aud_InterConnectionInput_I14, Soc_Aud_InterConnectionOutput_O01);
             EnableAfe(false);

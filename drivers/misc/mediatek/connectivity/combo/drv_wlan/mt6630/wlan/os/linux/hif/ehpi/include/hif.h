@@ -10,25 +10,7 @@
 
 
 
-/*
-** $Log: hif.h $
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
- *
- * 04 01 2011 cp.wu
- * [WCXRP00000540] [MT5931][Driver] Add eHPI8/eHPI16 support to Linux Glue Layer
- * 1. simplify config.h due to aggregation options could be also applied for eHPI/SPI interface
- * 2. use spin-lock instead of semaphore for protecting eHPI access because of possible access from ISR
- * 3. request_irq() API has some changes between linux kernel 2.6.12 and 2.6.26
- *
- * 03 11 2011 cp.wu
- * [WCXRP00000540] [MT5931][Driver] Add eHPI8/eHPI16 support to Linux Glue Layer
- * add porting layer for eHPI.
- *
-*/
+
 
 #ifndef _HIF_H
 #define _HIF_H

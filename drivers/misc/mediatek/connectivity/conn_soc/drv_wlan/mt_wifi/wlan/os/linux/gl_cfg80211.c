@@ -11,32 +11,7 @@
 
 
 
-/*
-** $Log: gl_cfg80211.c $
-** 
-** 09 05 2013 cp.wu
-** correct length to pass to wlanoidSetBssid()
-**
-** 09 04 2013 cp.wu
-** fix typo
-**
-** 09 03 2013 cp.wu
-** add path for reassociation
-**
-** 11 23 2012 yuche.tsai
-** [ALPS00398671] [Acer-Tablet] Remove Wi-Fi Direct completely
-** Fix bug of WiFi may reboot under user load, when WiFi Direct is removed..
-** 
-** 09 12 2012 wcpadmin
-** [ALPS00276400] Remove MTK copyright and legal header on GPL/LGPL related packages
-** .
-** 
-** 08 30 2012 chinglan.wang
-** [ALPS00349664] [6577JB][WIFI] Phone can not connect to AP secured with AES via WPS in 802.11n Only
-** .
- *
-**
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S
@@ -84,6 +59,8 @@ is that there is no resource in TC4, so del key command was not able to set, and
 timeout was happed. if we found the root cause why fw couldn't release TC resouce, we will remove this
 workaround */
 static UINT_8 gucKeyIndex = 255;
+extern struct semaphore g_halt_sem;
+extern int g_u4HaltFlag;
 
 
 
@@ -484,51 +461,50 @@ mtk_cfg80211_get_station (
     }
 
     /* 2. fill TX rate */
-    rStatus = kalIoctl(prGlueInfo,
-        wlanoidQueryLinkSpeed,
-        &u4Rate,
-        sizeof(u4Rate),
-        TRUE,
-        FALSE,
-        FALSE,
-        FALSE,
-        &u4BufLen);
+    if (prGlueInfo->eParamMediaStateIndicated != PARAM_MEDIA_STATE_CONNECTED) {
+	    /* not connected */
+	    DBGLOG(REQ, WARN, ("not yet connected\n"));
+    } else {
+	    rStatus = kalIoctl(prGlueInfo,
+			       wlanoidQueryLinkSpeed, &u4Rate, sizeof(u4Rate), TRUE, FALSE, FALSE, FALSE, &u4BufLen);
+    
+	    sinfo->filled |= STATION_INFO_TX_BITRATE;
+    
+	    if ((rStatus != WLAN_STATUS_SUCCESS) || (u4Rate == 0)) {
+		    /*
+		       DBGLOG(REQ, WARN, ("unable to retrieve link speed\n")));
+		     */
+		    DBGLOG(REQ, WARN, ("last link speed\n"));
+		    sinfo->txrate.legacy = prGlueInfo->u4LinkSpeedCache;
+	    } else {
+		    /*
+		       sinfo->filled |= STATION_INFO_TX_BITRATE;
+		     */
+		    sinfo->txrate.legacy = u4Rate / 1000;   /* convert from 100bps to 100kbps */
+		    prGlueInfo->u4LinkSpeedCache = u4Rate / 1000;
+	    }
+    }
+    
+    /* 3. fill RSSI */
+    if (prGlueInfo->eParamMediaStateIndicated != PARAM_MEDIA_STATE_CONNECTED) {
+	    /* not connected */
+	    DBGLOG(REQ, WARN, ("not yet connected\n"));
+    } else {
+	    rStatus = kalIoctl(prGlueInfo,
+			       wlanoidQueryRssi, &i4Rssi, sizeof(i4Rssi), TRUE, FALSE, FALSE, FALSE, &u4BufLen);
+    
+	    sinfo->filled |= STATION_INFO_SIGNAL;
+    
+	    if ((rStatus != WLAN_STATUS_SUCCESS) || (i4Rssi == PARAM_WHQL_RSSI_MIN_DBM)
+		|| (i4Rssi == PARAM_WHQL_RSSI_MAX_DBM)) {
+		    DBGLOG(REQ, WARN, ("last rssi\n"));
+		    sinfo->signal = prGlueInfo->i4RssiCache;
+	    } else {
+		    sinfo->signal = i4Rssi; /* dBm */
+		    prGlueInfo->i4RssiCache = i4Rssi;
+	    }
+    }
 
-    if (rStatus != WLAN_STATUS_SUCCESS) {
-        DBGLOG(REQ, WARN, ("unable to retrieve link speed\n"));
-    }
-    else {
-        sinfo->filled |= STATION_INFO_TX_BITRATE;
-        sinfo->txrate.legacy = u4Rate / 1000; /* convert from 100bps to 100kbps */
-    }
-
-    if(prGlueInfo->eParamMediaStateIndicated != PARAM_MEDIA_STATE_CONNECTED) {
-        /* not connected */
-        DBGLOG(REQ, WARN, ("not yet connected\n"));
-    }
-    else {
-        /* 3. fill RSSI */
-        rStatus = kalIoctl(prGlueInfo,
-                wlanoidQueryRssi,
-                &i4Rssi,
-                sizeof(i4Rssi),
-                TRUE,
-                FALSE,
-                FALSE,
-                FALSE,
-                &u4BufLen);
-        
-        if (rStatus != WLAN_STATUS_SUCCESS) {
-            DBGLOG(REQ, WARN, ("unable to retrieve link speed\n"));
-        }
-        else {
-            sinfo->filled |= STATION_INFO_SIGNAL;
-	    //in the cfg80211 layer, the signal is a signed char variable.
-            if(i4Rssi < -128)
-		sinfo->signal = -128;
-	    else
-            sinfo->signal = i4Rssi; /* dBm */
-        }
     sinfo->rx_packets = prGlueInfo->rNetDevStats.rx_packets;
         
         /* 4. Fill Tx OK and Tx Bad */
@@ -566,12 +542,12 @@ mtk_cfg80211_get_station (
 		prGlueInfo->u8Statistic[1] = rStatistics.rRetryCount.QuadPart;
 
 		/* check threshold is valid */
-		if(prGlueInfo->fgPoorlinkValid){
+		if(prGlueInfo->fgPoorlinkValid) {
 		  if(prGlueInfo->i4RssiThreshold)
 	  		i4RssiThreshold = prGlueInfo->i4RssiThreshold;
 		  if(prGlueInfo->u4LinkspeedThreshold)
 			u4LinkspeedThreshold = prGlueInfo->u4LinkspeedThreshold;
-   }
+   		}
 		/* add weighted to fail counter */	
                 if(sinfo->txrate.legacy < u4LinkspeedThreshold || sinfo->signal < i4RssiThreshold ){
 	    		prGlueInfo->u8TotalFailCnt += (u8diffTxBad*16 + u8diffRetry);
@@ -598,7 +574,6 @@ mtk_cfg80211_get_station (
             }                
 }
 
-    }
     return 0;
 }
 
@@ -4266,4 +4241,19 @@ mtk_cfg80211_testmode_get_lte_channel(
 }
 #endif
 #endif
+
+int	mtk_cfg80211_suspend(struct wiphy *wiphy, struct cfg80211_wowlan *wow)
+{
+	P_GLUE_INFO_T prGlueInfo = NULL;
+	down(&g_halt_sem);
+	if (g_u4HaltFlag || !wiphy)
+		goto end;
+
+	prGlueInfo = (P_GLUE_INFO_T) wiphy_priv(wiphy);
+
+	atomic_set(&prGlueInfo->prAdapter->fgIsSuspended, 1);
+end:
+	up(&g_halt_sem);
+	return 0;
+}
 

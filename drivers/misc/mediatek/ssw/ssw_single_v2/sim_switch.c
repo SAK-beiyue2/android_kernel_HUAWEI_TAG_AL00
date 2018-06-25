@@ -146,31 +146,31 @@ static int set_sim_gpio(unsigned int mode)
     {
         case SINGLE_TALK_MDSYS:
             #if (defined(GPIO_SIM1_HOT_PLUG) && defined(GPIO_SIM2_HOT_PLUG))
-            mt_set_gpio_mode(GPIO_SIM1_HOT_PLUG,5);
-            mt_set_gpio_mode(GPIO_SIM2_HOT_PLUG,4);
+            mt_set_gpio_mode(GPIO_SIM1_HOT_PLUG, GPIO_SIM1_HOT_PLUG_M_MDEINT);
+            mt_set_gpio_mode(GPIO_SIM2_HOT_PLUG, GPIO_SIM2_HOT_PLUG_M_MDEINT);
             #endif
             //SIM1=> MD1 SIM1IF
-            mt_set_gpio_mode(GPIO_SIM1_SCLK,1);
-            mt_set_gpio_mode(GPIO_SIM1_SRST,1);
-            mt_set_gpio_mode(GPIO_SIM1_SIO ,1);
+            mt_set_gpio_mode(GPIO_SIM1_SCLK, GPIO_SIM1_SCLK_M_CLK);
+            mt_set_gpio_mode(GPIO_SIM1_SRST, GPIO_SIM1_SRST_M_MD_SIM1_SRST);
+            mt_set_gpio_mode(GPIO_SIM1_SIO , GPIO_SIM1_SIO_M_MD_SIM1_SDAT);
             //SIM2=> MD1 SIM2IF
-            mt_set_gpio_mode(GPIO_SIM2_SCLK,1);
-            mt_set_gpio_mode(GPIO_SIM2_SRST,1);
-            mt_set_gpio_mode(GPIO_SIM2_SIO ,1);
+            mt_set_gpio_mode(GPIO_SIM2_SCLK, GPIO_SIM2_SCLK_M_CLK);
+            mt_set_gpio_mode(GPIO_SIM2_SRST, GPIO_SIM2_SRST_M_MD_SIM2_SRST);
+            mt_set_gpio_mode(GPIO_SIM2_SIO , GPIO_SIM2_SIO_M_MD_SIM2_SDAT);
             break;
         case SINGLE_TALK_MDSYS_LITE:
             #if (defined(GPIO_SIM1_HOT_PLUG) && defined(GPIO_SIM2_HOT_PLUG))
-            mt_set_gpio_mode(GPIO_SIM1_HOT_PLUG,2);
-            mt_set_gpio_mode(GPIO_SIM2_HOT_PLUG,4);
+            mt_set_gpio_mode(GPIO_SIM1_HOT_PLUG, GPIO_SIM1_HOT_PLUG_M_C2K_UIM0_HOT_PLUG_IN);
+            mt_set_gpio_mode(GPIO_SIM2_HOT_PLUG, GPIO_SIM2_HOT_PLUG_M_MDEINT);
             #endif
             //SIM1=> MD3 SIM1IF
-            mt_set_gpio_mode(GPIO_SIM1_SCLK,4);
-            mt_set_gpio_mode(GPIO_SIM1_SRST,4);
-            mt_set_gpio_mode(GPIO_SIM1_SIO ,4);
+            mt_set_gpio_mode(GPIO_SIM1_SCLK, GPIO_SIM1_SCLK_M_UIM0_CLK);
+            mt_set_gpio_mode(GPIO_SIM1_SRST, GPIO_SIM1_SRST_M_UIM0_RST);
+            mt_set_gpio_mode(GPIO_SIM1_SIO , GPIO_SIM1_SIO_M_UIM0_IO);
             //SIM2=> MD1 SIM2IF
-            mt_set_gpio_mode(GPIO_SIM2_SCLK,1);
-            mt_set_gpio_mode(GPIO_SIM2_SRST,1);
-            mt_set_gpio_mode(GPIO_SIM2_SIO ,1);
+            mt_set_gpio_mode(GPIO_SIM2_SCLK, GPIO_SIM2_SCLK_M_CLK);
+            mt_set_gpio_mode(GPIO_SIM2_SRST, GPIO_SIM2_SRST_M_MD_SIM2_SRST);
+            mt_set_gpio_mode(GPIO_SIM2_SIO , GPIO_SIM2_SIO_M_MD_SIM2_SDAT);
             break;
 
         default:

@@ -1,37 +1,4 @@
-/*******************************************************************************
- * Filename:
- * ---------
- *   eemcs_fs_ut.c
- *
- * Project:
- * --------
- *   MOLY
- *
- * Description:
- * ------------
- *   Implements the CCCI FS unit test functions
- *
- * Author:
- * -------
- *
- * ==========================================================================
- * $Log$
- *
- * 07 03 2013 ian.cheng
- * [ALPS00837674] [LTE_MD]  EEMCS ALPS.JB5.82LTE.DEV migration
- * [eemcs migration]
- *
- * 05 27 2013 ian.cheng
- * [ALPS00741900] [EEMCS] Modify device major number to 183
- * 1. update eemcs major number to 183
- * 2. fix typo of CCCI_CHNNEL_T
- *
- * 04 28 2013 ian.cheng
- * [ALPS00612780] [EEMCS] Submit EEMCS to ALPS.JB2.MT6582.MT6290.BSP.DEV
- * 1. merge mediatek/kernel/drivers/eemcs to dev branch
- * 2. merge mdediatek/kernel/drivers/net/lte_hdrv_em to dev branch
- *
- ****************************************************************************/
+
 
 #include <linux/module.h>
 #include <linux/limits.h>

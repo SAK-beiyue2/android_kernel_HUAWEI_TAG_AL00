@@ -474,7 +474,6 @@ typedef enum
 #define fgIsH264IDRType(arg)  (arg & IDR_PIC)
 
 //For some BDAV, all I frame type are I_SLICE, and which contain sequence header data.
-//For fix BDP00049920. Jie Zhang(MTK40414)@20100910
 #define fgIsH264IType(arg)  ((arg & IDR_PIC) || ((arg&0xFF) == I_ALL_SLICE) || ((arg&0xFF) == I_SLICE))
 #define fgIsH264FileDataIType(arg)  ((arg & IDR_PIC) || ((arg&0xFF) == I_ALL_SLICE) || ((arg&0xFF) == I_SLICE))
 #define fgIsH264GopEntry(arg)  (((arg & SEQ_PS) && (fgIsH264IType(arg))) || ((arg & SUB_SEQ_PS) && (arg & ANCHOR_PIC)))

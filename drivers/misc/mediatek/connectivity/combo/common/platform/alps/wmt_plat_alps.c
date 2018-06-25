@@ -932,6 +932,8 @@ INT32 wmt_plat_all_eint_ctrl(ENUM_PIN_STATE state)
 
 INT32 wmt_plat_uart_ctrl(ENUM_PIN_STATE state)
 {
+#ifdef GPIO_COMBO_URXD_PIN
+#ifdef GPIO_COMBO_UTXD_PIN
 	switch (state) {
 	case PIN_STA_MUX:
 	case PIN_STA_INIT:
@@ -961,6 +963,12 @@ INT32 wmt_plat_uart_ctrl(ENUM_PIN_STATE state)
 		WMT_WARN_FUNC("WMT-PLAT:Warnning, invalid state(%d) on UART Group\n", state);
 		break;
 	}
+#else
+		WMT_WARN_FUNC("WMT-PLAT:Warnning, GPIO_COMBO_UTXD_PIN is not define\n");
+#endif
+#else
+		WMT_WARN_FUNC("WMT-PLAT:Warnning, GPIO_COMBO_URXD_PIN is not define\n");
+#endif
 
 	return 0;
 }

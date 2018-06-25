@@ -11,57 +11,7 @@
 
 
 
-/*
-** $Log: wapi.c $
-** 
-** 10 24 2012 wh.su
-** [ALPS00376392] [klocwork 9.1]  in  wapi.c, line 344
-** Use MAX_NUM_SUPPORTED_WAPI_AKM_SUITESfor avoid Klocwork warning.
-** 
-** 10 24 2012 wh.su
-** [ALPS00376391] [klocwork 9.1]  in  wapi.c, line 311
-** Use the MAX_NUM_SUPPORTED_WAPI_CIPHER_SUITES for avoid Klccwork waring.
- *
- * 11 10 2011 wh.su
- * [WCXRP00001078] [MT6620 Wi-Fi][Driver] Adding the mediatek log improment support : XLOG
- * change the debug module level.
- *
- * 10 20 2010 wh.su
- * [WCXRP00000067] [MT6620 Wi-Fi][Driver] Support the android+ WAPI function
- * fixed the network type
- *
- * 09 01 2010 wh.su
- * NULL
- * adding the wapi support for integration test.
- *
- * 07 20 2010 wh.su
- *
- * .
- *
- * 04 06 2010 wh.su
- * [BORA00000680][MT6620] Support the statistic for Micxxsoft os query
- * fixed the firmware return the broadcast frame at wrong tc.
- *
- * 03 03 2010 wh.su
- * [BORA00000637][MT6620 Wi-Fi] [Bug] WPA2 pre-authentication timer not correctly initialize
- * move the AIS specific variable for security to AIS specific structure.
- *
- * 12 18 2009 cm.chang
- * [BORA00000018]Integrate WIFI part into BORA for the 1st time
- * .
- *
- * Dec 8 2009 mtk01088
- * [BORA00000476] [Wi-Fi][firmware] Add the security module initialize code
- * adding the function to check and update the default wapi tx
- *
- * Dec 7 2009 mtk01088
- * [BORA00000476] [Wi-Fi][firmware] Add the security module initialize code
- * adding the generate wapi ie function, and replace the tabe by space
- *
- * Nov 23 2009 mtk01088
- * [BORA00000476] [Wi-Fi][firmware] Add the security module initialize code
- *
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S

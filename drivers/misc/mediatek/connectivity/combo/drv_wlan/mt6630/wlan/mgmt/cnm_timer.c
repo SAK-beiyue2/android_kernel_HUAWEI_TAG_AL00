@@ -9,18 +9,7 @@
 
 
 
-/*
-** $Log: cnm_timer.c $
-**
-** 02 21 2013 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Refine code to protect zero timeout interval like FW
-**
-** 09 17 2012 cm.chang
-** [BORA00002149] [MT6630 Wi-Fi] Initial software development
-** Duplicate source from MT6620 v2.3 driver branch
-** (Davinci label: MT6620_WIFI_Driver_V2_3_120913_1942_As_MT6630_Base)
-*/
+
 
 /*******************************************************************************
 *                         C O M P I L E R   F L A G S

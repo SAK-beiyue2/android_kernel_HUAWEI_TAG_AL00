@@ -10,22 +10,7 @@
 
 
 
-/*
-** $Log: mtreg.h $
- *
- * 01 28 2013 samp.lin
- * [WCXRP00000851] [MT6582 Wi-Fi][Driver] Add HIFSYS related definition to driver source tree
- * add MT6582-specific definitions.
- *
- * 08 15 2011 cp.wu
- * [WCXRP00000851] [MT6628 Wi-Fi][Driver] Add HIFSYS related definition to driver source tree
- * add MT6628-specific definitions.
- *
- * 07 13 2011 cp.wu
- * [WCXRP00000851] [MT6628 Wi-Fi][Driver] Add HIFSYS related definition to driver source tree
- * add initial version for MT6628 driver support.
- *
-*/
+
 
 #ifndef _MTREG_H
 #define _MTREG_H

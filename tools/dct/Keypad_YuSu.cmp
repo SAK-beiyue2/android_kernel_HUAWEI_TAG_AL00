@@ -67,6 +67,7 @@ KEY_W
 KEY_X
 KEY_Y
 KEY_Z
+KEY_FN_SMARTKEY
 
 [Key_code]
 0
@@ -137,6 +138,7 @@ KEY_Z
 45
 21
 44
+485
 
 
 [Key_code_linux]

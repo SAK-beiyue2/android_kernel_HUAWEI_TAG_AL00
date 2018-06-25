@@ -70,7 +70,6 @@
 #endif
 
 #define MTKPASR_FLUSH() do {				\
-				local_irq_disable();	\
 				lru_add_drain();	\
 				drain_local_pages(NULL);\
 			} while (0)			\

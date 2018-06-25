@@ -98,7 +98,6 @@ static struct i2c_driver tps65132_iic_driver = {
 	.id_table	= tps65132_id,
 	.probe		= tps65132_probe,
 	.remove		= tps65132_remove,
-	//.detect		= mt6605_detect,
 	.driver		= {
 		.owner	= THIS_MODULE,
 		.name	= "tps65132",
@@ -734,4 +733,3 @@ LCM_DRIVER r63417_fhd_dsi_cmd_truly_nt50358_720p_lcm_drv=
     .update         = lcm_update,
     .switch_mode		= lcm_switch_mode,
 };
-/* END PN:DTS2013053103858 , Added by d00238048, 2013.05.31*/

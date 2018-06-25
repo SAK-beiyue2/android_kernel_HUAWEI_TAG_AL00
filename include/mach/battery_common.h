@@ -7,7 +7,7 @@
 
 
 /*****************************************************************************
- *  BATTERY VOLTAGE
+ *  BATTERY VOLTAGE  
  ****************************************************************************/
 #define PRE_CHARGE_VOLTAGE                  3200
 #define SYSTEM_OFF_VOLTAGE                  3400
@@ -120,14 +120,16 @@ typedef enum {
 } temp_state_enum;
 
 
-#define TEMP_POS_60_THRESHOLD  50
-#define TEMP_POS_60_THRES_MINUS_X_DEGREE 47
+#define TEMP_POS_60_THRESHOLD  59
+#define TEMP_POS_60_THRES_MINUS_X_DEGREE 53
 
 #define TEMP_POS_45_THRESHOLD  45
-#define TEMP_POS_45_THRES_MINUS_X_DEGREE 39
+#define TEMP_POS_45_THRES_PLUS_X_DEGREE 46
+#define TEMP_POS_45_THRES_MINUS_X_DEGREE 40
 
 #define TEMP_POS_10_THRESHOLD  10
 #define TEMP_POS_10_THRES_PLUS_X_DEGREE 16
+#define TEMP_POS_10_THRES_MINUS_X_DEGREE 14
 
 #define TEMP_POS_0_THRESHOLD  0
 #define TEMP_POS_0_THRES_PLUS_X_DEGREE 6
@@ -139,8 +141,8 @@ typedef enum {
 #define TEMP_NEG_10_THRESHOLD  0
 #define TEMP_NEG_10_THRES_PLUS_X_DEGREE  0
 #else
-#define TEMP_NEG_10_THRESHOLD  0
-#define TEMP_NEG_10_THRES_PLUS_X_DEGREE  0
+#define TEMP_NEG_10_THRESHOLD  -10
+#define TEMP_NEG_10_THRES_PLUS_X_DEGREE  -10
 #endif
 
 /*****************************************************************************
